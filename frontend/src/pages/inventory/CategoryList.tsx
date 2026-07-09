@@ -3,16 +3,18 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getCategories, createCategory, updateCategory, deleteCategory } from '@/api/inventory';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/store/authStore';
-import { Tag, Pencil, Trash2, Plus, X, Check } from 'lucide-react';
+import { Tag, Pencil, Trash2, Plus, X, Check, FolderOpen } from 'lucide-react';
+import { Button, ButtonSpinner } from '@/components/ui/button';
 
 export default function CategoryList() {
-    const [name, setName] = useState('');
+    const [name,        setName]        = useState('');
     const [description, setDescription] = useState('');
-    const [editingId, setEditingId] = useState<number | null>(null);
-    const [showForm, setShowForm] = useState(false);
+    const [editingId,   setEditingId]   = useState<number | null>(null);
+    const [showForm,    setShowForm]    = useState(false);
+
     const queryClient = useQueryClient();
-    const user = useAuthStore(state => state.user);
-    const canManage = user?.role === 'guru' || user?.role === 'admin';
+    const user        = useAuthStore(state => state.user);
+    const canManage   = user?.role === 'guru' || user?.role === 'admin';
 
     const { data, isLoading } = useQuery({
         queryKey: ['categories'],
@@ -60,6 +62,8 @@ export default function CategoryList() {
         setName(cat.name);
         setDescription(cat.description ?? '');
         setShowForm(true);
+        // Scroll to form
+        setTimeout(() => document.getElementById('category-form')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
     }
 
     function handleSubmit() {
@@ -75,42 +79,52 @@ export default function CategoryList() {
 
     return (
         <div className="space-y-5">
-            {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+
+            {/* ── Page Header ── */}
+            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 animate-fade-up">
                 <div>
-                    <h1 className="text-2xl font-bold tracking-tight text-neutral-900">Kategori Inventaris</h1>
-                    <p className="text-sm text-neutral-500 mt-0.5">
+                    <h1 className="text-2xl font-bold tracking-tight text-foreground">Kategori Inventaris</h1>
+                    <p className="text-sm text-muted-foreground mt-0.5">
                         {canManage ? 'Kelola kategori barang inventaris' : 'Daftar kategori barang inventaris'}
                     </p>
                 </div>
                 {canManage && !showForm && (
-                    <button
-                        onClick={() => setShowForm(true)}
-                        className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all duration-200 ease-out active:scale-[0.97] shadow-sm"
-                    >
+                    <Button onClick={() => setShowForm(true)} className="gap-2 flex-shrink-0 animate-fade-up delay-75">
                         <Plus className="w-4 h-4" />
                         Tambah Kategori
-                    </button>
+                    </Button>
                 )}
             </div>
 
-            {/* Form — guru/admin only */}
+            {/* ── Inline Form ── */}
             {canManage && showForm && (
-                <div className="bg-white rounded-2xl border border-neutral-200 px-6 py-5 shadow-sm">
+                <div
+                    id="category-form"
+                    className="glass-card px-5 py-5 animate-spring-in"
+                >
+                    {/* Form header */}
                     <div className="flex items-center justify-between mb-4">
-                        <h3 className="font-medium text-neutral-900">
-                            {editingId ? 'Edit Kategori' : 'Tambah Kategori Baru'}
-                        </h3>
+                        <div className="flex items-center gap-2.5">
+                            <div className="w-8 h-8 rounded-xl bg-primary/10 dark:bg-primary/20 flex items-center justify-center">
+                                <Tag className="w-4 h-4 text-primary" />
+                            </div>
+                            <h3 className="font-semibold text-sm text-foreground">
+                                {editingId ? 'Edit Kategori' : 'Tambah Kategori Baru'}
+                            </h3>
+                        </div>
                         <button
                             onClick={resetForm}
-                            className="p-1.5 rounded-xl text-neutral-400 hover:bg-neutral-100 transition-all duration-200 ease-out active:scale-[0.97]"
+                            className="p-1.5 rounded-xl text-muted-foreground hover:bg-accent hover:text-foreground transition-all duration-150 active:scale-[0.93]"
+                            aria-label="Tutup form"
                         >
                             <X className="w-4 h-4" />
                         </button>
                     </div>
+
+                    {/* Fields */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-xs font-medium text-neutral-600 mb-1.5">
+                        <div className="space-y-1.5">
+                            <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                                 Nama Kategori <span className="text-red-500">*</span>
                             </label>
                             <input
@@ -118,11 +132,13 @@ export default function CategoryList() {
                                 value={name}
                                 onChange={e => setName(e.target.value)}
                                 placeholder="Contoh: Perangkat Jaringan"
-                                className="w-full rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all duration-150"
+                                className="input-ios"
+                                autoFocus
+                                onKeyDown={e => e.key === 'Enter' && handleSubmit()}
                             />
                         </div>
-                        <div>
-                            <label className="block text-xs font-medium text-neutral-600 mb-1.5">
+                        <div className="space-y-1.5">
+                            <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                                 Deskripsi
                             </label>
                             <input
@@ -130,107 +146,149 @@ export default function CategoryList() {
                                 value={description}
                                 onChange={e => setDescription(e.target.value)}
                                 placeholder="Deskripsi opsional"
-                                className="w-full rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all duration-150"
+                                className="input-ios"
+                                onKeyDown={e => e.key === 'Enter' && handleSubmit()}
                             />
                         </div>
                     </div>
+
+                    {/* Actions */}
                     <div className="flex justify-end gap-2 mt-4">
-                        <button
-                            onClick={resetForm}
-                            className="px-4 py-2.5 text-sm font-medium text-neutral-600 border border-neutral-200 rounded-xl hover:bg-neutral-50 transition-all duration-200 ease-out active:scale-[0.97]"
-                        >
+                        <Button variant="outline" size="sm" onClick={resetForm}>
                             Batal
-                        </button>
-                        <button
+                        </Button>
+                        <Button
+                            size="sm"
                             onClick={handleSubmit}
                             disabled={!name.trim() || isMutating}
-                            className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 disabled:opacity-50 transition-all duration-200 ease-out active:scale-[0.97]"
+                            loading={isMutating}
+                            className="gap-1.5"
                         >
-                            <Check className="w-4 h-4" />
+                            {!isMutating && <Check className="w-3.5 h-3.5" />}
                             {isMutating ? 'Menyimpan...' : editingId ? 'Simpan Perubahan' : 'Tambah'}
-                        </button>
+                        </Button>
                     </div>
                 </div>
             )}
 
-            {/* Table */}
-            <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm overflow-hidden">
+            {/* ── Table ── */}
+            <div className="glass-card overflow-hidden animate-fade-up delay-100">
+
+                {/* Table meta */}
                 {data?.data && (
-                    <div className="px-6 py-4 border-b border-neutral-100 text-sm text-neutral-500">
-                        Total: <span className="font-semibold text-neutral-700">{data.data.length}</span> kategori
+                    <div className="px-5 py-3.5 border-b border-border/40 flex items-center justify-between">
+                        <p className="text-xs text-muted-foreground">
+                            Total <span className="font-semibold text-foreground">{data.data.length}</span> kategori
+                        </p>
                     </div>
                 )}
 
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                         <thead>
-                            <tr className="bg-neutral-50 border-b border-neutral-100">
-                                <th className="px-6 py-3 text-left text-xs font-semibold text-neutral-500 uppercase tracking-wider">Nama Kategori</th>
-                                <th className="px-6 py-3 text-left text-xs font-semibold text-neutral-500 uppercase tracking-wider">Slug</th>
-                                <th className="px-6 py-3 text-left text-xs font-semibold text-neutral-500 uppercase tracking-wider">Deskripsi</th>
+                            <tr className="border-b border-border/50">
+                                <th className="px-5 py-3.5 text-[10px] font-bold text-muted-foreground uppercase tracking-widest text-left">Nama Kategori</th>
+                                <th className="px-5 py-3.5 text-[10px] font-bold text-muted-foreground uppercase tracking-widest text-left hidden sm:table-cell">Slug</th>
+                                <th className="px-5 py-3.5 text-[10px] font-bold text-muted-foreground uppercase tracking-widest text-left hidden md:table-cell">Deskripsi</th>
                                 {canManage && (
-                                    <th className="px-6 py-3 text-right text-xs font-semibold text-neutral-500 uppercase tracking-wider">Aksi</th>
+                                    <th className="px-5 py-3.5 text-[10px] font-bold text-muted-foreground uppercase tracking-widest text-right">Aksi</th>
                                 )}
                             </tr>
                         </thead>
                         <tbody>
                             {isLoading ? (
-                                Array.from({ length: 4 }).map((_, i) => (
-                                    <tr key={i} className="animate-pulse border-b border-neutral-50">
-                                        <td className="px-6 py-4"><div className="h-4 w-32 bg-neutral-200 rounded-full" /></td>
-                                        <td className="px-6 py-4"><div className="h-3 w-28 bg-neutral-200 rounded-full" /></td>
-                                        <td className="px-6 py-4"><div className="h-3 w-48 bg-neutral-200 rounded-full" /></td>
-                                        {canManage && <td className="px-6 py-4" />}
+                                Array.from({ length: 5 }).map((_, i) => (
+                                    <tr key={i} className="border-b border-border/30" style={{ animationDelay: `${i * 50}ms` }}>
+                                        <td className="px-5 py-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="skeleton w-8 h-8 rounded-xl flex-shrink-0" />
+                                                <div className="skeleton h-4 w-28 rounded-full" />
+                                            </div>
+                                        </td>
+                                        <td className="px-5 py-4 hidden sm:table-cell"><div className="skeleton h-3 w-24 rounded-full" /></td>
+                                        <td className="px-5 py-4 hidden md:table-cell"><div className="skeleton h-3 w-40 rounded-full" /></td>
+                                        {canManage && <td className="px-5 py-4" />}
                                     </tr>
                                 ))
                             ) : data?.data?.length === 0 ? (
                                 <tr>
-                                    <td colSpan={canManage ? 4 : 3} className="px-6 py-4">
-                                        <div className="py-16 text-center">
-                                            <div className="w-16 h-16 rounded-2xl bg-neutral-100 mx-auto mb-4 flex items-center justify-center">
-                                                <Tag className="w-8 h-8 text-neutral-400" />
+                                    <td colSpan={canManage ? 4 : 3} className="px-5 py-20">
+                                        <div className="flex flex-col items-center gap-3 text-muted-foreground animate-spring-in">
+                                            <div className="w-14 h-14 rounded-3xl bg-accent flex items-center justify-center">
+                                                <FolderOpen className="w-7 h-7 opacity-40" />
                                             </div>
-                                            <span className="text-sm text-neutral-400">Belum ada kategori.</span>
+                                            <p className="text-sm">Belum ada kategori.</p>
+                                            {canManage && (
+                                                <Button size="sm" variant="outline" onClick={() => setShowForm(true)} className="gap-1.5 mt-1">
+                                                    <Plus className="w-3.5 h-3.5" />
+                                                    Tambah Sekarang
+                                                </Button>
+                                            )}
                                         </div>
                                     </td>
                                 </tr>
                             ) : (
-                                data?.data?.map((cat: any) => (
-                                    <tr key={cat.id} className="border-b border-neutral-50 hover:bg-neutral-50 transition-colors duration-150">
-                                        <td className="px-6 py-4 text-sm">
-                                            <div className="flex items-center gap-2.5">
-                                                <div className="w-7 h-7 rounded-xl bg-indigo-100 flex items-center justify-center flex-shrink-0">
-                                                    <Tag className="w-3.5 h-3.5 text-indigo-600" />
+                                data?.data?.map((cat: any, i: number) => (
+                                    <tr
+                                        key={cat.id}
+                                        className="border-b border-border/30 hover:bg-accent/30 transition-colors duration-150 animate-fade-up group"
+                                        style={{ animationDelay: `${i * 30}ms` }}
+                                    >
+                                        {/* Name */}
+                                        <td className="px-5 py-3.5">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-xl bg-primary/10 dark:bg-primary/20 flex items-center justify-center flex-shrink-0 transition-transform duration-200 group-hover:scale-110">
+                                                    <Tag className="w-3.5 h-3.5 text-primary" />
                                                 </div>
-                                                <span className="font-medium text-neutral-900">{cat.name}</span>
+                                                <span className="font-semibold text-foreground">{cat.name}</span>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4 text-sm font-mono text-xs text-neutral-400">{cat.slug}</td>
-                                        <td className="px-6 py-4 text-sm text-neutral-500">
-                                            {cat.description ?? <span className="text-neutral-300">—</span>}
+
+                                        {/* Slug */}
+                                        <td className="px-5 py-3.5 hidden sm:table-cell">
+                                            <span className="font-mono text-xs text-muted-foreground bg-accent/60 px-2 py-1 rounded-lg">
+                                                {cat.slug}
+                                            </span>
                                         </td>
+
+                                        {/* Description */}
+                                        <td className="px-5 py-3.5 text-sm text-muted-foreground hidden md:table-cell">
+                                            {cat.description || <span className="text-muted-foreground/40">—</span>}
+                                        </td>
+
+                                        {/* Actions */}
                                         {canManage && (
-                                            <td className="px-6 py-4 text-sm text-right">
-                                                <div className="flex justify-end gap-1">
-                                                    <button
+                                            <td className="px-5 py-3.5 text-right">
+                                                <div className="flex justify-end gap-1.5">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon-sm"
                                                         onClick={() => handleEdit(cat)}
-                                                        className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all duration-200 ease-out active:scale-[0.97]"
+                                                        className="text-primary hover:bg-primary/8 dark:hover:bg-primary/15 hover:text-primary opacity-0 group-hover:opacity-100 transition-all duration-150"
+                                                        aria-label={`Edit ${cat.name}`}
+                                                        title="Edit"
                                                     >
-                                                        <Pencil className="w-3 h-3" />
-                                                        Edit
-                                                    </button>
-                                                    <button
+                                                        <Pencil className="w-3.5 h-3.5" />
+                                                    </Button>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon-sm"
                                                         onClick={() => {
                                                             if (confirm(`Yakin ingin menghapus kategori "${cat.name}"?`)) {
                                                                 deleteMutation.mutate(cat.id);
                                                             }
                                                         }}
                                                         disabled={deleteMutation.isPending}
-                                                        className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 rounded-xl transition-all duration-200 ease-out active:scale-[0.97] disabled:opacity-40"
+                                                        className="text-destructive hover:bg-destructive/8 dark:hover:bg-destructive/15 hover:text-destructive opacity-0 group-hover:opacity-100 transition-all duration-150 disabled:opacity-30"
+                                                        aria-label={`Hapus ${cat.name}`}
+                                                        title="Hapus"
                                                     >
-                                                        <Trash2 className="w-3 h-3" />
-                                                        Hapus
-                                                    </button>
+                                                        {deleteMutation.isPending ? (
+                                                            <ButtonSpinner className="w-3.5 h-3.5 text-destructive" />
+                                                        ) : (
+                                                            <Trash2 className="w-3.5 h-3.5" />
+                                                        )}
+                                                    </Button>
                                                 </div>
                                             </td>
                                         )}

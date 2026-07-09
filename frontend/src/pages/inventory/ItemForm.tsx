@@ -1,68 +1,230 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getCategories, createItem, updateItem, getItem, deleteItemImage } from '@/api/inventory';
 import { toast } from 'sonner';
+import {
+    ArrowLeft,
+    Package,
+    Tag,
+    ImagePlus,
+    X,
+    Upload,
+    LayoutGrid,
+    Info,
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 const STORAGE_URL = (import.meta.env.VITE_STORAGE_URL ?? 'http://localhost:8000/storage').replace(/\/+$/, '');
 
+// ─── FormSection ──────────────────────────────────────────────────────────────
+
+function FormSection({
+    title,
+    icon,
+    children,
+    delay,
+}: {
+    title:    string;
+    icon:     React.ReactNode;
+    children: React.ReactNode;
+    delay?:   string;
+}) {
+    return (
+        <div className={['glass-card overflow-hidden animate-fade-up', delay].filter(Boolean).join(' ')}>
+            <div className="px-6 py-4 border-b border-border/40 flex items-center gap-3">
+                <div className="w-8 h-8 rounded-xl bg-primary/10 dark:bg-primary/20 flex items-center justify-center flex-shrink-0">
+                    {icon}
+                </div>
+                <h3 className="font-semibold text-sm text-foreground">{title}</h3>
+            </div>
+            <div className="px-6 py-5">{children}</div>
+        </div>
+    );
+}
+
+// ─── Field ────────────────────────────────────────────────────────────────────
+
+function Field({
+    label,
+    required,
+    hint,
+    children,
+}: {
+    label:     string;
+    required?: boolean;
+    hint?:     string;
+    children:  React.ReactNode;
+}) {
+    return (
+        <div className="space-y-1.5">
+            <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                {label} {required && <span className="text-red-500 normal-case">*</span>}
+            </label>
+            {children}
+            {hint && <p className="text-xs text-muted-foreground/70">{hint}</p>}
+        </div>
+    );
+}
+
+// ─── Dropzone ─────────────────────────────────────────────────────────────────
+
+function Dropzone({
+    label,
+    accept,
+    multiple,
+    onFiles,
+    preview,
+    hint,
+}: {
+    label:    string;
+    accept:   string;
+    multiple: boolean;
+    onFiles:  (files: File[]) => void;
+    preview?: string | null;
+    hint?:    string;
+}) {
+    const inputRef                    = useRef<HTMLInputElement>(null);
+    const [isDragging, setIsDragging] = useState(false);
+
+    function handleDrop(e: React.DragEvent) {
+        e.preventDefault();
+        setIsDragging(false);
+        const files = Array.from(e.dataTransfer.files);
+        if (files.length) onFiles(files);
+    }
+
+    return (
+        <div
+            role="button"
+            tabIndex={0}
+            aria-label={`Upload ${label}`}
+            onClick={() => inputRef.current?.click()}
+            onKeyDown={e => e.key === 'Enter' && inputRef.current?.click()}
+            onDragOver={e => { e.preventDefault(); setIsDragging(true); }}
+            onDragLeave={() => setIsDragging(false)}
+            onDrop={handleDrop}
+            className={[
+                'relative rounded-3xl border-2 border-dashed transition-all duration-300 cursor-pointer select-none',
+                'flex flex-col items-center justify-center gap-3 p-6 text-center min-h-[120px]',
+                isDragging
+                    ? 'border-primary bg-primary/5 dark:bg-primary/10 scale-[1.01]'
+                    : preview
+                    ? 'border-border/40 bg-accent/30'
+                    : 'border-border/60 hover:border-primary/40 hover:bg-accent/20 active:scale-[0.99]',
+            ].join(' ')}
+        >
+            <input
+                ref={inputRef}
+                type="file"
+                accept={accept}
+                multiple={multiple}
+                className="sr-only"
+                onChange={e => onFiles(Array.from(e.target.files ?? []))}
+            />
+
+            {preview ? (
+                <div className="w-full flex flex-col items-center gap-2">
+                    <img
+                        src={preview}
+                        alt="Preview"
+                        className="max-h-32 rounded-2xl object-contain shadow-glass"
+                    />
+                    <span className="text-xs text-muted-foreground">Klik untuk mengganti</span>
+                </div>
+            ) : (
+                <>
+                    <div className={[
+                        'w-10 h-10 rounded-2xl flex items-center justify-center transition-all duration-300',
+                        isDragging
+                            ? 'bg-primary text-primary-foreground scale-110 shadow-glow-blue-sm'
+                            : 'bg-accent text-muted-foreground',
+                    ].join(' ')}>
+                        <Upload className="w-5 h-5" />
+                    </div>
+                    <div>
+                        <p className="text-sm font-semibold text-foreground">{label}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">Klik atau drag & drop</p>
+                    </div>
+                    {hint && <p className="text-[10px] text-muted-foreground/60">{hint}</p>}
+                </>
+            )}
+        </div>
+    );
+}
+
+// ─── GalleryThumb ─────────────────────────────────────────────────────────────
+
+function GalleryThumb({ src, onRemove }: { src: string; onRemove: () => void }) {
+    return (
+        <div className="relative w-20 h-20 rounded-2xl border border-border/40 overflow-hidden group flex-shrink-0 animate-spring-in">
+            <img src={src} alt="" className="object-cover w-full h-full" />
+            <button
+                type="button"
+                onClick={onRemove}
+                className="absolute inset-0 bg-black/50 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-150"
+                aria-label="Hapus gambar"
+            >
+                <X className="w-4 h-4" />
+            </button>
+        </div>
+    );
+}
+
+// ─── Main Component ───────────────────────────────────────────────────────────
+
 export default function ItemForm() {
-    const { id } = useParams();
-    const isEdit = Boolean(id);
-    const navigate = useNavigate();
+    const { id }      = useParams();
+    const isEdit      = Boolean(id);
+    const navigate    = useNavigate();
     const queryClient = useQueryClient();
 
     const [formData, setFormData] = useState({
-        category_id: '',
-        name: '',
-        description: '',
-        brand: '',
-        model: '',
-        type: 'non_consumable',
-        stock_total: '0',
+        category_id:   '',
+        name:          '',
+        description:   '',
+        brand:         '',
+        model:         '',
+        type:          'non_consumable',
+        stock_total:   '0',
         stock_minimum: '1',
-        condition: 'baik',
-        location: '',
-        is_available: true
+        condition:     'baik',
+        location:      '',
+        is_available:  true,
     });
-    
-    const [coverImage, setCoverImage] = useState<File | null>(null);
-    const [galleryImages, setGalleryImages] = useState<File[]>([]);
-    
-    // For edit preview
+
+    const [coverImage,      setCoverImage]      = useState<File | null>(null);
+    const [galleryImages,   setGalleryImages]   = useState<File[]>([]);
     const [coverPreviewUrl, setCoverPreviewUrl] = useState<string | null>(null);
     const [existingGallery, setExistingGallery] = useState<any[]>([]);
+    const [newGalleryPrev,  setNewGalleryPrev]  = useState<string[]>([]);
 
     const { data: categories } = useQuery({ queryKey: ['categories'], queryFn: getCategories });
 
     const { data: itemData, isLoading: itemLoading } = useQuery({
         queryKey: ['items', id],
-        queryFn: () => getItem(Number(id)),
-        enabled: isEdit,
+        queryFn:  () => getItem(Number(id)),
+        enabled:  isEdit,
     });
 
     useEffect(() => {
         if (isEdit && itemData?.data) {
             const item = itemData.data;
             setFormData({
-                category_id: String(item.category_id),
-                name: item.name,
-                description: item.description || '',
-                brand: item.brand || '',
-                model: item.model || '',
-                type: item.type || 'non_consumable',
-                stock_total: String(item.stock_total),
+                category_id:   String(item.category_id),
+                name:          item.name,
+                description:   item.description || '',
+                brand:         item.brand || '',
+                model:         item.model || '',
+                type:          item.type || 'non_consumable',
+                stock_total:   String(item.stock_total),
                 stock_minimum: String(item.stock_minimum),
-                condition: item.condition,
-                location: item.location || '',
-                is_available: item.is_available
+                condition:     item.condition,
+                location:      item.location || '',
+                is_available:  item.is_available,
             });
-            if (item.image) {
-                setCoverPreviewUrl(`${STORAGE_URL}/${item.image}`);
-            }
-            if (item.images) {
-                setExistingGallery(item.images);
-            }
+            if (item.image)  setCoverPreviewUrl(`${STORAGE_URL}/${item.image}`);
+            if (item.images) setExistingGallery(item.images);
         }
     }, [itemData, isEdit]);
 
@@ -74,17 +236,14 @@ export default function ItemForm() {
             navigate('/dashboard/items');
         },
         onError: (err: any) => {
-            console.error('Item mutation error:', err);
-            console.error('Response data:', err.response?.data);
-            console.error('Validation errors:', err.response?.data?.errors);
             const errors = err.response?.data?.errors;
             if (errors) {
-                const firstError = Object.values(errors).flat()[0] as string;
-                toast.error(firstError || err.response?.data?.message || 'Validasi gagal');
+                const first = Object.values(errors).flat()[0] as string;
+                toast.error(first || err.response?.data?.message || 'Validasi gagal');
             } else {
                 toast.error(err.response?.data?.message || 'Terjadi kesalahan');
             }
-        }
+        },
     });
 
     const deleteImageMutation = useMutation({
@@ -92,193 +251,382 @@ export default function ItemForm() {
         onSuccess: (_, imageId) => {
             toast.success('Gambar dihapus');
             setExistingGallery(prev => prev.filter(img => img.id !== imageId));
-        }
+        },
     });
 
-    const handleSubmit = (e: React.FormEvent) => {
+    function set(key: string, value: string | boolean) {
+        setFormData(prev => ({ ...prev, [key]: value }));
+    }
+
+    function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
         const data = new FormData();
         Object.entries(formData).forEach(([key, value]) => {
             data.append(key, typeof value === 'boolean' ? (value ? '1' : '0') : String(value));
         });
-
-        if (coverImage) {
-            data.append('cover_image', coverImage);
-        }
-
-        galleryImages.forEach(file => {
-            data.append('gallery_images[]', file);
-        });
-
+        if (coverImage) data.append('cover_image', coverImage);
+        galleryImages.forEach(file => data.append('gallery_images[]', file));
         mutation.mutate(data);
-    };
+    }
 
-    if (isEdit && itemLoading) return <div className="p-8 text-center">Loading...</div>;
+    function handleCoverFiles(files: File[]) {
+        const file = files[0];
+        if (!file) return;
+        setCoverImage(file);
+        setCoverPreviewUrl(URL.createObjectURL(file));
+    }
+
+    function handleGalleryFiles(files: File[]) {
+        setGalleryImages(prev => [...prev, ...files]);
+        setNewGalleryPrev(prev => [
+            ...prev,
+            ...files.map(f => URL.createObjectURL(f)),
+        ]);
+    }
+
+    function removeNewGallery(index: number) {
+        setGalleryImages(prev => prev.filter((_, i) => i !== index));
+        setNewGalleryPrev(prev => prev.filter((_, i) => i !== index));
+    }
+
+    const inputCls = 'input-ios';
+
+    // ── Loading skeleton ──
+    if (isEdit && itemLoading) {
+        return (
+            <div className="max-w-4xl mx-auto space-y-5">
+                {[1, 2, 3].map(i => (
+                    <div key={i} className="skeleton h-48 rounded-3xl" />
+                ))}
+            </div>
+        );
+    }
 
     return (
-        <div className="max-w-4xl mx-auto space-y-6">
-            <div className="flex items-center gap-4">
+        <div className="max-w-4xl mx-auto space-y-5">
+
+            {/* ── Header ── */}
+            <div className="flex items-center gap-3 animate-fade-up">
                 <button
+                    type="button"
                     onClick={() => navigate(-1)}
-                    className="text-sm text-neutral-500 hover:text-neutral-900 transition-colors duration-150"
+                    className="p-2 rounded-2xl text-muted-foreground hover:bg-accent hover:text-foreground transition-all duration-150 active:scale-[0.93] flex-shrink-0"
+                    aria-label="Kembali"
                 >
-                    &larr; Kembali
+                    <ArrowLeft className="w-5 h-5" />
                 </button>
-                <h2 className="text-2xl font-bold tracking-tight">{isEdit ? 'Edit Barang' : 'Tambah Barang Baru'}</h2>
+                <div>
+                    <h1 className="text-xl font-bold tracking-tight text-foreground">
+                        {isEdit ? 'Edit Barang' : 'Tambah Barang Baru'}
+                    </h1>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                        {isEdit
+                            ? 'Perbarui informasi barang inventaris'
+                            : 'Daftarkan barang baru ke inventaris TKJ'}
+                    </p>
+                </div>
             </div>
 
-            <form onSubmit={handleSubmit} className="bg-white shadow-sm rounded-2xl border border-neutral-200 overflow-hidden">
-                <div className="px-6 py-5 space-y-6">
-                    {/* Basic Info */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label className="block text-sm font-medium mb-1">Nama Barang <span className="text-red-500">*</span></label>
-                            <input required type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all duration-150" />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium mb-1">Kategori <span className="text-red-500">*</span></label>
-                            <select required value={formData.category_id} onChange={e => setFormData({...formData, category_id: e.target.value})} className="w-full rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all duration-150">
+            <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+
+                {/* ── 1. Informasi Dasar ── */}
+                <FormSection
+                    title="Informasi Dasar"
+                    icon={<Package className="w-4 h-4 text-primary" />}
+                    delay="delay-75"
+                >
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <Field label="Nama Barang" required>
+                            <input
+                                required
+                                type="text"
+                                value={formData.name}
+                                onChange={e => set('name', e.target.value)}
+                                placeholder="Contoh: Cisco Switch 24 Port"
+                                className={inputCls}
+                            />
+                        </Field>
+
+                        <Field label="Kategori" required>
+                            <select
+                                required
+                                value={formData.category_id}
+                                onChange={e => set('category_id', e.target.value)}
+                                className={inputCls + ' appearance-none cursor-pointer'}
+                            >
                                 <option value="">Pilih Kategori</option>
-                                {categories?.data?.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                                {categories?.data?.map(c => (
+                                    <option key={c.id} value={c.id}>{c.name}</option>
+                                ))}
                             </select>
-                        </div>
-                    </div>
+                        </Field>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label className="block text-sm font-medium mb-1">Merk / Brand</label>
-                            <input type="text" value={formData.brand} onChange={e => setFormData({...formData, brand: e.target.value})} className="w-full rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all duration-150" />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium mb-1">Model / Seri</label>
-                            <input type="text" value={formData.model} onChange={e => setFormData({...formData, model: e.target.value})} className="w-full rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all duration-150" />
-                        </div>
-                    </div>
+                        <Field label="Merk / Brand">
+                            <input
+                                type="text"
+                                value={formData.brand}
+                                onChange={e => set('brand', e.target.value)}
+                                placeholder="Cisco, TP-Link, APC..."
+                                className={inputCls}
+                            />
+                        </Field>
 
-                    <div>
-                        <label className="block text-sm font-medium mb-1">Deskripsi Spesifikasi</label>
-                        <textarea rows={3} value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} className="w-full rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all duration-150" />
-                    </div>
+                        <Field label="Model / Seri">
+                            <input
+                                type="text"
+                                value={formData.model}
+                                onChange={e => set('model', e.target.value)}
+                                placeholder="WS-C2960-24TC..."
+                                className={inputCls}
+                            />
+                        </Field>
 
-                    {/* Jenis Barang */}
-                    <div>
-                        <label className="block text-sm font-medium mb-2">Jenis Barang <span className="text-red-500">*</span></label>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            <label className={`flex items-start gap-3 p-3 border-2 rounded-2xl cursor-pointer transition-colors ${formData.type === 'non_consumable' ? 'border-indigo-500 bg-indigo-50' : 'border-neutral-200 hover:border-neutral-300'}`}>
-                                <input
-                                    type="radio"
-                                    name="type"
-                                    value="non_consumable"
-                                    checked={formData.type === 'non_consumable'}
-                                    onChange={e => setFormData({...formData, type: e.target.value})}
-                                    className="mt-0.5 accent-indigo-600"
+                        <div className="md:col-span-2">
+                            <Field label="Deskripsi & Spesifikasi">
+                                <textarea
+                                    rows={3}
+                                    value={formData.description}
+                                    onChange={e => set('description', e.target.value)}
+                                    placeholder="Spesifikasi teknis, keterangan tambahan, dll."
+                                    className={inputCls + ' resize-none'}
                                 />
-                                <div>
-                                    <div className="text-sm font-medium">Non-Consumable</div>
-                                    <div className="text-xs text-neutral-500 mt-0.5">Dapat dipinjam dan wajib dikembalikan. Contoh: laptop, kabel, akses poin.</div>
-                                </div>
-                            </label>
-                            <label className={`flex items-start gap-3 p-3 border-2 rounded-2xl cursor-pointer transition-colors ${formData.type === 'consumable' ? 'border-amber-500 bg-amber-50' : 'border-neutral-200 hover:border-neutral-300'}`}>
-                                <input
-                                    type="radio"
-                                    name="type"
-                                    value="consumable"
-                                    checked={formData.type === 'consumable'}
-                                    onChange={e => setFormData({...formData, type: e.target.value})}
-                                    className="mt-0.5 accent-amber-600"
-                                />
-                                <div>
-                                    <div className="text-sm font-medium">Consumable</div>
-                                    <div className="text-xs text-neutral-500 mt-0.5">Sekali pakai, bisa habis terpakai. Contoh: konektor RJ45, isolasi, tinta.</div>
-                                </div>
-                            </label>
+                            </Field>
                         </div>
                     </div>
+                </FormSection>
 
-                    <hr className="border-neutral-200" />
+                {/* ── 2. Jenis Barang ── */}
+                <FormSection
+                    title="Jenis Barang"
+                    icon={<Tag className="w-4 h-4 text-primary" />}
+                    delay="delay-100"
+                >
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {([
+                            {
+                                value: 'non_consumable',
+                                title: 'Non-Consumable',
+                                desc:  'Dapat dipinjam dan wajib dikembalikan.',
+                                sub:   'Laptop, kabel, akses poin, dll.',
+                                ring:  'border-primary bg-primary/5 dark:bg-primary/10',
+                                radio: 'accent-primary',
+                                text:  'text-primary',
+                            },
+                            {
+                                value: 'consumable',
+                                title: 'Consumable',
+                                desc:  'Sekali pakai, bisa habis terpakai.',
+                                sub:   'Konektor RJ45, isolasi, tinta, dll.',
+                                ring:  'border-amber-400 bg-amber-50/60 dark:bg-amber-900/15',
+                                radio: 'accent-amber-500',
+                                text:  'text-amber-600 dark:text-amber-400',
+                            },
+                        ] as const).map(opt => {
+                            const sel = formData.type === opt.value;
+                            return (
+                                <label
+                                    key={opt.value}
+                                    className={[
+                                        'flex items-start gap-3.5 p-4 rounded-3xl border-2 cursor-pointer',
+                                        'transition-all duration-200 ease-spring',
+                                        sel ? opt.ring : 'border-border/60 hover:border-border',
+                                    ].join(' ')}
+                                >
+                                    <input
+                                        type="radio"
+                                        name="type"
+                                        value={opt.value}
+                                        checked={sel}
+                                        onChange={e => set('type', e.target.value)}
+                                        className={['mt-1 w-4 h-4', opt.radio].join(' ')}
+                                    />
+                                    <div>
+                                        <p className={['text-sm font-semibold', sel ? opt.text : 'text-foreground'].join(' ')}>
+                                            {opt.title}
+                                        </p>
+                                        <p className="text-xs text-muted-foreground mt-0.5">{opt.desc}</p>
+                                        <p className="text-[10px] text-muted-foreground/60 mt-0.5">{opt.sub}</p>
+                                    </div>
+                                </label>
+                            );
+                        })}
+                    </div>
+                </FormSection>
 
-                    {/* Inventory Logic */}
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                        <div>
-                            <label className="block text-sm font-medium mb-1">Total Stok Fisik <span className="text-red-500">*</span></label>
-                            <input required type="number" min="0" value={formData.stock_total} onChange={e => setFormData({...formData, stock_total: e.target.value})} className="w-full rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all duration-150" />
-                            {!isEdit && <p className="text-xs text-neutral-500 mt-1">Stok aktif (bisa dipinjam) otomatis mengikuti total awal.</p>}
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium mb-1">Batas Minimum Stok</label>
-                            <input required type="number" min="1" value={formData.stock_minimum} onChange={e => setFormData({...formData, stock_minimum: e.target.value})} className="w-full rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all duration-150" />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium mb-1">Kondisi</label>
-                            <select value={formData.condition} onChange={e => setFormData({...formData, condition: e.target.value})} className="w-full rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all duration-150">
+                {/* ── 3. Stok & Kondisi ── */}
+                <FormSection
+                    title="Stok & Kondisi"
+                    icon={<LayoutGrid className="w-4 h-4 text-primary" />}
+                    delay="delay-150"
+                >
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-5">
+                        <Field
+                            label="Total Stok Fisik"
+                            required
+                            hint={!isEdit ? 'Stok aktif mengikuti total awal.' : undefined}
+                        >
+                            <input
+                                required
+                                type="number"
+                                min="0"
+                                value={formData.stock_total}
+                                onChange={e => set('stock_total', e.target.value)}
+                                className={inputCls}
+                            />
+                        </Field>
+
+                        <Field label="Stok Minimum">
+                            <input
+                                required
+                                type="number"
+                                min="1"
+                                value={formData.stock_minimum}
+                                onChange={e => set('stock_minimum', e.target.value)}
+                                className={inputCls}
+                            />
+                        </Field>
+
+                        <Field label="Kondisi">
+                            <select
+                                value={formData.condition}
+                                onChange={e => set('condition', e.target.value)}
+                                className={inputCls + ' appearance-none cursor-pointer'}
+                            >
                                 <option value="baik">Baik</option>
                                 <option value="rusak_ringan">Rusak Ringan</option>
                                 <option value="rusak_berat">Rusak Berat</option>
                             </select>
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium mb-1">Lokasi Penyimpanan</label>
-                            <input type="text" value={formData.location} onChange={e => setFormData({...formData, location: e.target.value})} placeholder="Lemari A1" className="w-full rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all duration-150" />
-                        </div>
+                        </Field>
+
+                        <Field label="Lokasi Penyimpanan">
+                            <input
+                                type="text"
+                                value={formData.location}
+                                onChange={e => set('location', e.target.value)}
+                                placeholder="Lemari A1"
+                                className={inputCls}
+                            />
+                        </Field>
                     </div>
 
-                    <div className="flex items-center">
-                        <input type="checkbox" id="is_available" checked={formData.is_available} onChange={e => setFormData({...formData, is_available: e.target.checked})} className="h-4 w-4 text-indigo-600 rounded border-neutral-300" />
-                        <label htmlFor="is_available" className="ml-2 block text-sm font-medium">Bisa Dipinjam (Tersedia)</label>
-                    </div>
-
-                    <hr className="border-neutral-200" />
-
-                    {/* Images */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    {/* Available toggle */}
+                    <label className="flex items-center gap-3 mt-5 p-3.5 rounded-2xl hover:bg-accent/40 transition-colors duration-150 cursor-pointer w-fit">
+                        <input
+                            type="checkbox"
+                            checked={formData.is_available}
+                            onChange={e => set('is_available', e.target.checked)}
+                            className="w-4 h-4 rounded accent-primary"
+                        />
                         <div>
-                            <label className="block text-sm font-medium mb-2">Foto Utama (Cover)</label>
-                            {coverPreviewUrl && !coverImage && (
-                                <div className="mb-4 relative w-48 aspect-video rounded-xl overflow-hidden border border-neutral-200">
-                                    <img src={coverPreviewUrl} alt="Cover" className="object-cover w-full h-full" />
-                                </div>
-                            )}
-                            <input type="file" accept=".jpg,.jpeg,.png,.webp" onChange={e => setCoverImage(e.target.files?.[0] || null)} className="w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 transition-all duration-150" />
-                            <p className="text-xs text-neutral-500 mt-1">Format: JPG, PNG, WebP. Maks 5MB.</p>
+                            <p className="text-sm font-medium text-foreground">Bisa Dipinjam (Tersedia)</p>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                                Hilangkan centang untuk menonaktifkan peminjaman barang ini
+                            </p>
                         </div>
-                        
-                        <div>
-                            <label className="block text-sm font-medium mb-2">Foto Tambahan (Gallery)</label>
-                            
+                    </label>
+                </FormSection>
+
+                {/* ── 4. Gambar ── */}
+                <FormSection
+                    title="Gambar"
+                    icon={<ImagePlus className="w-4 h-4 text-primary" />}
+                    delay="delay-200"
+                >
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                        {/* Cover */}
+                        <div className="space-y-2">
+                            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                                Foto Utama (Cover)
+                            </p>
+                            <Dropzone
+                                label="Upload Cover"
+                                accept=".jpg,.jpeg,.png,.webp"
+                                multiple={false}
+                                onFiles={handleCoverFiles}
+                                preview={coverImage ? coverPreviewUrl : (coverPreviewUrl ?? null)}
+                                hint="JPG, PNG, WebP — maks 5MB"
+                            />
+                        </div>
+
+                        {/* Gallery */}
+                        <div className="space-y-2">
+                            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                                Foto Tambahan (Gallery)
+                            </p>
+
+                            {/* Existing thumbs */}
                             {existingGallery.length > 0 && (
-                                <div className="flex gap-2 flex-wrap mb-4">
+                                <div className="flex gap-2 flex-wrap">
                                     {existingGallery.map(img => (
-                                        <div key={img.id} className="relative w-20 h-20 rounded-xl border border-neutral-200 overflow-hidden group">
-                                            <img src={`${STORAGE_URL}/${img.path}`} alt="" className="object-cover w-full h-full" />
-                                            <button type="button" onClick={() => deleteImageMutation.mutate(img.id)} className="absolute inset-0 bg-black/50 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-xs">
-                                                Hapus
-                                            </button>
-                                        </div>
+                                        <GalleryThumb
+                                            key={img.id}
+                                            src={`${STORAGE_URL}/${img.path}`}
+                                            onRemove={() => deleteImageMutation.mutate(img.id)}
+                                        />
                                     ))}
                                 </div>
                             )}
 
-                            <input type="file" multiple accept=".jpg,.jpeg,.png,.webp" onChange={e => setGalleryImages(Array.from(e.target.files || []))} className="w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-neutral-100 hover:file:bg-neutral-200 transition-all duration-150" />
-                            <p className="text-xs text-neutral-500 mt-2">Bisa memilih lebih dari 1 file. Format: JPG, PNG, WebP. Maks 5MB per file.</p>
+                            {/* New thumbs */}
+                            {newGalleryPrev.length > 0 && (
+                                <div className="flex gap-2 flex-wrap">
+                                    {newGalleryPrev.map((src, i) => (
+                                        <GalleryThumb
+                                            key={src}
+                                            src={src}
+                                            onRemove={() => removeNewGallery(i)}
+                                        />
+                                    ))}
+                                </div>
+                            )}
+
+                            <Dropzone
+                                label="Tambah Foto"
+                                accept=".jpg,.jpeg,.png,.webp"
+                                multiple
+                                onFiles={handleGalleryFiles}
+                                hint="Pilih beberapa file — maks 5MB/file"
+                            />
                         </div>
                     </div>
-                </div>
 
-                <div className="bg-neutral-50 px-6 py-4 border-t border-neutral-200 flex justify-end gap-3">
-                    <button
-                        type="button"
-                        onClick={() => navigate(-1)}
-                        className="bg-white border border-neutral-200 text-neutral-700 px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-neutral-50 transition-all duration-200 ease-out active:scale-[0.97]"
-                    >
-                        Batal
-                    </button>
-                    <button
-                        type="submit"
-                        disabled={mutation.isPending}
-                        className="bg-indigo-600 text-white px-6 py-2.5 rounded-xl text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 transition-all duration-200 ease-out active:scale-[0.97]"
-                    >
-                        {mutation.isPending ? 'Menyimpan...' : 'Simpan Barang'}
-                    </button>
+                    {/* Info note */}
+                    <div className="flex gap-2.5 mt-4 bg-blue-50/60 dark:bg-blue-900/10 border border-blue-200/40 dark:border-blue-700/20 rounded-2xl px-4 py-3">
+                        <Info className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
+                        <p className="text-xs text-blue-600 dark:text-blue-400 leading-relaxed">
+                            Foto tersimpan dapat dihapus dengan hover lalu klik. Foto baru tampil di galeri setelah disimpan.
+                        </p>
+                    </div>
+                </FormSection>
+
+                {/* ── Submit footer ── */}
+                <div className="glass-card px-6 py-4 flex items-center justify-between gap-3 animate-fade-up delay-300">
+                    <p className="text-xs text-muted-foreground hidden sm:block">
+                        {isEdit
+                            ? 'Perubahan akan disimpan setelah klik Simpan.'
+                            : 'Barang baru akan langsung tersedia di inventaris.'}
+                    </p>
+                    <div className="flex gap-3 ml-auto">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => navigate(-1)}
+                            disabled={mutation.isPending}
+                        >
+                            Batal
+                        </Button>
+                        <Button
+                            type="submit"
+                            loading={mutation.isPending}
+                            disabled={mutation.isPending}
+                            className="px-8"
+                        >
+                            {mutation.isPending
+                                ? 'Menyimpan...'
+                                : isEdit ? 'Simpan Perubahan' : 'Simpan Barang'}
+                        </Button>
+                    </div>
                 </div>
             </form>
         </div>

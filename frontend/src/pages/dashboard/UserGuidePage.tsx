@@ -31,23 +31,22 @@ interface Step {
 }
 
 interface GuideSection {
-    id: string;
-    icon: React.ReactNode;
-    title: string;
+    id:          string;
+    icon:        React.ReactNode;
+    title:       string;
     description: string;
-    steps: Step[];
-    link?: { to: string; label: string };
-    tip?: string;
-    roles: ('siswa' | 'guru' | 'admin')[];
+    steps:       Step[];
+    link?:       { to: string; label: string };
+    tip?:        string;
+    roles:       ('siswa' | 'guru' | 'admin')[];
 }
 
-// ─── Data panduan ─────────────────────────────────────────────────────────────
+// ─── Guide Data ───────────────────────────────────────────────────────────────
 
 const GUIDE_SECTIONS: GuideSection[] = [
-    // ── Semua role ──
     {
         id: 'register',
-        icon: <UserPlus className="w-5 h-5" />,
+        icon: <UserPlus className="w-4 h-4" />,
         title: 'Mendaftar Akun',
         description: 'Cara membuat akun baru sebagai siswa.',
         roles: ['siswa'],
@@ -63,7 +62,7 @@ const GUIDE_SECTIONS: GuideSection[] = [
     },
     {
         id: 'login',
-        icon: <LogIn className="w-5 h-5" />,
+        icon: <LogIn className="w-4 h-4" />,
         title: 'Login ke Sistem',
         description: 'Masuk menggunakan email & password atau akun Google.',
         roles: ['siswa', 'guru', 'admin'],
@@ -75,11 +74,9 @@ const GUIDE_SECTIONS: GuideSection[] = [
         ],
         link: { to: '/login', label: 'Ke Halaman Login' },
     },
-
-    // ── Siswa ──
     {
         id: 'browse-items',
-        icon: <Package className="w-5 h-5" />,
+        icon: <Package className="w-4 h-4" />,
         title: 'Melihat Daftar Barang',
         description: 'Cari dan lihat detail barang yang tersedia untuk dipinjam.',
         roles: ['siswa', 'guru', 'admin'],
@@ -93,7 +90,7 @@ const GUIDE_SECTIONS: GuideSection[] = [
     },
     {
         id: 'borrow',
-        icon: <ClipboardList className="w-5 h-5" />,
+        icon: <ClipboardList className="w-4 h-4" />,
         title: 'Mengajukan Peminjaman',
         description: 'Cara mengajukan permohonan peminjaman barang inventaris.',
         roles: ['siswa', 'guru', 'admin'],
@@ -112,7 +109,7 @@ const GUIDE_SECTIONS: GuideSection[] = [
     },
     {
         id: 'track',
-        icon: <Info className="w-5 h-5" />,
+        icon: <Info className="w-4 h-4" />,
         title: 'Memantau Status Peminjaman',
         description: 'Cek status dan riwayat semua peminjamanmu.',
         roles: ['siswa', 'guru', 'admin'],
@@ -127,7 +124,7 @@ const GUIDE_SECTIONS: GuideSection[] = [
     },
     {
         id: 'return',
-        icon: <RotateCcw className="w-5 h-5" />,
+        icon: <RotateCcw className="w-4 h-4" />,
         title: 'Mengembalikan Barang',
         description: 'Proses pengembalian barang yang sudah selesai dipinjam.',
         roles: ['siswa', 'guru', 'admin'],
@@ -141,11 +138,9 @@ const GUIDE_SECTIONS: GuideSection[] = [
         ],
         tip: 'Kembalikan barang sebelum tanggal jatuh tempo untuk menghindari status Terlambat.',
     },
-
-    // ── Guru & Admin ──
     {
         id: 'approve',
-        icon: <CheckCircle2 className="w-5 h-5" />,
+        icon: <CheckCircle2 className="w-4 h-4" />,
         title: 'Menyetujui / Menolak Peminjaman',
         description: 'Proses approval permohonan peminjaman dari siswa.',
         roles: ['guru', 'admin'],
@@ -160,7 +155,7 @@ const GUIDE_SECTIONS: GuideSection[] = [
     },
     {
         id: 'verify-return',
-        icon: <ShieldCheck className="w-5 h-5" />,
+        icon: <ShieldCheck className="w-4 h-4" />,
         title: 'Verifikasi Pengembalian',
         description: 'Konfirmasi bahwa barang sudah dikembalikan dalam kondisi yang sesuai.',
         roles: ['guru', 'admin'],
@@ -176,7 +171,7 @@ const GUIDE_SECTIONS: GuideSection[] = [
     },
     {
         id: 'report',
-        icon: <FileBarChart2 className="w-5 h-5" />,
+        icon: <FileBarChart2 className="w-4 h-4" />,
         title: 'Melihat & Mengekspor Laporan',
         description: 'Rekap transaksi peminjaman, pengembalian, dan kondisi inventaris.',
         roles: ['guru', 'admin'],
@@ -189,11 +184,9 @@ const GUIDE_SECTIONS: GuideSection[] = [
         ],
         link: { to: '/dashboard/reports/borrowings', label: 'Lihat Laporan' },
     },
-
-    // ── Admin only ──
     {
         id: 'approve-user',
-        icon: <Users className="w-5 h-5" />,
+        icon: <Users className="w-4 h-4" />,
         title: 'Menyetujui Pendaftaran Siswa',
         description: 'Review dan setujui akun siswa yang baru mendaftar.',
         roles: ['admin'],
@@ -208,7 +201,7 @@ const GUIDE_SECTIONS: GuideSection[] = [
     },
     {
         id: 'manage-items',
-        icon: <Package className="w-5 h-5" />,
+        icon: <Package className="w-4 h-4" />,
         title: 'Tambah & Kelola Barang',
         description: 'Tambah barang baru, edit data, dan atur kondisi stok.',
         roles: ['admin'],
@@ -225,7 +218,7 @@ const GUIDE_SECTIONS: GuideSection[] = [
     },
     {
         id: 'manage-categories',
-        icon: <Tag className="w-5 h-5" />,
+        icon: <Tag className="w-4 h-4" />,
         title: 'Kelola Kategori',
         description: 'Tambah dan atur kategori untuk pengelompokan barang.',
         roles: ['admin'],
@@ -240,7 +233,7 @@ const GUIDE_SECTIONS: GuideSection[] = [
     },
     {
         id: 'manage-classes',
-        icon: <GraduationCap className="w-5 h-5" />,
+        icon: <GraduationCap className="w-4 h-4" />,
         title: 'Kelola Kelas & Tahun Ajaran',
         description: 'Atur data angkatan dan kelas untuk pendaftaran siswa.',
         roles: ['admin'],
@@ -255,112 +248,129 @@ const GUIDE_SECTIONS: GuideSection[] = [
     },
 ];
 
-// ─── Status badge tabel ───────────────────────────────────────────────────────
+// ─── Status reference ─────────────────────────────────────────────────────────
 
 const STATUS_TABLE = [
-    { status: 'Menunggu',     desc: 'Permohonan belum diproses guru/admin',     color: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' },
-    { status: 'Disetujui',    desc: 'Disetujui, barang bisa diambil',           color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' },
-    { status: 'Dipinjam',     desc: 'Barang sedang dipinjam',                   color: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400' },
-    { status: 'Pengembalian', desc: 'Proses pengembalian menunggu verifikasi',   color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' },
-    { status: 'Dikembalikan', desc: 'Peminjaman selesai',                       color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' },
-    { status: 'Ditolak',      desc: 'Permohonan ditolak oleh guru/admin',       color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' },
-    { status: 'Terlambat',    desc: 'Melewati tanggal pengembalian',            color: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400' },
-    { status: 'Dibatalkan',   desc: 'Dibatalkan oleh peminjam',                 color: 'bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400' },
+    { status: 'Menunggu',     desc: 'Permohonan belum diproses guru/admin',     color: 'bg-amber-100/80  text-amber-700  dark:bg-amber-900/30  dark:text-amber-400'  },
+    { status: 'Disetujui',    desc: 'Disetujui, barang bisa diambil',           color: 'bg-blue-100/80   text-blue-700   dark:bg-blue-900/30   dark:text-blue-400'   },
+    { status: 'Dipinjam',     desc: 'Barang sedang dipinjam',                   color: 'bg-indigo-100/80 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400' },
+    { status: 'Pengembalian', desc: 'Proses pengembalian menunggu verifikasi',  color: 'bg-violet-100/80 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400' },
+    { status: 'Dikembalikan', desc: 'Peminjaman selesai',                       color: 'bg-green-100/80  text-green-700  dark:bg-green-900/30  dark:text-green-400'  },
+    { status: 'Ditolak',      desc: 'Permohonan ditolak oleh guru/admin',       color: 'bg-red-100/80    text-red-700    dark:bg-red-900/30    dark:text-red-400'    },
+    { status: 'Terlambat',    desc: 'Melewati tanggal pengembalian',            color: 'bg-orange-100/80 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400' },
+    { status: 'Dibatalkan',   desc: 'Dibatalkan oleh peminjam',                 color: 'bg-neutral-100   text-neutral-500 dark:bg-neutral-800  dark:text-neutral-400' },
 ];
 
 // ─── Role config ──────────────────────────────────────────────────────────────
 
 const ROLE_CONFIG = {
     siswa: {
-        label: 'Siswa',
-        color: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300',
-        intro: 'Sebagai siswa, kamu dapat mengajukan peminjaman barang inventaris dan memantau statusnya.',
+        label:  'Siswa',
+        badge:  'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300',
+        iconBg: 'bg-indigo-500',
+        intro:  'Sebagai siswa, kamu dapat mengajukan peminjaman barang inventaris dan memantau statusnya.',
     },
     guru: {
-        label: 'Guru',
-        color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
-        intro: 'Sebagai guru, kamu dapat menyetujui peminjaman, memverifikasi pengembalian, dan melihat laporan.',
+        label:  'Guru',
+        badge:  'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
+        iconBg: 'bg-emerald-500',
+        intro:  'Sebagai guru, kamu dapat menyetujui peminjaman, memverifikasi pengembalian, dan melihat laporan.',
     },
     admin: {
-        label: 'Admin',
-        color: 'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300',
-        intro: 'Sebagai admin, kamu memiliki akses penuh: manajemen pengguna, inventaris, master data, dan laporan.',
+        label:  'Admin',
+        badge:  'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300',
+        iconBg: 'bg-violet-500',
+        intro:  'Sebagai admin, kamu memiliki akses penuh: manajemen pengguna, inventaris, master data, dan laporan.',
     },
 } as const;
 
 // ─── AccordionItem ────────────────────────────────────────────────────────────
 
-function AccordionItem({ section }: { section: GuideSection }) {
+function AccordionItem({ section, index }: { section: GuideSection; index: number }) {
     const [open, setOpen] = useState(false);
 
     return (
-        <div className={`rounded-xl border transition-all duration-200 overflow-hidden ${
-            open
-                ? 'border-indigo-300 dark:border-indigo-700 shadow-sm'
-                : 'border-neutral-200 dark:border-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-700'
-        }`}>
-            {/* Header */}
+        <div
+            className={[
+                'glass-card overflow-hidden transition-all duration-300 animate-fade-up',
+                `delay-${Math.min(index * 50, 300)}`,
+                open ? 'ring-2 ring-primary/20 dark:ring-primary/15' : '',
+            ].filter(Boolean).join(' ')}
+            style={{ animationDelay: `${index * 40}ms` }}
+        >
+            {/* Header button */}
             <button
                 type="button"
                 onClick={() => setOpen((v) => !v)}
-                className="w-full flex items-center gap-4 px-5 py-4 text-left transition-colors bg-white dark:bg-neutral-900 hover:bg-neutral-50 dark:hover:bg-neutral-800/50"
+                className="w-full flex items-center gap-4 px-5 py-4 text-left hover:bg-accent/30 transition-colors duration-150 group"
                 aria-expanded={open}
             >
-                <div className={`flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center transition-colors ${
+                {/* Icon badge */}
+                <div className={[
+                    'flex-shrink-0 w-9 h-9 rounded-2xl flex items-center justify-center transition-all duration-200',
                     open
-                        ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/50 dark:text-indigo-400'
-                        : 'bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400'
-                }`}>
+                        ? 'bg-primary text-primary-foreground shadow-glow-blue-sm scale-105'
+                        : 'bg-accent text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary',
+                ].join(' ')}>
                     {section.icon}
                 </div>
+
+                {/* Text */}
                 <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
+                    <p className={['text-sm font-semibold transition-colors duration-150', open ? 'text-primary' : 'text-foreground'].join(' ')}>
                         {section.title}
                     </p>
-                    <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5 truncate">
+                    <p className="text-xs text-muted-foreground mt-0.5 truncate">
                         {section.description}
                     </p>
                 </div>
-                <ChevronDown className={`w-4 h-4 text-neutral-400 flex-shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
+
+                {/* Chevron */}
+                <ChevronDown className={[
+                    'w-4 h-4 flex-shrink-0 transition-all duration-300',
+                    open ? 'rotate-180 text-primary' : 'text-muted-foreground/60',
+                ].join(' ')} />
             </button>
 
             {/* Body */}
             {open && (
-                <div className="px-5 pb-5 pt-1 bg-white dark:bg-neutral-900 border-t border-neutral-100 dark:border-neutral-800">
+                <div className="px-5 pb-5 border-t border-border/40 animate-fade-up">
+
                     {/* Steps */}
                     <ol className="space-y-3 mt-4">
                         {section.steps.map((step, i) => (
-                            <li key={i} className="flex gap-3">
-                                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-indigo-600 text-white text-xs font-bold flex items-center justify-center mt-0.5">
+                            <li key={i} className="flex gap-3 items-start animate-fade-up" style={{ animationDelay: `${i * 40}ms` }}>
+                                {/* Step number badge */}
+                                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center mt-0.5 shadow-glow-blue-sm">
                                     {i + 1}
                                 </span>
-                                <div className="flex-1">
-                                    <p className="text-sm text-neutral-700 dark:text-neutral-300">{step.text}</p>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-sm text-foreground/80 leading-snug">{step.text}</p>
                                     {step.note && (
-                                        <p className="text-xs text-neutral-400 dark:text-neutral-500 mt-1 flex items-center gap-1">
-                                            <Info className="w-3 h-3 flex-shrink-0" />
-                                            {step.note}
-                                        </p>
+                                        <div className="flex items-start gap-1.5 mt-1.5">
+                                            <Info className="w-3 h-3 text-muted-foreground/60 flex-shrink-0 mt-px" />
+                                            <p className="text-xs text-muted-foreground leading-snug">{step.note}</p>
+                                        </div>
                                     )}
                                 </div>
                             </li>
                         ))}
                     </ol>
 
-                    {/* Tip */}
+                    {/* Tip box */}
                     {section.tip && (
-                        <div className="mt-4 flex gap-2.5 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg px-4 py-3">
-                            <AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
+                        <div className="mt-4 flex gap-3 bg-amber-50 dark:bg-amber-900/15 border border-amber-200/60 dark:border-amber-700/30 rounded-2xl px-4 py-3 animate-fade-up">
+                            <AlertTriangle className="w-4 h-4 text-amber-500 dark:text-amber-400 flex-shrink-0 mt-0.5" />
                             <p className="text-xs text-amber-700 dark:text-amber-400 leading-relaxed">{section.tip}</p>
                         </div>
                     )}
 
                     {/* Link */}
                     {section.link && (
-                        <div className="mt-4">
+                        <div className="mt-4 animate-fade-up">
                             <Link
                                 to={section.link.to}
-                                className="inline-flex items-center gap-1.5 text-sm text-indigo-600 dark:text-indigo-400 font-medium hover:underline"
+                                className="inline-flex items-center gap-1.5 text-sm text-primary font-semibold hover:gap-2 transition-all duration-150 px-3 py-1.5 rounded-xl hover:bg-primary/8 dark:hover:bg-primary/15 -ml-3"
                             >
                                 {section.link.label}
                                 <ArrowRight className="w-3.5 h-3.5" />
@@ -376,86 +386,85 @@ function AccordionItem({ section }: { section: GuideSection }) {
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function UserGuidePage() {
-    const user = useAuthStore((s) => s.user);
-    const role = (user?.role ?? 'siswa') as 'siswa' | 'guru' | 'admin';
-    const config = ROLE_CONFIG[role];
-
-    // Sections yang relevan untuk role ini
+    const user       = useAuthStore((s) => s.user);
+    const role       = (user?.role ?? 'siswa') as 'siswa' | 'guru' | 'admin';
+    const config     = ROLE_CONFIG[role];
     const mySections = GUIDE_SECTIONS.filter((s) => s.roles.includes(role));
-
-    // Siswa saja yang butuh lihat tabel status
-    const showStatusTable = role === 'siswa' || role === 'guru' || role === 'admin';
 
     return (
         <div className="space-y-6 max-w-3xl mx-auto">
 
-            {/* Header */}
-            <div className="flex items-start gap-4">
-                <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-indigo-600 flex items-center justify-center shadow">
+            {/* ── Page Header ── */}
+            <div className="glass-card px-6 py-5 flex items-start gap-4 animate-fade-up">
+                {/* Icon */}
+                <div className={['w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-glow-blue-sm', config.iconBg].join(' ')}>
                     <BookOpen className="w-6 h-6 text-white" />
                 </div>
-                <div>
-                    <div className="flex items-center gap-2 flex-wrap">
-                        <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">
+                <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap mb-1">
+                        <h1 className="text-xl font-bold text-foreground tracking-tight">
                             Panduan Pengguna
                         </h1>
-                        <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${config.color}`}>
+                        <span className={['badge-pill', config.badge].join(' ')}>
                             {config.label}
                         </span>
                     </div>
-                    <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
-                        {config.intro}
-                    </p>
+                    <p className="text-sm text-muted-foreground leading-relaxed">{config.intro}</p>
                 </div>
             </div>
 
-            {/* Quick info — foto selfie wajib */}
-            <div className="flex gap-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl px-5 py-4">
-                <Camera className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
+            {/* ── Selfie info banner ── */}
+            <div className="flex gap-3 bg-blue-50/80 dark:bg-blue-900/15 border border-blue-200/60 dark:border-blue-700/30 rounded-3xl px-5 py-4 animate-fade-up delay-100">
+                <div className="w-8 h-8 rounded-xl bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center flex-shrink-0">
+                    <Camera className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                </div>
                 <div>
-                    <p className="text-sm font-medium text-blue-800 dark:text-blue-300">Foto Selfie Wajib</p>
-                    <p className="text-xs text-blue-600 dark:text-blue-400 mt-0.5">
-                        Setiap peminjaman dan pengembalian membutuhkan foto selfie sebagai bukti identitas. Pastikan foto jelas dan wajah terlihat.
+                    <p className="text-sm font-semibold text-blue-800 dark:text-blue-300">Foto Selfie Wajib</p>
+                    <p className="text-xs text-blue-600/80 dark:text-blue-400/80 mt-0.5 leading-relaxed">
+                        Setiap peminjaman dan pengembalian membutuhkan foto selfie sebagai bukti identitas.
+                        Pastikan foto jelas dan wajah terlihat.
                     </p>
                 </div>
             </div>
 
-            {/* Accordion sections */}
-            <div>
-                <h2 className="text-sm font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider mb-3">
+            {/* ── Accordion sections ── */}
+            <div className="animate-fade-up delay-100">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 mb-3 px-1">
                     Panduan Langkah demi Langkah
-                </h2>
+                </p>
                 <div className="space-y-2">
-                    {mySections.map((section) => (
-                        <AccordionItem key={section.id} section={section} />
+                    {mySections.map((section, i) => (
+                        <AccordionItem key={section.id} section={section} index={i} />
                     ))}
                 </div>
             </div>
 
-            {/* Status table */}
-            {showStatusTable && (
-                <div>
-                    <h2 className="text-sm font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider mb-3">
-                        Arti Status Peminjaman
-                    </h2>
-                    <div className="bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800 overflow-hidden">
-                        <div className="divide-y divide-neutral-100 dark:divide-neutral-800">
-                            {STATUS_TABLE.map((row) => (
-                                <div key={row.status} className="flex items-center gap-4 px-5 py-3">
-                                    <span className={`flex-shrink-0 px-2.5 py-0.5 rounded-full text-xs font-semibold ${row.color}`}>
-                                        {row.status}
-                                    </span>
-                                    <p className="text-sm text-neutral-600 dark:text-neutral-400">{row.desc}</p>
-                                </div>
-                            ))}
+            {/* ── Status Reference Table ── */}
+            <div className="animate-fade-up delay-200">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 mb-3 px-1">
+                    Arti Status Peminjaman
+                </p>
+                <div className="glass-card overflow-hidden">
+                    {STATUS_TABLE.map((row, i) => (
+                        <div
+                            key={row.status}
+                            className={[
+                                'flex items-center gap-4 px-5 py-3.5 transition-colors duration-150 hover:bg-accent/30',
+                                i < STATUS_TABLE.length - 1 ? 'border-b border-border/40' : '',
+                            ].join(' ')}
+                        >
+                            <span className={['badge-pill flex-shrink-0', row.color].join(' ')}>
+                                {row.status}
+                            </span>
+                            <p className="text-sm text-muted-foreground">{row.desc}</p>
                         </div>
-                    </div>
+                    ))}
                 </div>
-            )}
+            </div>
 
-            {/* Footer note */}
-            <div className="flex gap-2 text-xs text-neutral-400 dark:text-neutral-600 pb-4">
-                <Info className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
+            {/* ── Footer note ── */}
+            <div className="flex gap-2 text-xs text-muted-foreground/50 pb-6 animate-fade-up delay-300">
+                <Info className="w-3.5 h-3.5 flex-shrink-0 mt-px" />
                 <p>Jika ada pertanyaan atau masalah, hubungi guru atau admin langsung. Panduan ini diperbarui sesuai perkembangan fitur sistem.</p>
             </div>
         </div>
