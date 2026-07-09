@@ -10,6 +10,8 @@ class BorrowingItem extends Pivot
 {
     public $incrementing = true;
 
+    protected $table = 'borrowing_items';
+
     protected $fillable = [
         'borrowing_id',
         'item_id',
@@ -32,6 +34,6 @@ class BorrowingItem extends Pivot
 
     public function returnConditions(): HasMany
     {
-        return $this->hasMany(BorrowingItemReturn::class);
+        return $this->hasMany(BorrowingItemReturn::class, 'borrowing_item_id', 'id');
     }
 }
