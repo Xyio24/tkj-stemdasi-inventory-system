@@ -6,15 +6,15 @@
 
 ---
 
-## Phase 1 — Backend Foundation
+## Phase 1 — Backend Foundation ✅ SELESAI
 
 ### Migration
 
-- [ ] **Migration baru** `create_borrowing_item_returns_table`
+- [x] **Migration baru** `create_borrowing_item_returns_table`
   - Kolom: `id`, `borrowing_item_id` (FK → `borrowing_items.id`, CASCADE), `condition` ENUM(`baik`, `rusak_ringan`, `rusak_berat`, `hilang`, `terpakai`), `quantity` TINYINT UNSIGNED, `notes` TEXT nullable, `timestamps`
   - Index: `borrowing_item_id`, `condition`
 
-- [ ] **Migration baru** `add_stock_condition_columns_to_items_table`
+- [x] **Migration baru** `add_stock_condition_columns_to_items_table`
   - Tambah: `type` ENUM(`non_consumable`, `consumable`) default `non_consumable`
   - Tambah: `stock_baik` UNSIGNED TINYINT default 0
   - Tambah: `stock_rusak_ringan` UNSIGNED TINYINT default 0
@@ -24,17 +24,17 @@
 
 ### Model
 
-- [ ] **Buat Model `BorrowingItemReturn`**
+- [x] **Buat Model `BorrowingItemReturn`**
   - `$fillable`: `borrowing_item_id`, `condition`, `quantity`, `notes`
   - Relasi `borrowingItem()` → `belongsTo(BorrowingItem::class)`
 
-- [ ] **Update Model `Item`**
+- [x] **Update Model `Item`**
   - Tambah ke `$fillable`: `type`, `stock_baik`, `stock_rusak_ringan`, `stock_rusak_berat`, `stock_hilang`
   - Tambah method `availableStock(): int` → return `stock_baik`
   - Tambah method `syncStock(): void` → `stock = stock_baik + stock_rusak_ringan + stock_rusak_berat`
   - Tambah method `updateConditionFromMajority(): void` → kondisi mayoritas dari breakdown, prioritas `rusak_berat > rusak_ringan > baik` saat seri
 
-- [ ] **Update Model `BorrowingItem`**
+- [x] **Update Model `BorrowingItem`**
   - Tambah relasi `returnConditions()` → `hasMany(BorrowingItemReturn::class)`
 
 ---
@@ -174,7 +174,7 @@
 
 | Phase | Status |
 |---|---|
-| Phase 1 — Backend Foundation | ⬜ Belum dimulai |
+| Phase 1 — Backend Foundation | ✅ Selesai |
 | Phase 2 — Backend Logic Update | ⬜ Belum dimulai |
 | Phase 3 — Backend Stock Condition | ⬜ Belum dimulai |
 | Phase 4 — Frontend | ⬜ Belum dimulai |
