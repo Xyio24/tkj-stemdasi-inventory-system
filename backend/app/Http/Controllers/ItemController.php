@@ -47,22 +47,26 @@ class ItemController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'category_id' => 'required|exists:categories,id',
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'brand' => 'nullable|string|max:100',
-            'model' => 'nullable|string|max:100',
-            'stock_total' => 'required|integer|min:0',
-            'stock_minimum' => 'required|integer|min:1',
-            'condition' => 'required|in:baik,rusak_ringan,rusak_berat',
-            'location' => 'nullable|string|max:100',
-            'is_available' => 'boolean',
-            'cover_image' => 'nullable|file|mimes:jpeg,jpg,png,webp|max:10240',
+            'category_id'      => 'required|exists:categories,id',
+            'name'             => 'required|string|max:255',
+            'description'      => 'nullable|string',
+            'brand'            => 'nullable|string|max:100',
+            'model'            => 'nullable|string|max:100',
+            'type'             => 'sometimes|in:non_consumable,consumable',
+            'stock_total'      => 'required|integer|min:0',
+            'stock_minimum'    => 'required|integer|min:1',
+            'condition'        => 'required|in:baik,rusak_ringan,rusak_berat',
+            'location'         => 'nullable|string|max:100',
+            'is_available'     => 'boolean',
+            'cover_image'      => 'nullable|file|mimes:jpeg,jpg,png,webp|max:10240',
             'gallery_images.*' => 'nullable|file|mimes:jpeg,jpg,png,webp|max:10240',
+        ], [
+            'type.in' => 'Jenis barang tidak valid. Pilih non_consumable atau consumable.',
         ]);
 
-        $validated['slug'] = Str::slug($validated['name']) . '-' . uniqid();
-        $validated['stock'] = $validated['stock_total']; // Initially stock equals total stock
+        $validated['slug']       = Str::slug($validated['name']) . '-' . uniqid();
+        $validated['stock']      = $validated['stock_total'];
+        $validated['stock_baik'] = $validated['stock_total']; // Stok awal semua dianggap baik
 
         if ($request->hasFile('cover_image')) {
             $path = $request->file('cover_image')->store('items/covers', 'public');
@@ -103,23 +107,28 @@ class ItemController extends Controller
     public function update(Request $request, Item $item)
     {
         $validated = $request->validate([
-            'category_id' => 'required|exists:categories,id',
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'brand' => 'nullable|string|max:100',
-            'model' => 'nullable|string|max:100',
-            'stock_total' => 'required|integer|min:0',
-            'stock_minimum' => 'required|integer|min:1',
-            'condition' => 'required|in:baik,rusak_ringan,rusak_berat',
-            'location' => 'nullable|string|max:100',
-            'is_available' => 'boolean',
-            'cover_image' => 'nullable|file|mimes:jpeg,jpg,png,webp|max:10240',
+            'category_id'      => 'required|exists:categories,id',
+            'name'             => 'required|string|max:255',
+            'description'      => 'nullable|string',
+            'brand'            => 'nullable|string|max:100',
+            'model'            => 'nullable|string|max:100',
+            'type'             => 'sometimes|in:non_consumable,consumable',
+            'stock_total'      => 'required|integer|min:0',
+            'stock_minimum'    => 'required|integer|min:1',
+            'condition'        => 'required|in:baik,rusak_ringan,rusak_berat',
+            'location'         => 'nullable|string|max:100',
+            'is_available'     => 'boolean',
+            'cover_image'      => 'nullable|file|mimes:jpeg,jpg,png,webp|max:10240',
             'gallery_images.*' => 'nullable|file|mimes:jpeg,jpg,png,webp|max:10240',
+        ], [
+            'type.in' => 'Jenis barang tidak valid. Pilih non_consumable atau consumable.',
         ]);
 
-        // Adjust available stock based on the difference in stock_total
-        $stockDiff = $validated['stock_total'] - $item->stock_total;
-        $validated['stock'] = max(0, $item->stock + $stockDiff);
+        // Sesuaikan stock berdasarkan perubahan stock_total
+        // stock_baik ikut naik/turun proporsional dengan selisih stock_total
+        $stockDiff           = $validated['stock_total'] - $item->stock_total;
+        $validated['stock']  = max(0, $item->stock + $stockDiff);
+        $validated['stock_baik'] = max(0, $item->stock_baik + $stockDiff);
         
         if ($request->has('name') && $request->name !== $item->name) {
             $validated['slug'] = Str::slug($validated['name']) . '-' . uniqid();

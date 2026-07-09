@@ -7,6 +7,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\StockConditionController;
 use App\Http\Controllers\UserController;
 
 // Public routes untuk halaman registrasi — tidak butuh auth
@@ -55,10 +56,12 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
 // Categories & Items — read: semua role, write: guru/admin, delete: admin
 Route::middleware('auth:sanctum')->group(function () {
     // Read — semua authenticated user (siswa, guru, admin)
-    Route::get('categories',          [\App\Http\Controllers\CategoryController::class, 'index']);
-    Route::get('categories/{category}',[\App\Http\Controllers\CategoryController::class, 'show']);
-    Route::get('items',               [\App\Http\Controllers\ItemController::class, 'index']);
-    Route::get('items/{item}',        [\App\Http\Controllers\ItemController::class, 'show']);
+    Route::get('categories',           [\App\Http\Controllers\CategoryController::class, 'index']);
+    Route::get('categories/{category}', [\App\Http\Controllers\CategoryController::class, 'show']);
+    Route::get('items',                [\App\Http\Controllers\ItemController::class, 'index']);
+    // stock-conditions harus SEBELUM items/{item} agar tidak dikira {item}='stock-conditions'
+    Route::get('items/stock-conditions', [StockConditionController::class, 'index']);
+    Route::get('items/{item}',         [\App\Http\Controllers\ItemController::class, 'show']);
 });
 
 Route::middleware(['auth:sanctum', 'role:admin,guru'])->group(function () {
@@ -109,5 +112,10 @@ Route::middleware(['auth:sanctum', 'role:admin,guru'])->group(function () {
         Route::get('/inventory',           [ReportController::class, 'inventoryReport']);
         Route::get('/inventory/export',    [ReportController::class, 'exportInventory']);
     });
+});
+
+// Adjust condition — admin only
+Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
+    Route::post('items/{item}/adjust-condition', [StockConditionController::class, 'adjust']);
 });
 

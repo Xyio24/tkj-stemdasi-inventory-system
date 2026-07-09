@@ -79,18 +79,18 @@
 
 ---
 
-## Phase 3 — Backend Stock Condition
+## Phase 3 — Backend Stock Condition ✅ SELESAI
 
 ### Controller
 
-- [ ] **Buat `StockConditionController`**
+- [x] **Buat `StockConditionController`**
 
-- [ ] **`GET /api/items/stock-conditions`** (guru + admin)
+- [x] **`GET /api/items/stock-conditions`** (guru + admin)
   - Query `Item` dengan kolom breakdown stok
   - Filter: `search` (nama/brand), `category_id`, `has_damage` (boolean — hanya yang `stock_rusak_ringan > 0` atau `stock_rusak_berat > 0` atau `stock_hilang > 0`)
   - Paginate, response include semua kolom stock breakdown
 
-- [ ] **`POST /api/items/{item}/adjust-condition`** (admin only)
+- [x] **`POST /api/items/{item}/adjust-condition`** (admin only)
   - Input: `from_condition`, `to_condition`, `quantity`, `notes` (nullable)
   - Validasi: `from_condition` != `to_condition`
   - Validasi: qty yang dipindah tidak melebihi stok di `from_condition`
@@ -101,14 +101,16 @@
 
 ### Item Controller
 
-- [ ] **Update `ItemController::store()` dan `update()`**
-  - Tambah validasi `type`: `Rule::in(['non_consumable', 'consumable'])`
+- [x] **Update `ItemController::store()` dan `update()`**
+  - Tambah validasi `type`: `in:non_consumable,consumable`
   - Tambah `type` ke response
+  - `store()`: set `stock_baik = stock_total` saat create
+  - `update()`: `stock_baik` ikut naik/turun proporsional dengan diff `stock_total`
 
 ### Routes
 
-- [ ] **Update `routes/api.php`**
-  - Tambah: `GET /items/stock-conditions` (role: guru, admin)
+- [x] **Update `routes/api.php`**
+  - Tambah: `GET /items/stock-conditions` (semua auth) — didaftarkan SEBELUM `items/{item}`
   - Tambah: `POST /items/{item}/adjust-condition` (role: admin)
 
 ---
@@ -180,5 +182,5 @@
 |---|---|
 | Phase 1 — Backend Foundation | ✅ Selesai |
 | Phase 2 — Backend Logic Update | ✅ Selesai |
-| Phase 3 — Backend Stock Condition | ⬜ Belum dimulai |
+| Phase 3 — Backend Stock Condition | ✅ Selesai |
 | Phase 4 — Frontend | ⬜ Belum dimulai |
