@@ -14,6 +14,12 @@ export interface CreateBorrowingPayload {
     items: BorrowingItemPayload[];
 }
 
+export interface ReturnConditionEntry {
+    condition: 'baik' | 'rusak_ringan' | 'rusak_berat' | 'hilang' | 'terpakai';
+    quantity: number;
+    notes?: string;
+}
+
 export interface BorrowingItemDetail {
     id: number;
     name: string;
@@ -21,12 +27,14 @@ export interface BorrowingItemDetail {
     brand?: string;
     model?: string;
     image?: string;
+    type?: 'non_consumable' | 'consumable';
     quantity: number;
     returned_quantity: number;
     item_condition_out?: string;
     item_condition_in?: string;
     borrowing_item_id: number;
     notes?: string;
+    return_conditions?: ReturnConditionEntry[];
 }
 
 export interface BorrowingPhoto {
@@ -72,8 +80,7 @@ export interface Borrowing {
 
 export interface ApproveReturnItemPayload {
     borrowing_item_id: number;
-    returned_quantity: number;
-    item_condition_in: string;
+    return_conditions: ReturnConditionEntry[];
 }
 
 // --- API calls ---

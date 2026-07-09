@@ -10,9 +10,10 @@ import {
     approveReturn,
     deleteBorrowing
 } from '@/api/borrowing';
-import type { BorrowingPhoto, BorrowingItemDetail, ApproveReturnItemPayload } from '@/api/borrowing';
+import type { BorrowingPhoto, BorrowingItemDetail, ApproveReturnItemPayload, ReturnConditionEntry } from '@/api/borrowing';
 import { useAuthStore } from '@/store/authStore';
 import { toast } from 'sonner';
+import { Plus, Trash2 } from 'lucide-react';
 
 export default function BorrowingDetail() {
     const { id } = useParams<{ id: string }>();
@@ -44,8 +45,12 @@ export default function BorrowingDetail() {
             setReturnItems(
                 borrowing.items.map((item: BorrowingItemDetail) => ({
                     borrowing_item_id: item.borrowing_item_id,
-                    returned_quantity: item.quantity,
-                    item_condition_in: item.item_condition_out || 'baik'
+                    return_conditions: [
+                        {
+                            condition: (item.item_condition_out || 'baik') as ReturnConditionEntry['condition'],
+                            quantity: item.quantity,
+                        }
+                    ],
                 }))
             );
         }
@@ -385,52 +390,112 @@ export default function BorrowingDetail() {
                     {isGuruOrAdmin && borrowing.status === 'returning' && (
                         <div className="bg-white dark:bg-neutral-900 shadow-sm rounded-xl border border-neutral-200 dark:border-neutral-800 p-6 space-y-4">
                             <h3 className="font-medium text-lg border-b border-neutral-100 dark:border-neutral-800 pb-2">Konfirmasi Pengembalian</h3>
-                            
                             <div className="space-y-4">
-                                <div className="space-y-3">
-                                    <span className="block text-sm font-medium">Kondisi & Jumlah Kembali</span>
-                                    {returnItems.map((rItem, idx) => {
-                                        const originalItem = borrowing.items?.find((i: BorrowingItemDetail) => i.borrowing_item_id === rItem.borrowing_item_id);
-                                        return (
-                                            <div key={rItem.borrowing_item_id} className="p-3 border border-neutral-200 dark:border-neutral-700 rounded-md space-y-2">
-                                                <div className="font-medium text-sm text-indigo-600 dark:text-indigo-400">{originalItem?.name}</div>
-                                                <div className="flex gap-3">
-                                                    <div className="flex-1">
-                                                        <label className="block text-xs text-neutral-500 mb-1">Jumlah Kembali</label>
-                                                        <input 
-                                                            type="number"
-                                                            min={0}
-                                                            max={originalItem?.quantity || 1}
-                                                            value={rItem.returned_quantity}
-                                                            onChange={(e) => {
-                                                                const newItems = [...returnItems];
-                                                                newItems[idx].returned_quantity = Number(e.target.value);
-                                                                setReturnItems(newItems);
-                                                            }}
-                                                            className="w-full border border-neutral-300 dark:border-neutral-700 rounded-md px-2 py-1 text-sm dark:bg-neutral-800"
-                                                        />
-                                                    </div>
-                                                    <div className="flex-1">
-                                                        <label className="block text-xs text-neutral-500 mb-1">Kondisi</label>
-                                                        <select
-                                                            value={rItem.item_condition_in}
-                                                            onChange={(e) => {
-                                                                const newItems = [...returnItems];
-                                                                newItems[idx].item_condition_in = e.target.value;
-                                                                setReturnItems(newItems);
-                                                            }}
-                                                            className="w-full border border-neutral-300 dark:border-neutral-700 rounded-md px-2 py-1 text-sm dark:bg-neutral-800"
-                                                        >
-                                                            <option value="baik">Baik</option>
-                                                            <option value="rusak_ringan">Rusak Ringan</option>
-                                                            <option value="rusak_berat">Rusak Berat</option>
-                                                        </select>
-                                                    </div>
-                                                </div>
+                                {/* Per-item condition breakdown */}
+                                {returnItems.map((rItem, itemIdx) => {
+                                    const originalItem = borrowing.items?.find((i: BorrowingItemDetail) => i.borrowing_item_id === rItem.borrowing_item_id);
+                                    const totalQty = rItem.return_conditions.reduce((s, c) => s + c.quantity, 0);
+                                    const isMatch = totalQty === (originalItem?.quantity ?? 0);
+                                    const isConsumable = originalItem?.type === 'consumable';
+
+                                    const CONDITION_OPTIONS = [
+                                        { value: 'baik', label: 'Baik' },
+                                        { value: 'rusak_ringan', label: 'Rusak Ringan' },
+                                        { value: 'rusak_berat', label: 'Rusak Berat' },
+                                        { value: 'hilang', label: 'Hilang' },
+                                        ...(isConsumable ? [{ value: 'terpakai', label: 'Terpakai' }] : []),
+                                    ];
+
+                                    return (
+                                        <div key={rItem.borrowing_item_id} className="border border-neutral-200 dark:border-neutral-700 rounded-lg p-3 space-y-2">
+                                            <div className="flex items-center justify-between">
+                                                <span className="font-medium text-sm text-indigo-600 dark:text-indigo-400">
+                                                    {originalItem?.name ?? '-'}
+                                                    {isConsumable && <span className="ml-1 text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full">Consumable</span>}
+                                                </span>
+                                                <span className={`text-xs font-medium ${isMatch ? 'text-green-600' : 'text-red-500'}`}>
+                                                    {totalQty}/{originalItem?.quantity ?? 0} unit
+                                                </span>
                                             </div>
-                                        );
-                                    })}
-                                </div>
+
+                                            {/* Condition rows */}
+                                            <div className="space-y-1.5">
+                                                {rItem.return_conditions.map((cond, condIdx) => (
+                                                    <div key={condIdx} className="flex gap-2 items-center">
+                                                        <select
+                                                            value={cond.condition}
+                                                            onChange={(e) => {
+                                                                const updated = returnItems.map((ri, ii) => {
+                                                                    if (ii !== itemIdx) return ri;
+                                                                    const conditions = ri.return_conditions.map((c, ci) =>
+                                                                        ci === condIdx ? { ...c, condition: e.target.value as ReturnConditionEntry['condition'] } : c
+                                                                    );
+                                                                    return { ...ri, return_conditions: conditions };
+                                                                });
+                                                                setReturnItems(updated);
+                                                            }}
+                                                            className="flex-1 border border-neutral-300 dark:border-neutral-600 rounded-md px-2 py-1.5 text-xs dark:bg-neutral-800"
+                                                        >
+                                                            {CONDITION_OPTIONS.map(o => (
+                                                                <option key={o.value} value={o.value}>{o.label}</option>
+                                                            ))}
+                                                        </select>
+                                                        <input
+                                                            type="number"
+                                                            min={1}
+                                                            max={originalItem?.quantity}
+                                                            value={cond.quantity}
+                                                            onChange={(e) => {
+                                                                const updated = returnItems.map((ri, ii) => {
+                                                                    if (ii !== itemIdx) return ri;
+                                                                    const conditions = ri.return_conditions.map((c, ci) =>
+                                                                        ci === condIdx ? { ...c, quantity: Number(e.target.value) } : c
+                                                                    );
+                                                                    return { ...ri, return_conditions: conditions };
+                                                                });
+                                                                setReturnItems(updated);
+                                                            }}
+                                                            className="w-16 border border-neutral-300 dark:border-neutral-600 rounded-md px-2 py-1.5 text-xs text-center dark:bg-neutral-800"
+                                                        />
+                                                        {rItem.return_conditions.length > 1 && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    const updated = returnItems.map((ri, ii) => {
+                                                                        if (ii !== itemIdx) return ri;
+                                                                        return { ...ri, return_conditions: ri.return_conditions.filter((_, ci) => ci !== condIdx) };
+                                                                    });
+                                                                    setReturnItems(updated);
+                                                                }}
+                                                                className="text-red-400 hover:text-red-600"
+                                                            >
+                                                                <Trash2 className="w-3.5 h-3.5" />
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                            </div>
+
+                                            {/* Add condition row */}
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    const updated = returnItems.map((ri, ii) => {
+                                                        if (ii !== itemIdx) return ri;
+                                                        return {
+                                                            ...ri,
+                                                            return_conditions: [...ri.return_conditions, { condition: 'baik' as ReturnConditionEntry['condition'], quantity: 1 }],
+                                                        };
+                                                    });
+                                                    setReturnItems(updated);
+                                                }}
+                                                className="flex items-center gap-1 text-xs text-indigo-600 dark:text-indigo-400 hover:underline mt-1"
+                                            >
+                                                <Plus className="w-3 h-3" /> Tambah Kondisi
+                                            </button>
+                                        </div>
+                                    );
+                                })}
 
                                 <div>
                                     <label className="block text-sm font-medium mb-1">Catatan Pengembalian (Opsional)</label>
@@ -444,7 +509,13 @@ export default function BorrowingDetail() {
                                 </div>
                                 <button
                                     onClick={() => approveReturnMutation.mutate()}
-                                    disabled={approveReturnMutation.isPending}
+                                    disabled={
+                                        approveReturnMutation.isPending ||
+                                        returnItems.some(ri => {
+                                            const orig = borrowing.items?.find((i: BorrowingItemDetail) => i.borrowing_item_id === ri.borrowing_item_id);
+                                            return ri.return_conditions.reduce((s, c) => s + c.quantity, 0) !== (orig?.quantity ?? 0);
+                                        })
+                                    }
                                     className="w-full bg-purple-600 text-white py-2 rounded-md font-medium hover:bg-purple-700 disabled:opacity-50"
                                 >
                                     {approveReturnMutation.isPending ? 'Memproses...' : 'Konfirmasi Pengembalian'}

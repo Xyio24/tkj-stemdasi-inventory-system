@@ -115,53 +115,49 @@
 
 ---
 
-## Phase 4 — Frontend
+## Phase 4 — Frontend ✅ SELESAI
 
 ### Tipe & API Layer
 
-- [ ] **Update tipe `Item`** (di `api/inventory.ts` atau file types)
+- [x] **Update tipe `Item`** (di `api/inventory.ts`)
   - Tambah: `type: 'non_consumable' | 'consumable'`
   - Tambah: `stock_baik`, `stock_rusak_ringan`, `stock_rusak_berat`, `stock_hilang`
 
-- [ ] **Update `api/borrowing.ts`**
-  - Update interface `ReturnConditionEntry`: `{ condition, quantity, notes? }`
+- [x] **Update `api/borrowing.ts`**
+  - Tambah interface `ReturnConditionEntry`: `{ condition, quantity, notes? }`
   - Update interface `ApproveReturnItemPayload`: ganti `returned_quantity` + `item_condition_in` dengan `return_conditions: ReturnConditionEntry[]`
-  - Update fungsi `approveReturn` jika ada perubahan
+  - Tambah field `type` dan `return_conditions` ke `BorrowingItemDetail`
 
-- [ ] **Buat `api/stockCondition.ts`**
+- [x] **Buat `api/stockCondition.ts`**
   - `getStockConditions(params)` → GET `/items/stock-conditions`
   - `adjustItemCondition(itemId, data)` → POST `/items/{id}/adjust-condition`
 
 ### Komponen
 
-- [ ] **Buat `components/inventory/AdjustConditionModal.tsx`**
-  - Props: `item`, `isOpen`, `onClose`, `onSuccess`
-  - Form: `from_condition` (select, hanya tampilkan kondisi yang qty > 0), `to_condition` (select), `quantity` (number, max = stok di from_condition), `notes` (optional)
+- [x] **Buat `components/inventory/AdjustConditionModal.tsx`**
+  - Props: `item`, `isOpen`, `onClose`
+  - Tampilkan ringkasan stok per kondisi
+  - Form: `from_condition`, `to_condition`, `quantity` (max = stok di from), `notes`
   - Validasi: from != to, qty valid
-  - Panggil `adjustItemCondition` on submit
+  - Invalidate query `stock-conditions` dan `items` on success
 
 ### Halaman
 
-- [ ] **Update `pages/borrowing/BorrowingDetail.tsx`**
-  - Section "Konfirmasi Pengembalian": ganti satu select kondisi dengan tabel breakdown
-  - State baru: `returnItems` berisi array `{ borrowing_item_id, return_conditions: ReturnConditionEntry[] }`
-  - Untuk setiap item yang dipinjam: tampilkan qty yang dipinjam, UI add/remove baris kondisi
-  - Validasi real-time: total qty per item harus == qty dipinjam, tampilkan counter
-  - Tombol "Konfirmasi Pengembalian" disabled jika ada item yang totalnya tidak sesuai
-  - Untuk consumable: opsi kondisi tambah `terpakai`
+- [x] **Update `pages/borrowing/BorrowingDetail.tsx`**
+  - Section konfirmasi pengembalian: breakdown per kondisi dengan add/remove baris
+  - Counter real-time total qty per item vs qty dipinjam
+  - Tombol konfirmasi disabled jika total tidak sesuai
+  - Support consumable: opsi kondisi tambah `terpakai`
 
-- [ ] **Update `pages/inventory/ItemForm.tsx`**
-  - Tambah field "Jenis Barang": radio/select `Non-Consumable` / `Consumable`
+- [x] **Update `pages/inventory/ItemForm.tsx`**
+  - Tambah field "Jenis Barang": radio Non-Consumable / Consumable
   - Default: `non_consumable`
-  - Tampilkan deskripsi singkat tiap jenis
 
-- [ ] **Update `pages/inventory/ItemList.tsx`**
-  - Tambah tab "Kondisi Stok" di samping tab yang ada (atau sebagai halaman utama dengan tab baru)
-  - Tabel tab "Kondisi Stok":
-    - Kolom: Nama Barang, Stok Total, Baik, Rusak Ringan, Rusak Berat, Hilang, Kondisi, Aksi
-    - Filter: search, has_damage toggle
-    - Tombol "Koreksi Kondisi" (admin only) → buka `AdjustConditionModal`
-  - Gunakan `useQuery` dengan `getStockConditions`
+- [x] **Update `pages/inventory/ItemList.tsx`**
+  - Tambah tab "Kondisi Stok" di samping "Semua Barang"
+  - Tabel breakdown: Barang | Total | Baik | Rusak Ringan | Rusak Berat | Hilang | Kondisi | Aksi
+  - Filter: search, has_damage toggle
+  - Tombol "Koreksi" (admin only) → buka `AdjustConditionModal`
 
 ---
 
@@ -183,4 +179,4 @@
 | Phase 1 — Backend Foundation | ✅ Selesai |
 | Phase 2 — Backend Logic Update | ✅ Selesai |
 | Phase 3 — Backend Stock Condition | ✅ Selesai |
-| Phase 4 — Frontend | ⬜ Belum dimulai |
+| Phase 4 — Frontend | ✅ Selesai |

@@ -19,6 +19,7 @@ export default function ItemForm() {
         description: '',
         brand: '',
         model: '',
+        type: 'non_consumable',
         stock_total: '0',
         stock_minimum: '1',
         condition: 'baik',
@@ -50,6 +51,7 @@ export default function ItemForm() {
                 description: item.description || '',
                 brand: item.brand || '',
                 model: item.model || '',
+                type: item.type || 'non_consumable',
                 stock_total: String(item.stock_total),
                 stock_minimum: String(item.stock_minimum),
                 condition: item.condition,
@@ -152,6 +154,41 @@ export default function ItemForm() {
                     <div>
                         <label className="block text-sm font-medium mb-1">Deskripsi Spesifikasi</label>
                         <textarea rows={3} value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} className="w-full border rounded-md px-3 py-2 dark:bg-neutral-800 dark:border-neutral-700" />
+                    </div>
+
+                    {/* Jenis Barang */}
+                    <div>
+                        <label className="block text-sm font-medium mb-2">Jenis Barang <span className="text-red-500">*</span></label>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <label className={`flex items-start gap-3 p-3 border-2 rounded-lg cursor-pointer transition-colors ${formData.type === 'non_consumable' ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-950/30' : 'border-neutral-200 dark:border-neutral-700 hover:border-neutral-300'}`}>
+                                <input
+                                    type="radio"
+                                    name="type"
+                                    value="non_consumable"
+                                    checked={formData.type === 'non_consumable'}
+                                    onChange={e => setFormData({...formData, type: e.target.value})}
+                                    className="mt-0.5 accent-indigo-600"
+                                />
+                                <div>
+                                    <div className="text-sm font-medium">Non-Consumable</div>
+                                    <div className="text-xs text-neutral-500 mt-0.5">Dapat dipinjam dan wajib dikembalikan. Contoh: laptop, kabel, akses poin.</div>
+                                </div>
+                            </label>
+                            <label className={`flex items-start gap-3 p-3 border-2 rounded-lg cursor-pointer transition-colors ${formData.type === 'consumable' ? 'border-amber-500 bg-amber-50 dark:bg-amber-950/30' : 'border-neutral-200 dark:border-neutral-700 hover:border-neutral-300'}`}>
+                                <input
+                                    type="radio"
+                                    name="type"
+                                    value="consumable"
+                                    checked={formData.type === 'consumable'}
+                                    onChange={e => setFormData({...formData, type: e.target.value})}
+                                    className="mt-0.5 accent-amber-600"
+                                />
+                                <div>
+                                    <div className="text-sm font-medium">Consumable</div>
+                                    <div className="text-xs text-neutral-500 mt-0.5">Sekali pakai, bisa habis terpakai. Contoh: konektor RJ45, isolasi, tinta.</div>
+                                </div>
+                            </label>
+                        </div>
                     </div>
 
                     <hr className="border-neutral-200 dark:border-neutral-800" />

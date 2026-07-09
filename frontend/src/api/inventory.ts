@@ -22,9 +22,14 @@ export interface Item {
     description?: string;
     brand?: string;
     model?: string;
+    type: 'non_consumable' | 'consumable';
     stock: number;
     stock_total: number;
     stock_minimum: number;
+    stock_baik: number;
+    stock_rusak_ringan: number;
+    stock_rusak_berat: number;
+    stock_hilang: number;
     condition: 'baik' | 'rusak_ringan' | 'rusak_berat';
     location?: string;
     is_available: boolean;
