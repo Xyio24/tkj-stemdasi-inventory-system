@@ -61,6 +61,7 @@ class Borrowing extends Model
     public function items(): BelongsToMany
     {
         return $this->belongsToMany(Item::class, 'borrowing_items')
+            ->using(BorrowingItem::class)
             ->withPivot(['id', 'quantity', 'returned_quantity', 'item_condition_out', 'item_condition_in', 'notes'])
             ->withTimestamps();
     }

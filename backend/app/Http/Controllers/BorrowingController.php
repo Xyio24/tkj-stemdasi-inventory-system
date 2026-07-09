@@ -80,7 +80,14 @@ class BorrowingController extends Controller
     {
         Gate::authorize('view', $borrowing);
 
-        $borrowing->load(['user', 'items', 'photos', 'approvedBy', 'returnApprovedBy']);
+        $borrowing->load([
+            'user',
+            'items',
+            'photos',
+            'approvedBy',
+            'returnApprovedBy',
+            'borrowingItems.returnConditions',
+        ]);
 
         return $this->successResponse(
             'Detail peminjaman berhasil diambil.',

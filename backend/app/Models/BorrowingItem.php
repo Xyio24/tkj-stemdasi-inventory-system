@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\Pivot;
 
-class BorrowingItem extends Model
+class BorrowingItem extends Pivot
 {
+    public $incrementing = true;
+
     protected $fillable = [
         'borrowing_id',
         'item_id',
@@ -15,7 +17,7 @@ class BorrowingItem extends Model
         'returned_quantity',
         'item_condition_out',
         'item_condition_in',
-        'notes'
+        'notes',
     ];
 
     public function borrowing(): BelongsTo

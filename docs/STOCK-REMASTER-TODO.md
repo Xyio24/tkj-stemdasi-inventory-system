@@ -39,21 +39,21 @@
 
 ---
 
-## Phase 2 — Backend Logic Update
+## Phase 2 — Backend Logic Update ✅ SELESAI
 
 ### Request
 
-- [ ] **Update `ApproveReturnRequest`**
+- [x] **Update `ApproveReturnRequest`**
   - Ubah struktur: ganti `items[].returned_quantity` + `items[].item_condition_in` dengan `items[].return_conditions[].condition` + `items[].return_conditions[].quantity` + `items[].return_conditions[].notes` (nullable)
   - Validasi: `condition` harus valid enum, `quantity` min 1
 
 ### Service
 
-- [ ] **Update `BorrowingApprovalService::approve()`**
+- [x] **Update `BorrowingApprovalService::approve()`**
   - Ganti validasi stok dari `$item->stock` ke `$item->stock_baik`
   - Update pesan error untuk menyebut "stok kondisi baik"
 
-- [ ] **Update `BorrowingApprovalService::approveReturn()`**
+- [x] **Update `BorrowingApprovalService::approveReturn()`**
   - Untuk setiap item, iterasi `return_conditions`
   - Validasi total qty == `borrowItem->quantity`
   - Simpan tiap kondisi ke `BorrowingItemReturn`
@@ -70,8 +70,12 @@
 
 ### Resource
 
-- [ ] **Update `BorrowingResource`**
-  - Di bagian `items`, tambah `return_conditions` (from `returnConditions` relation) saat loaded
+- [x] **Update `BorrowingResource`**
+  - Di bagian `items`, tambah `return_conditions` (from `borrowingItems.returnConditions` relation) saat loaded
+  - Tambah field `type` dari item
+  - Update `BorrowingController::show()` dan `BorrowingAdminController::approveReturn()` untuk load `borrowingItems.returnConditions`
+  - Update `BorrowingItem` extend `Pivot` (bukan `Model`) + `$incrementing = true`
+  - Update `Borrowing::items()` pakai `->using(BorrowingItem::class)`
 
 ---
 
@@ -175,6 +179,6 @@
 | Phase | Status |
 |---|---|
 | Phase 1 — Backend Foundation | ✅ Selesai |
-| Phase 2 — Backend Logic Update | ⬜ Belum dimulai |
+| Phase 2 — Backend Logic Update | ✅ Selesai |
 | Phase 3 — Backend Stock Condition | ⬜ Belum dimulai |
 | Phase 4 — Frontend | ⬜ Belum dimulai |

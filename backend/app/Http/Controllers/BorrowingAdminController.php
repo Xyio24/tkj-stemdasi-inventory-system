@@ -68,7 +68,12 @@ class BorrowingAdminController extends Controller
 
         return $this->successResponse(
             'Pengembalian barang berhasil dikonfirmasi.',
-            new BorrowingResource($borrowing->load(['user', 'items', 'photos']))
+            new BorrowingResource($borrowing->load([
+                'user',
+                'items',
+                'photos',
+                'borrowingItems.returnConditions',
+            ]))
         );
     }
 }

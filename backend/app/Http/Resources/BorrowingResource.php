@@ -49,20 +49,38 @@ class BorrowingResource extends JsonResource
                 ];
             }),
             'items' => $this->whenLoaded('items', function () {
-                return $this->items->map(function ($item) {
+                // Ambil returnConditions via borrowingItems jika sudah di-load
+                $returnConditionsMap = [];
+                if ($this->relationLoaded('borrowingItems')) {
+                    foreach ($this->borrowingItems as $bi) {
+                        if ($bi->relationLoaded('returnConditions')) {
+                            $returnConditionsMap[$bi->id] = $bi->returnConditions->map(fn ($rc) => [
+                                'id'        => $rc->id,
+                                'condition' => $rc->condition,
+                                'quantity'  => $rc->quantity,
+                                'notes'     => $rc->notes,
+                            ])->values();
+                        }
+                    }
+                }
+
+                return $this->items->map(function ($item) use ($returnConditionsMap) {
+                    $pivotId = $item->pivot->id;
                     return [
-                        'id' => $item->id,
-                        'name' => $item->name,
-                        'slug' => $item->slug,
-                        'brand' => $item->brand,
-                        'model' => $item->model,
-                        'image' => $item->image,
-                        'quantity' => $item->pivot->quantity,
-                        'returned_quantity' => $item->pivot->returned_quantity,
+                        'id'                 => $item->id,
+                        'name'               => $item->name,
+                        'slug'               => $item->slug,
+                        'brand'              => $item->brand,
+                        'model'              => $item->model,
+                        'image'              => $item->image,
+                        'type'               => $item->type,
+                        'quantity'           => $item->pivot->quantity,
+                        'returned_quantity'  => $item->pivot->returned_quantity,
                         'item_condition_out' => $item->pivot->item_condition_out,
-                        'item_condition_in' => $item->pivot->item_condition_in,
-                        'borrowing_item_id' => $item->pivot->id,
-                        'notes' => $item->pivot->notes,
+                        'item_condition_in'  => $item->pivot->item_condition_in,
+                        'borrowing_item_id'  => $pivotId,
+                        'notes'              => $item->pivot->notes,
+                        'return_conditions'  => $returnConditionsMap[$pivotId] ?? [],
                     ];
                 });
             }),
