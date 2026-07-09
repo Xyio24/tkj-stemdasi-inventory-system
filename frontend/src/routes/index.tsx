@@ -2,6 +2,7 @@ import { createBrowserRouter, Navigate } from 'react-router-dom';
 import GuestLayout from '@/layouts/GuestLayout';
 import DashboardLayout from '@/layouts/DashboardLayout';
 import Login from '@/pages/auth/Login';
+import Register from '@/pages/auth/Register';
 import Dashboard from '@/pages/dashboard/Dashboard';
 
 import UserList from '@/pages/users/UserList';
@@ -16,6 +17,7 @@ import BorrowingDetail from '@/pages/borrowing/BorrowingDetail';
 import BorrowingReportPage from '@/pages/report/BorrowingReportPage';
 import ReturnReportPage from '@/pages/report/ReturnReportPage';
 import InventoryReportPage from '@/pages/report/InventoryReportPage';
+import ProfilePage from '@/pages/profile/ProfilePage';
 
 
 export const router = createBrowserRouter([
@@ -26,6 +28,10 @@ export const router = createBrowserRouter([
             {
                 path: 'login',
                 element: <Login />,
+            },
+            {
+                path: 'register',
+                element: <Register />,
             },
             {
                 index: true,
@@ -92,6 +98,10 @@ export const router = createBrowserRouter([
             {
                 path: 'reports/inventory',
                 element: <InventoryReportPage />,
+            },
+            {
+                path: 'profile',
+                element: <ProfilePage />,
             },
         ],
     },

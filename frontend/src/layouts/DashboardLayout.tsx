@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Outlet, Navigate, NavLink, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
+import GeneratedAvatar from '@/components/common/GeneratedAvatar';
 import {
     LayoutDashboard,
     Package,
@@ -16,6 +17,7 @@ import {
     X,
     LogOut,
     ChevronRight,
+    UserCircle,
 } from 'lucide-react';
 
 // ─── Nav structure ────────────────────────────────────────────────────────────
@@ -70,6 +72,12 @@ const NAV_GROUPS: NavGroup[] = [
             { to: '/dashboard/users',          label: 'Pengguna',    icon: <Users className="w-4 h-4" />,       roles: ['admin'] },
             { to: '/dashboard/classes',         label: 'Kelas',       icon: <GraduationCap className="w-4 h-4" />,roles: ['admin'] },
             { to: '/dashboard/academic-years',  label: 'Tahun Ajaran',icon: <CalendarDays className="w-4 h-4" />, roles: ['admin'] },
+        ],
+    },
+    {
+        label: 'Akun',
+        items: [
+            { to: '/dashboard/profile', label: 'Profil Saya', icon: <UserCircle className="w-4 h-4" /> },
         ],
     },
 ];
@@ -153,12 +161,12 @@ function SidebarContent({ role, onClose }: { role: string; onClose?: () => void 
             {/* User profile + logout */}
             <div className="px-3 py-4 border-t border-neutral-200 dark:border-neutral-800">
                 <div className="flex items-center gap-3 px-3 py-2 mb-1">
-                    {user?.avatar ? (
-                        <img src={user.avatar} alt={user.name} className="w-8 h-8 rounded-full flex-shrink-0 object-cover" />
+                    {user?.avatar && user.avatar_type === 'upload' ? (
+                        <img src={user.avatar} alt={user.name} className="w-8 h-8 rounded-full shrink-0 object-cover" />
+                    ) : user ? (
+                        <GeneratedAvatar name={user.name} email={user.email} size={32} />
                     ) : (
-                        <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center flex-shrink-0 text-sm font-semibold text-indigo-700 dark:text-indigo-400">
-                            {user?.name?.charAt(0).toUpperCase()}
-                        </div>
+                        <div className="w-8 h-8 rounded-full bg-neutral-200 dark:bg-neutral-700 shrink-0" />
                     )}
                     <div className="min-w-0">
                         <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100 truncate">{user?.name}</p>

@@ -390,7 +390,7 @@ export default function BorrowingDetail() {
                                 <div className="space-y-3">
                                     <span className="block text-sm font-medium">Kondisi & Jumlah Kembali</span>
                                     {returnItems.map((rItem, idx) => {
-                                        const originalItem = borrowing.items?.find((i: BorrowingItemDetail) => i.id === rItem.borrowing_item_id);
+                                        const originalItem = borrowing.items?.find((i: BorrowingItemDetail) => i.borrowing_item_id === rItem.borrowing_item_id);
                                         return (
                                             <div key={rItem.borrowing_item_id} className="p-3 border border-neutral-200 dark:border-neutral-700 rounded-md space-y-2">
                                                 <div className="font-medium text-sm text-indigo-600 dark:text-indigo-400">{originalItem?.name}</div>

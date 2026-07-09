@@ -1,0 +1,439 @@
+import { useRef, useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { toast } from 'sonner';
+import { Camera, Trash2, Eye, EyeOff, Link2, Link2Off, Loader2 } from 'lucide-react';
+import { getProfile, updateProfile, uploadAvatar, deleteAvatar } from '@/api/profile';
+import { bindGoogle, unbindGoogle } from '@/api/auth';
+import { useAuthStore } from '@/store/authStore';
+import { Button } from '@/components/ui/button';
+import GeneratedAvatar from '@/components/common/GeneratedAvatar';
+import { GoogleLogin } from '@react-oauth/google';
+
+// ─── Schemas ──────────────────────────────────────────────────────────────────
+
+const profileSchema = z.object({
+    name:  z.string().min(1, 'Nama wajib diisi.').max(255),
+    email: z.string().min(1, 'Email wajib diisi.').email('Format email tidak valid.'),
+});
+
+const passwordSchema = z
+    .object({
+        current_password:      z.string().min(1, 'Password saat ini wajib diisi.'),
+        password:              z.string().min(8, 'Password baru minimal 8 karakter.'),
+        password_confirmation: z.string().min(1, 'Konfirmasi password wajib diisi.'),
+    })
+    .refine((d) => d.password === d.password_confirmation, {
+        message: 'Konfirmasi password tidak cocok.',
+        path: ['password_confirmation'],
+    });
+
+type ProfileForm   = z.infer<typeof profileSchema>;
+type PasswordForm  = z.infer<typeof passwordSchema>;
+
+// ─── Input className helper ───────────────────────────────────────────────────
+
+const inputCls =
+    'w-full rounded-lg border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800 px-3 py-2 text-sm text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 disabled:opacity-50 aria-invalid:border-red-400 transition';
+
+// ─── Section wrapper ──────────────────────────────────────────────────────────
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+    return (
+        <div className="bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800 shadow-sm">
+            <div className="px-6 py-4 border-b border-neutral-100 dark:border-neutral-800">
+                <h2 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">{title}</h2>
+            </div>
+            <div className="px-6 py-5">{children}</div>
+        </div>
+    );
+}
+
+// ─── Avatar Section ───────────────────────────────────────────────────────────
+
+function AvatarSection({ avatarUrl, name, email }: { avatarUrl: string | null; name: string; email: string }) {
+    const queryClient = useQueryClient();
+    const updateUser  = useAuthStore((s) => s.updateUser);
+    const fileRef     = useRef<HTMLInputElement>(null);
+
+    const uploadMutation = useMutation({
+        mutationFn: (file: File) => uploadAvatar(file),
+        onSuccess: (res) => {
+            toast.success('Foto profil berhasil diunggah.');
+            updateUser({ avatar: res.data.avatar_url, avatar_type: 'upload' });
+            queryClient.invalidateQueries({ queryKey: ['profile'] });
+        },
+        onError: () => toast.error('Gagal mengunggah foto.'),
+    });
+
+    const deleteMutation = useMutation({
+        mutationFn: deleteAvatar,
+        onSuccess: () => {
+            toast.success('Foto profil berhasil dihapus.');
+            updateUser({ avatar: null, avatar_type: 'generated' });
+            queryClient.invalidateQueries({ queryKey: ['profile'] });
+        },
+        onError: () => toast.error('Gagal menghapus foto.'),
+    });
+
+    const isBusy = uploadMutation.isPending || deleteMutation.isPending;
+
+    return (
+        <Section title="Foto Profil">
+            <div className="flex items-center gap-5">
+                {/* Avatar display */}
+                <div className="relative shrink-0">
+                    {avatarUrl ? (
+                        <img
+                            src={avatarUrl}
+                            alt={name}
+                            className="w-20 h-20 rounded-full object-cover"
+                        />
+                    ) : (
+                        <GeneratedAvatar name={name} email={email} size={80} />
+                    )}
+                    {isBusy && (
+                        <div className="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center">
+                            <Loader2 className="w-5 h-5 text-white animate-spin" />
+                        </div>
+                    )}
+                </div>
+
+                {/* Actions */}
+                <div className="space-y-2">
+                    <input
+                        ref={fileRef}
+                        type="file"
+                        accept="image/jpeg,image/jpg,image/png,image/webp"
+                        className="hidden"
+                        onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) uploadMutation.mutate(file);
+                            e.target.value = '';
+                        }}
+                    />
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={isBusy}
+                        onClick={() => fileRef.current?.click()}
+                        className="flex items-center gap-2"
+                    >
+                        <Camera className="w-3.5 h-3.5" />
+                        {avatarUrl ? 'Ganti Foto' : 'Upload Foto'}
+                    </Button>
+
+                    {avatarUrl && (
+                        <Button
+                            type="button"
+                            variant="destructive"
+                            size="sm"
+                            disabled={isBusy}
+                            onClick={() => deleteMutation.mutate()}
+                            className="flex items-center gap-2"
+                        >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            Hapus Foto
+                        </Button>
+                    )}
+                    <p className="text-xs text-neutral-400">JPEG, PNG, WebP — maks. 5 MB</p>
+                </div>
+            </div>
+        </Section>
+    );
+}
+
+// ─── Edit Profile Section ─────────────────────────────────────────────────────
+
+function EditProfileSection({ defaultName, defaultEmail }: { defaultName: string; defaultEmail: string }) {
+    const queryClient = useQueryClient();
+    const updateUser  = useAuthStore((s) => s.updateUser);
+
+    const { register, handleSubmit, formState: { errors, isDirty } } = useForm<ProfileForm>({
+        resolver: zodResolver(profileSchema),
+        defaultValues: { name: defaultName, email: defaultEmail },
+    });
+
+    const mutation = useMutation({
+        mutationFn: (data: ProfileForm) => updateProfile(data),
+        onSuccess: (res) => {
+            toast.success('Profil berhasil diperbarui.');
+            updateUser({ name: res.data.name, email: res.data.email });
+            queryClient.invalidateQueries({ queryKey: ['profile'] });
+        },
+        onError: (err: unknown) => {
+            const msg =
+                err &&
+                typeof err === 'object' &&
+                'response' in err
+                    ? ((err as { response: { data?: { message?: string } } }).response.data?.message)
+                    : undefined;
+            toast.error(msg ?? 'Gagal memperbarui profil.');
+        },
+    });
+
+    return (
+        <Section title="Informasi Profil">
+            <form onSubmit={handleSubmit((d) => mutation.mutate(d))} className="space-y-4 max-w-md">
+                <div className="space-y-1.5">
+                    <label htmlFor="p-name" className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Nama Lengkap</label>
+                    <input id="p-name" type="text" disabled={mutation.isPending} {...register('name')} aria-invalid={!!errors.name} className={inputCls} />
+                    {errors.name && <p className="text-xs text-red-500">{errors.name.message}</p>}
+                </div>
+                <div className="space-y-1.5">
+                    <label htmlFor="p-email" className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Email</label>
+                    <input id="p-email" type="email" disabled={mutation.isPending} {...register('email')} aria-invalid={!!errors.email} className={inputCls} />
+                    {errors.email && <p className="text-xs text-red-500">{errors.email.message}</p>}
+                </div>
+                <Button
+                    type="submit"
+                    disabled={mutation.isPending || !isDirty}
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white"
+                    size="sm"
+                >
+                    {mutation.isPending ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Menyimpan...</> : 'Simpan Perubahan'}
+                </Button>
+            </form>
+        </Section>
+    );
+}
+
+
+// ─── Change Password Section ──────────────────────────────────────────────────
+
+function ChangePasswordSection() {
+    const [showCurrent, setShowCurrent] = useState(false);
+    const [showNew, setShowNew]         = useState(false);
+    const [showConfirm, setShowConfirm] = useState(false);
+
+    const { register, handleSubmit, reset, formState: { errors } } = useForm<PasswordForm>({
+        resolver: zodResolver(passwordSchema),
+    });
+
+    const mutation = useMutation({
+        mutationFn: (data: PasswordForm) => updateProfile(data),
+        onSuccess: () => {
+            toast.success('Password berhasil diganti.');
+            reset();
+        },
+        onError: (err: unknown) => {
+            const resp = err && typeof err === 'object' && 'response' in err
+                ? (err as { response: { data?: { message?: string; errors?: Record<string, string[]> } } }).response
+                : null;
+            const fieldErr = resp?.data?.errors?.current_password?.[0];
+            if (fieldErr) { toast.error(fieldErr); return; }
+            toast.error(resp?.data?.message ?? 'Gagal mengganti password.');
+        },
+    });
+
+    function PasswordInput({ id, label, show, toggle, reg, err }: {
+        id: string; label: string; show: boolean; toggle: () => void;
+        reg: ReturnType<typeof register>; err?: string;
+    }) {
+        return (
+            <div className="space-y-1.5">
+                <label htmlFor={id} className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">{label}</label>
+                <div className="relative">
+                    <input id={id} type={show ? 'text' : 'password'} disabled={mutation.isPending}
+                        {...reg} aria-invalid={!!err}
+                        className={inputCls + ' pr-10'} />
+                    <button type="button" tabIndex={-1} onClick={toggle}
+                        className="absolute inset-y-0 right-0 flex items-center px-3 text-neutral-400 hover:text-neutral-600"
+                        aria-label={show ? 'Sembunyikan' : 'Tampilkan'}>
+                        {show ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                </div>
+                {err && <p className="text-xs text-red-500">{err}</p>}
+            </div>
+        );
+    }
+
+    return (
+        <Section title="Ganti Password">
+            <form onSubmit={handleSubmit((d) => mutation.mutate(d))} className="space-y-4 max-w-md">
+                <PasswordInput id="pw-current" label="Password Saat Ini"
+                    show={showCurrent} toggle={() => setShowCurrent((v) => !v)}
+                    reg={register('current_password')} err={errors.current_password?.message} />
+                <PasswordInput id="pw-new" label="Password Baru"
+                    show={showNew} toggle={() => setShowNew((v) => !v)}
+                    reg={register('password')} err={errors.password?.message} />
+                <PasswordInput id="pw-confirm" label="Konfirmasi Password Baru"
+                    show={showConfirm} toggle={() => setShowConfirm((v) => !v)}
+                    reg={register('password_confirmation')} err={errors.password_confirmation?.message} />
+                <Button type="submit" disabled={mutation.isPending}
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white" size="sm">
+                    {mutation.isPending
+                        ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Menyimpan...</>
+                        : 'Ganti Password'}
+                </Button>
+            </form>
+        </Section>
+    );
+}
+
+// ─── Google Binding Section ───────────────────────────────────────────────────
+
+function GoogleBindingSection({ googleId }: { googleId: string | null }) {
+    const queryClient = useQueryClient();
+    const updateUser  = useAuthStore((s) => s.updateUser);
+
+    const bindMutation = useMutation({
+        mutationFn: (token: string) => bindGoogle(token),
+        onSuccess: () => {
+            toast.success('Akun Google berhasil dihubungkan.');
+            queryClient.invalidateQueries({ queryKey: ['profile'] });
+        },
+        onError: (err: unknown) => {
+            const msg = err && typeof err === 'object' && 'response' in err
+                ? (err as { response: { data?: { message?: string } } }).response.data?.message
+                : undefined;
+            toast.error(msg ?? 'Gagal menghubungkan akun Google.');
+        },
+    });
+
+    const unbindMutation = useMutation({
+        mutationFn: unbindGoogle,
+        onSuccess: () => {
+            toast.success('Akun Google berhasil diputuskan.');
+            updateUser({ google_id: null });
+            queryClient.invalidateQueries({ queryKey: ['profile'] });
+        },
+        onError: (err: unknown) => {
+            const msg = err && typeof err === 'object' && 'response' in err
+                ? (err as { response: { data?: { message?: string } } }).response.data?.message
+                : undefined;
+            toast.error(msg ?? 'Gagal memutuskan akun Google.');
+        },
+    });
+
+    const isBusy = bindMutation.isPending || unbindMutation.isPending;
+
+    return (
+        <Section title="Akun Google">
+            <div className="flex items-center justify-between max-w-md">
+                <div>
+                    {googleId ? (
+                        <>
+                            <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100 flex items-center gap-2">
+                                <Link2 className="w-4 h-4 text-green-500" />
+                                Terhubung
+                            </p>
+                            <p className="text-xs text-neutral-400 mt-0.5">
+                                Akun Google kamu sudah terhubung. Kamu bisa login menggunakan Google.
+                            </p>
+                        </>
+                    ) : (
+                        <>
+                            <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100 flex items-center gap-2">
+                                <Link2Off className="w-4 h-4 text-neutral-400" />
+                                Belum Terhubung
+                            </p>
+                            <p className="text-xs text-neutral-400 mt-0.5">
+                                Hubungkan akun Google agar bisa login menggunakan Google.
+                            </p>
+                        </>
+                    )}
+                </div>
+
+                <div>
+                    {googleId ? (
+                        <Button
+                            type="button"
+                            variant="destructive"
+                            size="sm"
+                            disabled={isBusy}
+                            onClick={() => unbindMutation.mutate()}
+                            className="flex items-center gap-2"
+                        >
+                            {unbindMutation.isPending
+                                ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                : <Link2Off className="w-3.5 h-3.5" />}
+                            Putuskan
+                        </Button>
+                    ) : (
+                        isBusy ? (
+                            <Button type="button" variant="outline" size="sm" disabled>
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            </Button>
+                        ) : (
+                            <GoogleLogin
+                                onSuccess={(cred) => {
+                                    if (cred.credential) bindMutation.mutate(cred.credential);
+                                }}
+                                onError={() => toast.error('Gagal mendapatkan token Google.')}
+                                width="200"
+                            />
+                        )
+                    )}
+                </div>
+            </div>
+        </Section>
+    );
+}
+
+// ─── Main Page ────────────────────────────────────────────────────────────────
+
+export default function ProfilePage() {
+    const { data, isLoading } = useQuery({
+        queryKey: ['profile'],
+        queryFn: getProfile,
+    });
+
+    const user = data?.data;
+
+    if (isLoading || !user) {
+        return (
+            <div className="space-y-5">
+                <div className="h-6 w-40 bg-neutral-200 dark:bg-neutral-800 rounded animate-pulse" />
+                {[1, 2, 3, 4].map((i) => (
+                    <div key={i} className="bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800 h-32 animate-pulse" />
+                ))}
+            </div>
+        );
+    }
+
+    return (
+        <div className="space-y-5 max-w-2xl">
+            <div>
+                <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">Profil Saya</h1>
+                <p className="text-sm text-neutral-500 mt-0.5">Kelola informasi akun dan keamanan</p>
+            </div>
+
+            {/* Info readonly — kelas & angkatan */}
+            {user.student_class && (
+                <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-xl border border-neutral-200 dark:border-neutral-700 px-5 py-3 flex gap-6 text-sm">
+                    <div>
+                        <span className="text-neutral-400 text-xs">Kelas</span>
+                        <p className="font-medium text-neutral-900 dark:text-neutral-100 mt-0.5">
+                            {user.student_class.name}
+                        </p>
+                    </div>
+                    {user.student_class.academic_year && (
+                        <div>
+                            <span className="text-neutral-400 text-xs">Angkatan</span>
+                            <p className="font-medium text-neutral-900 dark:text-neutral-100 mt-0.5">
+                                {user.student_class.academic_year.name}
+                            </p>
+                        </div>
+                    )}
+                    {user.absen_number && (
+                        <div>
+                            <span className="text-neutral-400 text-xs">No. Absen</span>
+                            <p className="font-medium text-neutral-900 dark:text-neutral-100 mt-0.5">
+                                {user.absen_number}
+                            </p>
+                        </div>
+                    )}
+                </div>
+            )}
+
+            <AvatarSection avatarUrl={user.avatar_url} name={user.name} email={user.email} />
+            <EditProfileSection defaultName={user.name} defaultEmail={user.email} />
+            <ChangePasswordSection />
+            <GoogleBindingSection googleId={user.google_id} />
+        </div>
+    );
+}

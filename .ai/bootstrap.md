@@ -6,7 +6,8 @@ Before every task:
 2. Read docs/
 3. Read AGENTS.md
 4. Read CLAUDE.md
-5. Read TODO.md
+5. Read docs/AUTH-REMASTER-IMPLEMENTATION-PLAN.md
+6. Read docs/AUTH-REMASTER-TODO.md
 
 Follow Coding Standards.
 

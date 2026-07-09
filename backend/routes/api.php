@@ -5,23 +5,46 @@ use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\UserController;
 
+// Public routes untuk halaman registrasi — tidak butuh auth
+Route::get('/public/academic-years', [\App\Http\Controllers\AcademicYearController::class, 'index']);
+Route::get('/public/classes', [\App\Http\Controllers\ClassController::class, 'index']);
+
 Route::prefix('auth')->group(function () {
-    Route::post('/google', [AuthController::class, 'googleLogin']);
-    
+    // Public — tidak perlu token
+    Route::post('/register', [AuthController::class, 'register']);
+    Route::post('/login',    [AuthController::class, 'login']);
+    Route::post('/google',   [AuthController::class, 'googleLogin']);
+
+    // Protected — perlu token
     Route::middleware('auth:sanctum')->group(function () {
-        Route::get('/me', [AuthController::class, 'me']);
-        Route::post('/logout', [AuthController::class, 'logout']);
+        Route::get('/me',             [AuthController::class, 'me']);
+        Route::post('/logout',        [AuthController::class, 'logout']);
+        Route::post('/bind-google',   [AuthController::class, 'bindGoogle']);
+        Route::delete('/unbind-google', [AuthController::class, 'unbindGoogle']);
     });
 });
 
 Route::middleware(['auth:sanctum', 'role:admin'])->prefix('users')->group(function () {
     Route::get('/', [UserController::class, 'index']);
     Route::patch('/{user}', [UserController::class, 'update']);
-    Route::patch('/{user}/toggle-status', [UserController::class, 'toggleStatus']);
+    Route::patch('/{user}/approve', [UserController::class, 'approve']);
+    Route::patch('/{user}/reject', [UserController::class, 'reject']);
+    Route::patch('/{user}/block', [UserController::class, 'block']);
+    Route::patch('/{user}/unblock', [UserController::class, 'unblock']);
+    Route::patch('/{user}/toggle-status', [UserController::class, 'toggleStatus']); // deprecated
     Route::delete('/{user}', [UserController::class, 'destroy']);
+});
+
+// Profile routes — semua role yang sudah login
+Route::middleware('auth:sanctum')->prefix('profile')->group(function () {
+    Route::get('/', [ProfileController::class, 'show']);
+    Route::patch('/', [ProfileController::class, 'update']);
+    Route::post('/avatar', [ProfileController::class, 'uploadAvatar']);
+    Route::delete('/avatar', [ProfileController::class, 'deleteAvatar']);
 });
 
 Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {

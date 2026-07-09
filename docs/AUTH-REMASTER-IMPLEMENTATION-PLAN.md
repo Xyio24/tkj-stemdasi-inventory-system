@@ -109,6 +109,8 @@ Tidak ada perubahan struktur. `google_id` tetap nullable — user yang register 
 - Log: `auth.login`
 
 #### `POST /api/auth/google` (modifikasi)
+- Cari user by `google_id` DULU → jika ketemu, langsung login (menangani akun yang di-bind ke Google dengan email berbeda dari email sistem)
+- Jika tidak ketemu by `google_id`, cari by `email`
 - Jika email belum ada → **tolak dengan pesan** "Email ini belum terdaftar. Silakan daftar terlebih dahulu." (tidak lagi auto-create)
 - Jika email ada tapi `google_id` null → **bind** google_id ke akun, lalu login
 - Jika email ada dan `google_id` sudah match → login biasa
@@ -117,6 +119,7 @@ Tidak ada perubahan struktur. `google_id` tetap nullable — user yang register 
 #### `POST /api/auth/bind-google` (protected)
 - User yang sudah login (email/password) bisa bind akunnya ke Google
 - Input: Google ID token
+- **Constraint email**: email dari Google token **harus sama** dengan email user yang sedang login — mencegah user A menghubungkan akun Google milik user B ke akunnya
 - Validasi: google_id dari token belum dipakai akun lain
 - Update `google_id` di record user
 

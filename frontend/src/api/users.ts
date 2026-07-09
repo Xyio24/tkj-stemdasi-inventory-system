@@ -1,20 +1,31 @@
 import api from '@/lib/axios';
 
+// ─── Types ────────────────────────────────────────────────────────────────────
+
 export interface User {
     id: number;
     name: string;
     email: string;
-    role: string;
-    avatar?: string;
+    role: 'siswa' | 'guru' | 'admin';
+    avatar: string | null;
+    avatar_type: 'generated' | 'upload';
+    google_id: string | null;
+    status: 'pending' | 'active' | 'blocked';
     is_active: boolean;
-    nis_nip?: string;
-    phone?: string;
-    student_class?: {
+    absen_number: number | null;
+    nis_nip: string | null;
+    phone: string | null;
+    class_id: number | null;
+    approved_at: string | null;
+    registration_notes: string | null;
+    created_at: string;
+    updated_at: string;
+    student_class: {
         id: number;
         name: string;
         academic_year_id: number;
         academic_year?: { id: number; name: string; is_active: boolean };
-    };
+    } | null;
 }
 
 export interface UserListResponse {
@@ -30,16 +41,64 @@ export interface UserListResponse {
     };
 }
 
-export const getUsers = async (params?: { page?: number; search?: string; role?: string }) => {
+// ─── Read ─────────────────────────────────────────────────────────────────────
+
+export const getUsers = async (params?: {
+    page?: number;
+    per_page?: number;
+    search?: string;
+    role?: string;
+    status?: 'pending' | 'active' | 'blocked';
+}) => {
     const response = await api.get<UserListResponse>('/users', { params });
     return response.data;
 };
 
-export const updateUser = async (id: number, data: { role?: string; nis_nip?: string; phone?: string; class_id?: number | null }) => {
+// ─── Update ───────────────────────────────────────────────────────────────────
+
+export const updateUser = async (
+    id: number,
+    data: {
+        role?: string;
+        nis_nip?: string | null;
+        phone?: string | null;
+        class_id?: number | null;
+        absen_number?: number | null;
+    }
+) => {
     const response = await api.patch(`/users/${id}`, data);
     return response.data;
 };
 
+// ─── Approval ─────────────────────────────────────────────────────────────────
+
+export const approveUser = async (id: number) => {
+    const response = await api.patch(`/users/${id}/approve`);
+    return response.data as { success: boolean; message: string };
+};
+
+export const rejectUser = async (id: number, rejectionReason: string) => {
+    const response = await api.patch(`/users/${id}/reject`, {
+        rejection_reason: rejectionReason,
+    });
+    return response.data as { success: boolean; message: string };
+};
+
+// ─── Block / Unblock ──────────────────────────────────────────────────────────
+
+export const blockUser = async (id: number) => {
+    const response = await api.patch(`/users/${id}/block`);
+    return response.data as { success: boolean; message: string };
+};
+
+export const unblockUser = async (id: number) => {
+    const response = await api.patch(`/users/${id}/unblock`);
+    return response.data as { success: boolean; message: string };
+};
+
+// ─── Deprecated ───────────────────────────────────────────────────────────────
+
+/** @deprecated Gunakan blockUser / unblockUser */
 export const toggleUserStatus = async (id: number) => {
     const response = await api.patch(`/users/${id}/toggle-status`);
     return response.data;

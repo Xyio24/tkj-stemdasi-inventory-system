@@ -164,12 +164,6 @@ class BorrowingApprovalService
 
                 // Increment stock
                 $item->stock += $itemData['returned_quantity'];
-                
-                // Keep condition updated if it changed (e.g. if now it's damaged)
-                if (isset($itemData['item_condition_in']) && $itemData['item_condition_in'] !== $item->condition) {
-                    $item->condition = $itemData['item_condition_in'];
-                }
-                
                 $item->save();
 
                 $after['items'][] = [
