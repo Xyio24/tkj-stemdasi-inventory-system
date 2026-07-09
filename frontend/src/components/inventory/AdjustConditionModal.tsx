@@ -69,48 +69,47 @@ export default function AdjustConditionModal({ item, isOpen, onClose }: Props) {
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/25 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             {/* Backdrop */}
             <div
-                className="absolute inset-0 bg-black/40 dark:bg-black/60"
+                className="absolute inset-0"
                 onClick={onClose}
             />
 
             {/* Modal */}
-            <div className="relative bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800 shadow-xl w-full max-w-md">
+            <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden">
                 {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-100 dark:border-neutral-800">
+                <div className="px-6 py-5 border-b border-neutral-100 flex items-center justify-between">
                     <div>
-                        <h3 className="font-semibold text-neutral-900 dark:text-neutral-100">Koreksi Kondisi Stok</h3>
+                        <h3 className="font-semibold text-neutral-900">Koreksi Kondisi Stok</h3>
                         <p className="text-xs text-neutral-500 mt-0.5">{item.name}</p>
                     </div>
                     <button
                         onClick={onClose}
-                        className="text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors"
+                        className="p-2 rounded-xl hover:bg-neutral-100 text-neutral-400 hover:text-neutral-700 transition-all duration-150 active:scale-[0.95]"
                     >
-                        <X className="w-5 h-5" />
+                        <X className="w-4 h-4" />
                     </button>
                 </div>
 
-                {/* Stok ringkasan */}
-                <div className="px-6 pt-4">
+                {/* Body */}
+                <div className="px-6 py-6 space-y-5">
+                    {/* Stok ringkasan */}
                     <div className="grid grid-cols-4 gap-2 text-center text-xs">
                         {CONDITION_OPTIONS.map(opt => (
-                            <div key={opt.value} className="bg-neutral-50 dark:bg-neutral-800 rounded-lg p-2">
-                                <div className="font-semibold text-sm text-neutral-800 dark:text-neutral-200">
+                            <div key={opt.value} className="bg-neutral-50 rounded-xl p-3">
+                                <div className="font-semibold text-sm text-neutral-800">
                                     {item[CONDITION_STOCK_KEY[opt.value]] as number}
                                 </div>
                                 <div className="text-neutral-500 mt-0.5">{opt.label}</div>
                             </div>
                         ))}
                     </div>
-                </div>
 
-                {/* Form */}
-                <div className="px-6 py-4 space-y-4">
+                    {/* From / To */}
                     <div className="grid grid-cols-2 gap-3">
                         <div>
-                            <label className="block text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1">
+                            <label className="block text-xs font-medium text-neutral-600 mb-1.5">
                                 Dari Kondisi
                             </label>
                             <select
@@ -119,7 +118,7 @@ export default function AdjustConditionModal({ item, isOpen, onClose }: Props) {
                                     setFromCondition(e.target.value as ConditionKey);
                                     setQuantity(1);
                                 }}
-                                className="w-full border border-neutral-300 dark:border-neutral-600 rounded-lg px-3 py-2 text-sm dark:bg-neutral-800"
+                                className="w-full rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm text-neutral-900 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all duration-150 disabled:opacity-50"
                             >
                                 {CONDITION_OPTIONS.map(opt => (
                                     <option key={opt.value} value={opt.value}>
@@ -129,13 +128,13 @@ export default function AdjustConditionModal({ item, isOpen, onClose }: Props) {
                             </select>
                         </div>
                         <div>
-                            <label className="block text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1">
+                            <label className="block text-xs font-medium text-neutral-600 mb-1.5">
                                 Ke Kondisi
                             </label>
                             <select
                                 value={toCondition}
                                 onChange={e => setToCondition(e.target.value as ConditionKey)}
-                                className="w-full border border-neutral-300 dark:border-neutral-600 rounded-lg px-3 py-2 text-sm dark:bg-neutral-800"
+                                className="w-full rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm text-neutral-900 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all duration-150 disabled:opacity-50"
                             >
                                 {CONDITION_OPTIONS.filter(o => o.value !== fromCondition).map(opt => (
                                     <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -144,8 +143,9 @@ export default function AdjustConditionModal({ item, isOpen, onClose }: Props) {
                         </div>
                     </div>
 
+                    {/* Quantity */}
                     <div>
-                        <label className="block text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1">
+                        <label className="block text-xs font-medium text-neutral-600 mb-1.5">
                             Jumlah Unit <span className="text-neutral-400">(maks: {maxQty})</span>
                         </label>
                         <input
@@ -154,7 +154,7 @@ export default function AdjustConditionModal({ item, isOpen, onClose }: Props) {
                             max={maxQty}
                             value={quantity}
                             onChange={e => setQuantity(Number(e.target.value))}
-                            className="w-full border border-neutral-300 dark:border-neutral-600 rounded-lg px-3 py-2 text-sm dark:bg-neutral-800"
+                            className="w-full rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all duration-150 disabled:opacity-50"
                         />
                         {maxQty === 0 && (
                             <p className="text-xs text-red-500 mt-1">
@@ -163,8 +163,9 @@ export default function AdjustConditionModal({ item, isOpen, onClose }: Props) {
                         )}
                     </div>
 
+                    {/* Notes */}
                     <div>
-                        <label className="block text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1">
+                        <label className="block text-xs font-medium text-neutral-600 mb-1.5">
                             Catatan <span className="text-neutral-400">(opsional)</span>
                         </label>
                         <input
@@ -172,17 +173,17 @@ export default function AdjustConditionModal({ item, isOpen, onClose }: Props) {
                             value={notes}
                             onChange={e => setNotes(e.target.value)}
                             placeholder="Contoh: sudah diperbaiki oleh teknisi"
-                            className="w-full border border-neutral-300 dark:border-neutral-600 rounded-lg px-3 py-2 text-sm dark:bg-neutral-800"
+                            className="w-full rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all duration-150 disabled:opacity-50"
                         />
                     </div>
                 </div>
 
                 {/* Footer */}
-                <div className="px-6 pb-5 flex gap-3 justify-end">
+                <div className="px-6 py-4 border-t border-neutral-100 flex justify-end gap-3">
                     <button
                         type="button"
                         onClick={onClose}
-                        className="px-4 py-2 text-sm border border-neutral-300 dark:border-neutral-600 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors"
+                        className="px-4 py-2.5 text-sm font-medium text-neutral-600 border border-neutral-200 rounded-xl hover:bg-neutral-50 transition-all duration-200 ease-out active:scale-[0.97]"
                     >
                         Batal
                     </button>
@@ -190,7 +191,7 @@ export default function AdjustConditionModal({ item, isOpen, onClose }: Props) {
                         type="button"
                         onClick={() => mutation.mutate()}
                         disabled={!isValid || mutation.isPending}
-                        className="px-4 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+                        className="px-5 py-2.5 text-sm font-medium bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 disabled:opacity-50 transition-all duration-200 ease-out active:scale-[0.97]"
                     >
                         {mutation.isPending ? 'Menyimpan...' : 'Simpan Koreksi'}
                     </button>

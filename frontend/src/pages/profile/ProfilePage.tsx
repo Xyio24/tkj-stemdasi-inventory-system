@@ -37,14 +37,14 @@ type PasswordForm  = z.infer<typeof passwordSchema>;
 // ─── Input className helper ───────────────────────────────────────────────────
 
 const inputCls =
-    'w-full rounded-lg border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800 px-3 py-2 text-sm text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 disabled:opacity-50 aria-invalid:border-red-400 transition';
+    'w-full rounded-xl border border-neutral-200 bg-white dark:bg-neutral-800 dark:border-neutral-600 px-4 py-2.5 text-sm text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 disabled:opacity-50 aria-invalid:border-red-400 transition-all duration-150';
 
 // ─── Section wrapper ──────────────────────────────────────────────────────────
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
     return (
-        <div className="bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800 shadow-sm">
-            <div className="px-6 py-4 border-b border-neutral-100 dark:border-neutral-800">
+        <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 shadow-sm">
+            <div className="px-6 py-5 border-b border-neutral-100 dark:border-neutral-800">
                 <h2 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">{title}</h2>
             </div>
             <div className="px-6 py-5">{children}</div>
@@ -149,7 +149,7 @@ function AvatarSection({ avatarUrl, name, email }: { avatarUrl: string | null; n
                             size="sm"
                             disabled={isBusy}
                             onClick={() => fileRef.current?.click()}
-                            className="flex items-center gap-2"
+                            className="flex items-center gap-2 rounded-xl transition-all duration-200 ease-out active:scale-[0.97]"
                         >
                             <Camera className="w-3.5 h-3.5" />
                             {avatarUrl ? 'Ganti Foto' : 'Upload Foto'}
@@ -162,7 +162,7 @@ function AvatarSection({ avatarUrl, name, email }: { avatarUrl: string | null; n
                                 size="sm"
                                 disabled={isBusy}
                                 onClick={() => deleteMutation.mutate()}
-                                className="flex items-center gap-2"
+                                className="flex items-center gap-2 rounded-xl transition-all duration-200 ease-out active:scale-[0.97]"
                             >
                                 <Trash2 className="w-3.5 h-3.5" />
                                 Hapus Foto
@@ -230,7 +230,7 @@ function EditProfileSection({ defaultName, defaultEmail }: { defaultName: string
                 <Button
                     type="submit"
                     disabled={mutation.isPending || !isDirty}
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white"
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl transition-all duration-200 ease-out active:scale-[0.97]"
                     size="sm"
                 >
                     {mutation.isPending ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Menyimpan...</> : 'Simpan Perubahan'}
@@ -280,7 +280,7 @@ function ChangePasswordSection() {
                         {...reg} aria-invalid={!!err}
                         className={inputCls + ' pr-10'} />
                     <button type="button" tabIndex={-1} onClick={toggle}
-                        className="absolute inset-y-0 right-0 flex items-center px-3 text-neutral-400 hover:text-neutral-600"
+                        className="absolute inset-y-0 right-0 flex items-center px-3 text-neutral-400 hover:text-neutral-600 transition-colors"
                         aria-label={show ? 'Sembunyikan' : 'Tampilkan'}>
                         {show ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
@@ -303,7 +303,7 @@ function ChangePasswordSection() {
                     show={showConfirm} toggle={() => setShowConfirm((v) => !v)}
                     reg={register('password_confirmation')} err={errors.password_confirmation?.message} />
                 <Button type="submit" disabled={mutation.isPending}
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white" size="sm">
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl transition-all duration-200 ease-out active:scale-[0.97]" size="sm">
                     {mutation.isPending
                         ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Menyimpan...</>
                         : 'Ganti Password'}
@@ -385,7 +385,7 @@ function GoogleBindingSection({ googleId }: { googleId: string | null }) {
                             size="sm"
                             disabled={isBusy}
                             onClick={() => unbindMutation.mutate()}
-                            className="flex items-center gap-2"
+                            className="flex items-center gap-2 rounded-xl transition-all duration-200 ease-out active:scale-[0.97]"
                         >
                             {unbindMutation.isPending
                                 ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -394,7 +394,7 @@ function GoogleBindingSection({ googleId }: { googleId: string | null }) {
                         </Button>
                     ) : (
                         isBusy ? (
-                            <Button type="button" variant="outline" size="sm" disabled>
+                            <Button type="button" variant="outline" size="sm" disabled className="rounded-xl">
                                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
                             </Button>
                         ) : (
@@ -425,26 +425,26 @@ export default function ProfilePage() {
 
     if (isLoading || !user) {
         return (
-            <div className="space-y-5 max-w-2xl mx-auto w-full">
-                <div className="h-6 w-40 bg-neutral-200 dark:bg-neutral-800 rounded animate-pulse" />
+            <div className="space-y-6 max-w-2xl mx-auto w-full">
+                <div className="h-8 w-48 bg-neutral-200 dark:bg-neutral-800 rounded-xl animate-pulse" />
                 {[1, 2, 3, 4].map((i) => (
-                    <div key={i} className="bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800 h-32 animate-pulse" />
+                    <div key={i} className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 h-36 animate-pulse" />
                 ))}
             </div>
         );
     }
 
     return (
-        <div className="space-y-5">
+        <div className="space-y-6">
             {/* Page title */}
             <div>
-                <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">Profil Saya</h1>
+                <h1 className="text-2xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100">Profil Saya</h1>
                 <p className="text-sm text-neutral-500 mt-0.5">Kelola informasi akun dan keamanan</p>
             </div>
 
             {/* Info bar — full width, hanya tampil jika ada data kelas */}
             {user.student_class && (
-                <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-xl border border-neutral-200 dark:border-neutral-700 px-5 py-3 flex flex-wrap gap-6 text-sm">
+                <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-700 shadow-sm px-6 py-5 flex flex-wrap gap-6 text-sm">
                     <div>
                         <span className="text-neutral-400 text-xs">Kelas</span>
                         <p className="font-medium text-neutral-900 dark:text-neutral-100 mt-0.5">
@@ -471,15 +471,15 @@ export default function ProfilePage() {
             )}
 
             {/* 2-column grid di desktop, stack di mobile */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
                 {/* Kolom kiri — Foto Profil + Informasi Profil */}
-                <div className="space-y-5">
+                <div className="space-y-6">
                     <AvatarSection avatarUrl={user.avatar_url} name={user.name} email={user.email} />
                     <EditProfileSection defaultName={user.name} defaultEmail={user.email} />
                 </div>
 
                 {/* Kolom kanan — Ganti Password + Akun Google */}
-                <div className="space-y-5">
+                <div className="space-y-6">
                     <ChangePasswordSection />
                     <GoogleBindingSection googleId={user.google_id} />
                 </div>

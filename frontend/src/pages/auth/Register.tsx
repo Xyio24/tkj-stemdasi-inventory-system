@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { Link } from 'react-router-dom';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { Package, Eye, EyeOff, CheckCircle } from 'lucide-react';
+import { Eye, EyeOff, CheckCircle, ArrowRight } from 'lucide-react';
 import { registerUser } from '@/api/auth';
 import { Button } from '@/components/ui/button';
 import api from '@/lib/axios';
@@ -15,13 +15,13 @@ import type { AcademicYear, StudentClass } from '@/api/masterData';
 
 const registerSchema = z
     .object({
-        name: z.string().min(1, 'Nama lengkap wajib diisi.').max(255),
-        email: z.string().min(1, 'Email wajib diisi.').email('Format email tidak valid.'),
-        password: z.string().min(8, 'Password minimal 8 karakter.'),
+        name:                  z.string().min(1, 'Nama lengkap wajib diisi.').max(255),
+        email:                 z.string().min(1, 'Email wajib diisi.').email('Format email tidak valid.'),
+        password:              z.string().min(8, 'Password minimal 8 karakter.'),
         password_confirmation: z.string().min(1, 'Konfirmasi password wajib diisi.'),
-        academic_year_id: z.string().min(1, 'Angkatan wajib dipilih.'),
-        class_id: z.string().min(1, 'Kelas wajib dipilih.'),
-        absen_number: z
+        academic_year_id:      z.string().min(1, 'Angkatan wajib dipilih.'),
+        class_id:              z.string().min(1, 'Kelas wajib dipilih.'),
+        absen_number:          z
             .string()
             .min(1, 'Nomor absen wajib diisi.')
             .refine((v) => !isNaN(Number(v)) && Number(v) >= 1 && Number(v) <= 99, {
@@ -35,7 +35,7 @@ const registerSchema = z
 
 type RegisterForm = z.infer<typeof registerSchema>;
 
-// ─── API (public — no auth) ───────────────────────────────────────────────────
+// ─── API (public) ─────────────────────────────────────────────────────────────
 
 const fetchActiveAcademicYears = async (): Promise<AcademicYear[]> => {
     const res = await api.get('/public/academic-years');
@@ -50,26 +50,124 @@ const fetchClassesByYear = async (academicYearId: number): Promise<StudentClass[
     return res.data.data ?? [];
 };
 
-// ─── Helper: teks placeholder dropdown kelas ─────────────────────────────────
-
 function getClassPlaceholder(
     selectedYearId: number | null,
     loadingClasses: boolean,
     classes: StudentClass[],
     isFetched: boolean,
 ): string {
-    if (!selectedYearId) return '-- Pilih angkatan dulu --';
-    if (loadingClasses) return 'Memuat kelas...';
+    if (!selectedYearId)  return '-- Pilih angkatan dulu --';
+    if (loadingClasses)   return 'Memuat kelas...';
     if (isFetched && classes.length === 0) return 'Tidak ada kelas untuk angkatan ini';
     return '-- Pilih Kelas --';
 }
 
-// ─── Component ────────────────────────────────────────────────────────────────
+// ─── Frosted Input ────────────────────────────────────────────────────────────
+
+interface FrostedInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+    hasError?: boolean;
+}
+
+function FrostedInput({ hasError, className = '', ...props }: FrostedInputProps) {
+    return (
+        <input
+            {...props}
+            aria-invalid={hasError}
+            className={[
+                'input-ios',
+                hasError ? 'border-red-400/60 ring-4 ring-red-400/15' : '',
+                className,
+            ].join(' ')}
+        />
+    );
+}
+
+interface FrostedSelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
+    hasError?: boolean;
+}
+
+function FrostedSelect({ hasError, className = '', children, ...props }: FrostedSelectProps) {
+    return (
+        <select
+            {...props}
+            aria-invalid={hasError}
+            className={[
+                'input-ios appearance-none cursor-pointer',
+                hasError ? 'border-red-400/60 ring-4 ring-red-400/15' : '',
+                className,
+            ].join(' ')}
+        >
+            {children}
+        </select>
+    );
+}
+
+// ─── Field Wrapper ────────────────────────────────────────────────────────────
+
+function Field({
+    label,
+    htmlFor,
+    error,
+    delay,
+    children,
+}: {
+    label: string;
+    htmlFor: string;
+    error?: string;
+    delay?: string;
+    children: React.ReactNode;
+}) {
+    return (
+        <div className={['space-y-1.5 animate-fade-up', delay].filter(Boolean).join(' ')}>
+            <label htmlFor={htmlFor} className="block text-sm font-medium text-foreground/80">
+                {label}
+            </label>
+            {children}
+            {error && (
+                <p className="text-xs text-red-500 dark:text-red-400 animate-fade-in">
+                    {error}
+                </p>
+            )}
+        </div>
+    );
+}
+
+// ─── Success Screen ───────────────────────────────────────────────────────────
+
+function SuccessScreen() {
+    return (
+        <div className="min-h-dvh flex items-center justify-center p-4">
+            <div className="w-full max-w-sm text-center animate-spring-in">
+                {/* Success icon */}
+                <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-green-100 dark:bg-green-900/30 mb-6 animate-spring-in">
+                    <CheckCircle className="w-10 h-10 text-green-600 dark:text-green-400" />
+                </div>
+
+                <h1 className="text-2xl font-bold text-foreground tracking-tight mb-2">
+                    Pendaftaran Berhasil!
+                </h1>
+                <p className="text-muted-foreground mb-8 leading-relaxed text-sm">
+                    Akun kamu sedang menunggu persetujuan admin.
+                    Kamu bisa masuk setelah akun disetujui.
+                </p>
+
+                <Button asChild size="lg" className="w-full gap-2">
+                    <Link to="/login">
+                        Kembali ke Halaman Masuk
+                        <ArrowRight className="w-4 h-4" />
+                    </Link>
+                </Button>
+            </div>
+        </div>
+    );
+}
+
+// ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function Register() {
-    const [showPassword, setShowPassword] = useState(false);
-    const [showConfirm, setShowConfirm] = useState(false);
-    const [isSuccess, setIsSuccess] = useState(false);
+    const [showPassword, setShowPassword]   = useState(false);
+    const [showConfirm,  setShowConfirm]    = useState(false);
+    const [isSuccess,    setIsSuccess]      = useState(false);
     const [selectedYearId, setSelectedYearId] = useState<number | null>(null);
 
     const {
@@ -77,9 +175,7 @@ export default function Register() {
         handleSubmit,
         setValue,
         formState: { errors },
-    } = useForm<RegisterForm>({
-        resolver: zodResolver(registerSchema),
-    });
+    } = useForm<RegisterForm>({ resolver: zodResolver(registerSchema) });
 
     const { data: academicYears = [], isLoading: loadingYears } = useQuery({
         queryKey: ['public-academic-years'],
@@ -99,23 +195,19 @@ export default function Register() {
     const registerMutation = useMutation({
         mutationFn: (data: RegisterForm) =>
             registerUser({
-                name: data.name,
-                email: data.email,
-                password: data.password,
+                name:                  data.name,
+                email:                 data.email,
+                password:              data.password,
                 password_confirmation: data.password_confirmation,
-                class_id: Number(data.class_id),
-                absen_number: Number(data.absen_number),
+                class_id:              Number(data.class_id),
+                absen_number:          Number(data.absen_number),
             }),
-        onSuccess: () => {
-            setIsSuccess(true);
-        },
+        onSuccess: () => setIsSuccess(true),
         onError: (error: unknown) => {
             if (error && typeof error === 'object' && 'response' in error) {
-                const resp = (
-                    error as {
-                        response: { data?: { message?: string; errors?: Record<string, string[]> } };
-                    }
-                ).response;
+                const resp = (error as {
+                    response: { data?: { message?: string; errors?: Record<string, string[]> } };
+                }).response;
                 const fieldErrors = resp.data?.errors;
                 if (fieldErrors) {
                     const first = Object.values(fieldErrors)[0]?.[0];
@@ -128,166 +220,136 @@ export default function Register() {
     });
 
     const onSubmit = (values: RegisterForm) => registerMutation.mutate(values);
+    const isPending = registerMutation.isPending;
 
-    // ── Success ───────────────────────────────────────────────────────────────
-
-    if (isSuccess) {
-        return (
-            <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 flex items-center justify-center p-4">
-                <div className="w-full max-w-sm text-center">
-                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30 mb-6">
-                        <CheckCircle className="w-8 h-8 text-green-600 dark:text-green-400" />
-                    </div>
-                    <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100 mb-2">
-                        Pendaftaran Berhasil!
-                    </h1>
-                    <p className="text-neutral-500 dark:text-neutral-400 mb-8 leading-relaxed">
-                        Akun kamu sedang menunggu persetujuan admin.
-                        Kamu bisa masuk setelah akun disetujui.
-                    </p>
-                    <Link
-                        to="/login"
-                        className="inline-flex items-center justify-center w-full h-9 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium transition"
-                    >
-                        Kembali ke Halaman Masuk
-                    </Link>
-                </div>
-            </div>
-        );
-    }
-
-    // ── Form ──────────────────────────────────────────────────────────────────
-
-    const inputClass =
-        'w-full rounded-lg border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800 px-3 py-2 text-sm text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 disabled:opacity-50 aria-invalid:border-red-400 aria-invalid:ring-2 aria-invalid:ring-red-400/20 transition';
+    if (isSuccess) return <SuccessScreen />;
 
     return (
-        <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 flex items-center justify-center p-4">
+        <div className="min-h-dvh flex items-center justify-center p-4 py-10">
             <div className="w-full max-w-sm">
 
-                {/* Logo */}
-                <div className="text-center mb-8">
-                    <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-indigo-600 shadow-lg mb-4">
-                        <Package className="w-7 h-7 text-white" />
+                {/* ── Logo & title ── */}
+                <div className="text-center mb-7 animate-fade-up">
+                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-3xl bg-primary shadow-glow-blue mb-5 animate-spring-in">
+                        <img src="/tkj.svg" alt="TKJ Logo" className="w-9 h-9 object-contain brightness-0 invert" />
                     </div>
-                    <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100 tracking-tight">
+                    <h1 className="text-2xl font-bold text-foreground tracking-tight">
                         Daftar Akun
                     </h1>
-                    <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
+                    <p className="text-sm text-muted-foreground mt-1.5">
                         Isi data diri kamu untuk mendaftar
                     </p>
                 </div>
 
-                {/* Card */}
-                <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 shadow-sm px-8 py-8">
+                {/* ── Glass Card ── */}
+                <div className="glass-card px-7 py-7 animate-fade-up delay-100">
                     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
 
                         {/* Nama Lengkap */}
-                        <div className="space-y-1.5">
-                            <label htmlFor="name" className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                                Nama Lengkap
-                            </label>
-                            <input
+                        <Field label="Nama Lengkap" htmlFor="name" error={errors.name?.message} delay="delay-100">
+                            <FrostedInput
                                 id="name"
                                 type="text"
                                 autoComplete="name"
                                 placeholder="Nama sesuai data sekolah"
-                                disabled={registerMutation.isPending}
+                                disabled={isPending}
+                                hasError={!!errors.name}
                                 {...register('name')}
-                                aria-invalid={!!errors.name}
-                                className={inputClass}
                             />
-                            {errors.name && <p className="text-xs text-red-500">{errors.name.message}</p>}
-                        </div>
+                        </Field>
 
                         {/* Email */}
-                        <div className="space-y-1.5">
-                            <label htmlFor="email" className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                                Email
-                            </label>
-                            <input
+                        <Field label="Email" htmlFor="email" error={errors.email?.message} delay="delay-150">
+                            <FrostedInput
                                 id="email"
                                 type="email"
                                 autoComplete="email"
                                 placeholder="nama@email.com"
-                                disabled={registerMutation.isPending}
+                                disabled={isPending}
+                                hasError={!!errors.email}
                                 {...register('email')}
-                                aria-invalid={!!errors.email}
-                                className={inputClass}
                             />
-                            {errors.email && <p className="text-xs text-red-500">{errors.email.message}</p>}
-                        </div>
+                        </Field>
 
                         {/* Password */}
-                        <div className="space-y-1.5">
-                            <label htmlFor="password" className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                                Password
-                            </label>
+                        <Field label="Password" htmlFor="password" error={errors.password?.message} delay="delay-150">
                             <div className="relative">
-                                <input
+                                <FrostedInput
                                     id="password"
                                     type={showPassword ? 'text' : 'password'}
                                     autoComplete="new-password"
                                     placeholder="Minimal 8 karakter"
-                                    disabled={registerMutation.isPending}
+                                    disabled={isPending}
+                                    hasError={!!errors.password}
+                                    className="pr-11"
                                     {...register('password')}
-                                    aria-invalid={!!errors.password}
-                                    className={inputClass + ' pr-10'}
                                 />
-                                <button type="button" tabIndex={-1}
+                                <button
+                                    type="button"
+                                    tabIndex={-1}
                                     onClick={() => setShowPassword((v) => !v)}
-                                    className="absolute inset-y-0 right-0 flex items-center px-3 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300"
-                                    aria-label={showPassword ? 'Sembunyikan password' : 'Tampilkan password'}>
+                                    className="absolute inset-y-0 right-0 flex items-center px-3.5 text-muted-foreground hover:text-foreground transition-colors duration-150"
+                                    aria-label={showPassword ? 'Sembunyikan password' : 'Tampilkan password'}
+                                >
                                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                                 </button>
                             </div>
-                            {errors.password && <p className="text-xs text-red-500">{errors.password.message}</p>}
-                        </div>
+                        </Field>
 
                         {/* Konfirmasi Password */}
-                        <div className="space-y-1.5">
-                            <label htmlFor="password_confirmation" className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                                Konfirmasi Password
-                            </label>
+                        <Field
+                            label="Konfirmasi Password"
+                            htmlFor="password_confirmation"
+                            error={errors.password_confirmation?.message}
+                            delay="delay-200"
+                        >
                             <div className="relative">
-                                <input
+                                <FrostedInput
                                     id="password_confirmation"
                                     type={showConfirm ? 'text' : 'password'}
                                     autoComplete="new-password"
                                     placeholder="Ulangi password"
-                                    disabled={registerMutation.isPending}
+                                    disabled={isPending}
+                                    hasError={!!errors.password_confirmation}
+                                    className="pr-11"
                                     {...register('password_confirmation')}
-                                    aria-invalid={!!errors.password_confirmation}
-                                    className={inputClass + ' pr-10'}
                                 />
-                                <button type="button" tabIndex={-1}
+                                <button
+                                    type="button"
+                                    tabIndex={-1}
                                     onClick={() => setShowConfirm((v) => !v)}
-                                    className="absolute inset-y-0 right-0 flex items-center px-3 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300"
-                                    aria-label={showConfirm ? 'Sembunyikan password' : 'Tampilkan password'}>
+                                    className="absolute inset-y-0 right-0 flex items-center px-3.5 text-muted-foreground hover:text-foreground transition-colors duration-150"
+                                    aria-label={showConfirm ? 'Sembunyikan password' : 'Tampilkan password'}
+                                >
                                     {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                                 </button>
                             </div>
-                            {errors.password_confirmation && (
-                                <p className="text-xs text-red-500">{errors.password_confirmation.message}</p>
-                            )}
+                        </Field>
+
+                        {/* Divider */}
+                        <div className="flex items-center gap-3 py-1 animate-fade-up delay-200">
+                            <div className="flex-1 h-px bg-border/60" />
+                            <span className="text-xs text-muted-foreground/70 font-medium select-none">Data Sekolah</span>
+                            <div className="flex-1 h-px bg-border/60" />
                         </div>
 
                         {/* Angkatan */}
-                        <div className="space-y-1.5">
-                            <label htmlFor="academic_year_id" className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                                Angkatan
-                            </label>
-                            <select
+                        <Field
+                            label="Angkatan"
+                            htmlFor="academic_year_id"
+                            error={errors.academic_year_id?.message}
+                            delay="delay-200"
+                        >
+                            <FrostedSelect
                                 id="academic_year_id"
-                                disabled={registerMutation.isPending || loadingYears}
+                                disabled={isPending || loadingYears}
+                                hasError={!!errors.academic_year_id}
                                 {...register('academic_year_id', {
                                     onChange: (e) => {
                                         setValue('class_id', '');
                                         setSelectedYearId(Number(e.target.value) || null);
                                     },
                                 })}
-                                aria-invalid={!!errors.academic_year_id}
-                                className={inputClass}
                             >
                                 <option value="">
                                     {loadingYears ? 'Memuat...' : '-- Pilih Angkatan --'}
@@ -297,28 +359,26 @@ export default function Register() {
                                         {year.name}
                                     </option>
                                 ))}
-                            </select>
-                            {errors.academic_year_id && (
-                                <p className="text-xs text-red-500">{errors.academic_year_id.message}</p>
-                            )}
-                        </div>
+                            </FrostedSelect>
+                        </Field>
 
                         {/* Kelas */}
-                        <div className="space-y-1.5">
-                            <label htmlFor="class_id" className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                                Kelas
-                            </label>
-                            <select
+                        <Field
+                            label="Kelas"
+                            htmlFor="class_id"
+                            error={errors.class_id?.message}
+                            delay="delay-300"
+                        >
+                            <FrostedSelect
                                 id="class_id"
                                 disabled={
-                                    registerMutation.isPending ||
+                                    isPending ||
                                     !selectedYearId ||
                                     loadingClasses ||
                                     (classesFetched && classes.length === 0)
                                 }
+                                hasError={!!errors.class_id}
                                 {...register('class_id')}
-                                aria-invalid={!!errors.class_id}
-                                className={inputClass}
                             >
                                 <option value="">
                                     {getClassPlaceholder(selectedYearId, loadingClasses, classes, classesFetched)}
@@ -328,65 +388,65 @@ export default function Register() {
                                         {cls.name}
                                     </option>
                                 ))}
-                            </select>
-                            {/* Pesan khusus saat angkatan dipilih tapi tidak ada kelas */}
+                            </FrostedSelect>
                             {selectedYearId && classesFetched && !loadingClasses && classes.length === 0 && (
-                                <p className="text-xs text-amber-600 dark:text-amber-400">
-                                    Belum ada kelas yang terdaftar untuk angkatan ini. Hubungi admin.
+                                <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                                    Belum ada kelas untuk angkatan ini. Hubungi admin.
                                 </p>
                             )}
-                            {errors.class_id && (
-                                <p className="text-xs text-red-500">{errors.class_id.message}</p>
-                            )}
-                        </div>
+                        </Field>
 
                         {/* Nomor Absen */}
-                        <div className="space-y-1.5">
-                            <label htmlFor="absen_number" className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                                Nomor Absen
-                            </label>
-                            <input
+                        <Field
+                            label="Nomor Absen"
+                            htmlFor="absen_number"
+                            error={errors.absen_number?.message}
+                            delay="delay-300"
+                        >
+                            <FrostedInput
                                 id="absen_number"
                                 type="number"
                                 min={1}
                                 max={99}
                                 placeholder="Contoh: 12"
-                                disabled={registerMutation.isPending}
+                                disabled={isPending}
+                                hasError={!!errors.absen_number}
                                 {...register('absen_number')}
-                                aria-invalid={!!errors.absen_number}
-                                className={inputClass}
                             />
-                            {errors.absen_number && (
-                                <p className="text-xs text-red-500">{errors.absen_number.message}</p>
-                            )}
-                        </div>
+                        </Field>
 
-                        <Button
-                            type="submit"
-                            disabled={registerMutation.isPending}
-                            className="w-full h-9 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition"
-                        >
-                            {registerMutation.isPending ? (
-                                <span className="flex items-center gap-2">
-                                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                                    Mendaftar...
-                                </span>
-                            ) : (
-                                'Daftar'
-                            )}
-                        </Button>
+                        {/* Submit */}
+                        <div className="pt-2 animate-fade-up delay-300">
+                            <Button
+                                type="submit"
+                                size="lg"
+                                loading={isPending}
+                                disabled={isPending}
+                                className="w-full gap-2"
+                            >
+                                {!isPending && (
+                                    <>
+                                        Daftar Sekarang
+                                        <ArrowRight className="w-4 h-4" />
+                                    </>
+                                )}
+                                {isPending && 'Mendaftar...'}
+                            </Button>
+                        </div>
                     </form>
 
-                    <p className="text-center text-sm text-neutral-500 dark:text-neutral-400 mt-5">
+                    {/* Login link */}
+                    <p className="text-center text-sm text-muted-foreground mt-5 animate-fade-up delay-300">
                         Sudah punya akun?{' '}
-                        <Link to="/login" className="text-indigo-600 dark:text-indigo-400 font-medium hover:underline">
+                        <Link to="/login" className="text-primary font-semibold hover:underline underline-offset-2 transition-all">
                             Masuk
                         </Link>
                     </p>
                 </div>
 
-                <p className="text-center text-xs text-neutral-400 dark:text-neutral-600 mt-6">
-                    Jurusan Teknik Komputer dan Jaringan
+                {/* Footer */}
+                <p className="text-center text-xs text-muted-foreground/60 mt-6 animate-fade-up delay-500">
+                    Jurusan Teknik Komputer dan Jaringan · SMKN 2 Singosari
                 </p>
             </div>
         </div>

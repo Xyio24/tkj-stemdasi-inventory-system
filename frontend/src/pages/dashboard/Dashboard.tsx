@@ -56,15 +56,13 @@ interface StatCardProps {
 
 function StatCard({ label, value, icon, colorClass, note }: StatCardProps) {
     return (
-        <div className="bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800 p-5 flex items-start gap-4 shadow-sm">
-            <div className={`flex-shrink-0 w-11 h-11 rounded-lg flex items-center justify-center ${colorClass}`}>
+        <div className="bg-white rounded-2xl border border-neutral-200 p-5 shadow-sm dark:bg-neutral-900 dark:border-neutral-800">
+            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${colorClass}`}>
                 {icon}
             </div>
-            <div className="min-w-0">
-                <p className="text-sm text-neutral-500 dark:text-neutral-400 truncate">{label}</p>
-                <p className="text-2xl font-bold mt-0.5">{value.toLocaleString('id-ID')}</p>
-                {note && <p className="text-xs text-neutral-400 dark:text-neutral-500 mt-0.5">{note}</p>}
-            </div>
+            <p className="text-2xl font-bold text-neutral-900 dark:text-neutral-100 mt-1">{value.toLocaleString('id-ID')}</p>
+            <p className="text-sm text-neutral-500 dark:text-neutral-400">{label}</p>
+            {note && <p className="text-xs text-neutral-400 dark:text-neutral-500 mt-0.5">{note}</p>}
         </div>
     );
 }
@@ -75,10 +73,10 @@ function BorrowingsChart({ data }: { data: ChartData[] }) {
     const max = Math.max(...data.map(d => d.count), 1);
 
     return (
-        <div className="bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800 p-5 shadow-sm">
+        <div className="bg-white rounded-2xl border border-neutral-200 p-6 shadow-sm dark:bg-neutral-900 dark:border-neutral-800">
             <div className="flex items-center gap-2 mb-4">
                 <TrendingUp className="w-4 h-4 text-indigo-500" />
-                <h3 className="font-semibold text-sm">Peminjaman 7 Hari Terakhir</h3>
+                <h3 className="font-semibold text-sm text-neutral-900 dark:text-neutral-100">Peminjaman 7 Hari Terakhir</h3>
             </div>
 
             {data.every(d => d.count === 0) ? (
@@ -116,15 +114,15 @@ function RecentBorrowingsTable({ data }: { data: RecentBorrowing[] }) {
     const navigate = useNavigate();
 
     return (
-        <div className="bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800 shadow-sm overflow-hidden">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-neutral-100 dark:border-neutral-800">
+        <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm overflow-hidden dark:bg-neutral-900 dark:border-neutral-800">
+            <div className="flex items-center justify-between px-6 py-5 border-b border-neutral-100 dark:border-neutral-800">
                 <div className="flex items-center gap-2">
                     <ClipboardList className="w-4 h-4 text-indigo-500" />
-                    <h3 className="font-semibold text-sm">Peminjaman Terbaru</h3>
+                    <h3 className="font-semibold text-sm text-neutral-900 dark:text-neutral-100">Peminjaman Terbaru</h3>
                 </div>
                 <button
                     onClick={() => navigate('/dashboard/borrowings')}
-                    className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1"
+                    className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1 transition-all duration-200 ease-out active:scale-[0.97]"
                 >
                     Lihat semua <ArrowRight className="w-3 h-3" />
                 </button>
@@ -136,38 +134,38 @@ function RecentBorrowingsTable({ data }: { data: RecentBorrowing[] }) {
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                         <thead>
-                            <tr className="bg-neutral-50 dark:bg-neutral-800/50 text-neutral-500 dark:text-neutral-400">
-                                <th className="text-left px-5 py-3 font-medium">Kode</th>
-                                <th className="text-left px-5 py-3 font-medium">Peminjam</th>
-                                <th className="text-left px-5 py-3 font-medium">Tgl Pinjam</th>
-                                <th className="text-left px-5 py-3 font-medium">Status</th>
-                                <th className="text-right px-5 py-3 font-medium">Barang</th>
+                            <tr className="bg-neutral-50 border-b border-neutral-100 dark:bg-neutral-800/50 dark:border-neutral-800">
+                                <th className="px-6 py-3 text-xs font-semibold text-neutral-500 uppercase tracking-wider text-left dark:text-neutral-400">Kode</th>
+                                <th className="px-6 py-3 text-xs font-semibold text-neutral-500 uppercase tracking-wider text-left dark:text-neutral-400">Peminjam</th>
+                                <th className="px-6 py-3 text-xs font-semibold text-neutral-500 uppercase tracking-wider text-left dark:text-neutral-400">Tgl Pinjam</th>
+                                <th className="px-6 py-3 text-xs font-semibold text-neutral-500 uppercase tracking-wider text-left dark:text-neutral-400">Status</th>
+                                <th className="px-6 py-3 text-xs font-semibold text-neutral-500 uppercase tracking-wider text-right dark:text-neutral-400">Barang</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
+                        <tbody>
                             {data.map(b => {
                                 const status = STATUS_MAP[b.status] ?? { label: b.status, cls: '' };
                                 return (
                                     <tr
                                         key={b.id}
                                         onClick={() => navigate(`/dashboard/borrowings/${b.id}`)}
-                                        className="hover:bg-neutral-50 dark:hover:bg-neutral-800/40 cursor-pointer transition-colors"
+                                        className="border-b border-neutral-50 hover:bg-neutral-50 transition-colors duration-150 cursor-pointer dark:border-neutral-800 dark:hover:bg-neutral-800/40"
                                     >
-                                        <td className="px-5 py-3 font-mono text-xs font-medium text-indigo-600 dark:text-indigo-400">
+                                        <td className="px-6 py-4 text-sm font-mono text-xs font-medium text-indigo-600 dark:text-indigo-400">
                                             {b.code}
                                         </td>
-                                        <td className="px-5 py-3 text-neutral-700 dark:text-neutral-300">
+                                        <td className="px-6 py-4 text-sm text-neutral-700 dark:text-neutral-300">
                                             {b.user?.name ?? '-'}
                                         </td>
-                                        <td className="px-5 py-3 text-neutral-500">
+                                        <td className="px-6 py-4 text-sm text-neutral-500">
                                             {formatDate(b.borrow_date)}
                                         </td>
-                                        <td className="px-5 py-3">
+                                        <td className="px-6 py-4 text-sm">
                                             <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${status.cls}`}>
                                                 {status.label}
                                             </span>
                                         </td>
-                                        <td className="px-5 py-3 text-right text-neutral-500">
+                                        <td className="px-6 py-4 text-sm text-right text-neutral-500">
                                             {b.items_count} item
                                         </td>
                                     </tr>
@@ -185,10 +183,10 @@ function RecentBorrowingsTable({ data }: { data: RecentBorrowing[] }) {
 
 function ActivityFeed({ data }: { data: RecentActivity[] }) {
     return (
-        <div className="bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800 shadow-sm overflow-hidden">
-            <div className="flex items-center gap-2 px-5 py-4 border-b border-neutral-100 dark:border-neutral-800">
+        <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm overflow-hidden dark:bg-neutral-900 dark:border-neutral-800">
+            <div className="flex items-center gap-2 px-6 py-5 border-b border-neutral-100 dark:border-neutral-800">
                 <Activity className="w-4 h-4 text-indigo-500" />
-                <h3 className="font-semibold text-sm">Aktivitas Terbaru</h3>
+                <h3 className="font-semibold text-sm text-neutral-900 dark:text-neutral-100">Aktivitas Terbaru</h3>
             </div>
 
             {data.length === 0 ? (
@@ -196,7 +194,7 @@ function ActivityFeed({ data }: { data: RecentActivity[] }) {
             ) : (
                 <ul className="divide-y divide-neutral-100 dark:divide-neutral-800">
                     {data.map((log, idx) => (
-                        <li key={idx} className="px-5 py-3 flex gap-3">
+                        <li key={idx} className="px-6 py-3 flex gap-3">
                             <div className="w-2 h-2 rounded-full bg-indigo-400 flex-shrink-0 mt-1.5" />
                             <div className="min-w-0">
                                 <p className="text-sm text-neutral-700 dark:text-neutral-300 leading-snug">{log.description}</p>
@@ -215,7 +213,7 @@ function ActivityFeed({ data }: { data: RecentActivity[] }) {
 // ─── Skeleton ─────────────────────────────────────────────────────────────────
 
 function SkeletonBlock({ className }: { className?: string }) {
-    return <div className={`animate-pulse bg-neutral-200 dark:bg-neutral-800 rounded-lg ${className}`} />;
+    return <div className={`animate-pulse bg-neutral-200 dark:bg-neutral-800 rounded-2xl ${className}`} />;
 }
 
 function DashboardSkeleton() {
@@ -223,7 +221,7 @@ function DashboardSkeleton() {
         <div className="space-y-6">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {Array.from({ length: 7 }).map((_, i) => (
-                    <SkeletonBlock key={i} className="h-24" />
+                    <SkeletonBlock key={i} className="h-28" />
                 ))}
             </div>
             <SkeletonBlock className="h-48" />
@@ -253,10 +251,14 @@ export default function Dashboard() {
         return (
             <div className="space-y-6">
                 {/* Welcome banner */}
-                <div className="bg-indigo-600 rounded-2xl px-6 py-8 text-white shadow-md">
-                    <p className="text-sm font-medium text-indigo-200 mb-2">Selamat datang 👋</p>
-                    <h2 className="text-2xl font-bold">{user?.name}</h2>
-                    <p className="text-indigo-200 text-sm mt-2">
+                <div className="bg-gradient-to-br from-indigo-600 to-indigo-500 rounded-3xl px-8 py-10 text-white shadow-lg overflow-hidden relative">
+                    {/* Decorative circles */}
+                    <div className="absolute -right-8 -top-8 w-40 h-40 rounded-full bg-white/10" />
+                    <div className="absolute -right-4 -bottom-12 w-56 h-56 rounded-full bg-white/5" />
+
+                    <p className="relative text-sm font-medium text-indigo-200 mb-2">Selamat datang 👋</p>
+                    <h2 className="relative text-2xl font-bold tracking-tight">{user?.name}</h2>
+                    <p className="relative text-indigo-200 text-sm mt-2">
                         Sistem Inventaris & Peminjaman Lab TKJ — SMKN 2 Singosari
                     </p>
                 </div>
@@ -265,42 +267,42 @@ export default function Dashboard() {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <Link
                         to="/dashboard/borrowings/create"
-                        className="group bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800 p-5 hover:border-indigo-400 dark:hover:border-indigo-600 hover:shadow-sm transition-all"
+                        className="group bg-white rounded-2xl border border-neutral-200 p-6 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer dark:bg-neutral-900 dark:border-neutral-800"
                     >
-                        <div className="w-10 h-10 rounded-lg bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center mb-3">
+                        <div className="w-12 h-12 rounded-2xl bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center mb-4">
                             <ClipboardList className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
                         </div>
                         <p className="font-semibold text-sm text-neutral-900 dark:text-neutral-100">Buat Peminjaman</p>
-                        <p className="text-xs text-neutral-500 mt-0.5">Ajukan permohonan peminjaman barang</p>
-                        <span className="inline-flex items-center gap-1 text-xs text-indigo-600 dark:text-indigo-400 mt-3 font-medium group-hover:underline">
+                        <p className="text-xs text-neutral-400 mt-1">Ajukan permohonan peminjaman barang</p>
+                        <span className="inline-flex items-center gap-1 text-xs text-indigo-600 dark:text-indigo-400 font-semibold mt-4 group-hover:gap-2 transition-all duration-150">
                             Mulai <ArrowRight className="w-3 h-3" />
                         </span>
                     </Link>
 
                     <Link
                         to="/dashboard/borrowings"
-                        className="group bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800 p-5 hover:border-indigo-400 dark:hover:border-indigo-600 hover:shadow-sm transition-all"
+                        className="group bg-white rounded-2xl border border-neutral-200 p-6 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer dark:bg-neutral-900 dark:border-neutral-800"
                     >
-                        <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center mb-3">
+                        <div className="w-12 h-12 rounded-2xl bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center mb-4">
                             <Clock className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                         </div>
                         <p className="font-semibold text-sm text-neutral-900 dark:text-neutral-100">Riwayat Peminjaman</p>
-                        <p className="text-xs text-neutral-500 mt-0.5">Pantau status peminjaman aktif</p>
-                        <span className="inline-flex items-center gap-1 text-xs text-indigo-600 dark:text-indigo-400 mt-3 font-medium group-hover:underline">
+                        <p className="text-xs text-neutral-400 mt-1">Pantau status peminjaman aktif</p>
+                        <span className="inline-flex items-center gap-1 text-xs text-indigo-600 dark:text-indigo-400 font-semibold mt-4 group-hover:gap-2 transition-all duration-150">
                             Lihat <ArrowRight className="w-3 h-3" />
                         </span>
                     </Link>
 
                     <Link
                         to="/dashboard/guide"
-                        className="group bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800 p-5 hover:border-indigo-400 dark:hover:border-indigo-600 hover:shadow-sm transition-all"
+                        className="group bg-white rounded-2xl border border-neutral-200 p-6 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer dark:bg-neutral-900 dark:border-neutral-800"
                     >
-                        <div className="w-10 h-10 rounded-lg bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center mb-3">
+                        <div className="w-12 h-12 rounded-2xl bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center mb-4">
                             <Package className="w-5 h-5 text-amber-600 dark:text-amber-400" />
                         </div>
                         <p className="font-semibold text-sm text-neutral-900 dark:text-neutral-100">Panduan Pengguna</p>
-                        <p className="text-xs text-neutral-500 mt-0.5">Cara pakai sistem step by step</p>
-                        <span className="inline-flex items-center gap-1 text-xs text-indigo-600 dark:text-indigo-400 mt-3 font-medium group-hover:underline">
+                        <p className="text-xs text-neutral-400 mt-1">Cara pakai sistem step by step</p>
+                        <span className="inline-flex items-center gap-1 text-xs text-indigo-600 dark:text-indigo-400 font-semibold mt-4 group-hover:gap-2 transition-all duration-150">
                             Baca <ArrowRight className="w-3 h-3" />
                         </span>
                     </Link>
@@ -313,11 +315,11 @@ export default function Dashboard() {
 
     if (isError) {
         return (
-            <div className="bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800 p-8 shadow-sm text-center space-y-3">
+            <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 px-6 py-8 shadow-sm text-center space-y-3">
                 <p className="text-red-500 font-medium">Gagal memuat data dashboard.</p>
                 <button
                     onClick={() => refetch()}
-                    className="px-4 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                    className="px-4 py-2 text-sm bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all duration-200 ease-out active:scale-[0.97]"
                 >
                     Coba Lagi
                 </button>
@@ -333,44 +335,44 @@ export default function Dashboard() {
         {
             label: 'Total Barang',
             value: stats.total_items,
-            icon: <Package className="w-5 h-5 text-blue-600" />,
+            icon: <Package className="w-6 h-6 text-blue-600" />,
             colorClass: 'bg-blue-100 dark:bg-blue-900/30',
         },
         {
             label: 'Kategori',
             value: stats.total_categories,
-            icon: <Tag className="w-5 h-5 text-violet-600" />,
+            icon: <Tag className="w-6 h-6 text-violet-600" />,
             colorClass: 'bg-violet-100 dark:bg-violet-900/30',
         },
         {
             label: 'Total User',
             value: stats.total_users,
-            icon: <Users className="w-5 h-5 text-cyan-600" />,
+            icon: <Users className="w-6 h-6 text-cyan-600" />,
             colorClass: 'bg-cyan-100 dark:bg-cyan-900/30',
         },
         {
             label: 'Sedang Dipinjam',
             value: stats.active_borrowings,
-            icon: <ClipboardList className="w-5 h-5 text-indigo-600" />,
+            icon: <ClipboardList className="w-6 h-6 text-indigo-600" />,
             colorClass: 'bg-indigo-100 dark:bg-indigo-900/30',
         },
         {
             label: 'Pending Approval',
             value: stats.pending_approvals,
-            icon: <Clock className="w-5 h-5 text-yellow-600" />,
+            icon: <Clock className="w-6 h-6 text-yellow-600" />,
             colorClass: 'bg-yellow-100 dark:bg-yellow-900/30',
             note: 'Menunggu disetujui',
         },
         {
             label: 'Proses Kembali',
             value: stats.returning_count,
-            icon: <RotateCcw className="w-5 h-5 text-purple-600" />,
+            icon: <RotateCcw className="w-6 h-6 text-purple-600" />,
             colorClass: 'bg-purple-100 dark:bg-purple-900/30',
         },
         {
             label: 'Stok Menipis',
             value: stats.items_low_stock,
-            icon: <AlertTriangle className="w-5 h-5 text-red-600" />,
+            icon: <AlertTriangle className="w-6 h-6 text-red-600" />,
             colorClass: 'bg-red-100 dark:bg-red-900/30',
             note: 'Di bawah stok minimum',
         },
@@ -380,7 +382,7 @@ export default function Dashboard() {
         <div className="space-y-6">
             {/* Header */}
             <div>
-                <h1 className="text-xl font-semibold">Dashboard</h1>
+                <h1 className="text-2xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100">Dashboard</h1>
                 <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">
                     Ringkasan sistem inventaris & peminjaman TKJ
                 </p>
