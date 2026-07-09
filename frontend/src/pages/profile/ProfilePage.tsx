@@ -216,7 +216,7 @@ function EditProfileSection({ defaultName, defaultEmail }: { defaultName: string
 
     return (
         <Section title="Informasi Profil">
-            <form onSubmit={handleSubmit((d) => mutation.mutate(d))} className="space-y-4 max-w-md">
+            <form onSubmit={handleSubmit((d) => mutation.mutate(d))} className="space-y-4">
                 <div className="space-y-1.5">
                     <label htmlFor="p-name" className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Nama Lengkap</label>
                     <input id="p-name" type="text" disabled={mutation.isPending} {...register('name')} aria-invalid={!!errors.name} className={inputCls} />
@@ -292,7 +292,7 @@ function ChangePasswordSection() {
 
     return (
         <Section title="Ganti Password">
-            <form onSubmit={handleSubmit((d) => mutation.mutate(d))} className="space-y-4 max-w-md">
+            <form onSubmit={handleSubmit((d) => mutation.mutate(d))} className="space-y-4">
                 <PasswordInput id="pw-current" label="Password Saat Ini"
                     show={showCurrent} toggle={() => setShowCurrent((v) => !v)}
                     reg={register('current_password')} err={errors.current_password?.message} />
@@ -352,7 +352,7 @@ function GoogleBindingSection({ googleId }: { googleId: string | null }) {
 
     return (
         <Section title="Akun Google">
-            <div className="flex items-center justify-between max-w-md">
+            <div className="flex items-center justify-between">
                 <div>
                     {googleId ? (
                         <>
@@ -425,7 +425,7 @@ export default function ProfilePage() {
 
     if (isLoading || !user) {
         return (
-            <div className="space-y-5">
+            <div className="space-y-5 max-w-2xl mx-auto w-full">
                 <div className="h-6 w-40 bg-neutral-200 dark:bg-neutral-800 rounded animate-pulse" />
                 {[1, 2, 3, 4].map((i) => (
                     <div key={i} className="bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800 h-32 animate-pulse" />
@@ -435,15 +435,16 @@ export default function ProfilePage() {
     }
 
     return (
-        <div className="space-y-5 max-w-2xl">
+        <div className="space-y-5">
+            {/* Page title */}
             <div>
                 <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">Profil Saya</h1>
                 <p className="text-sm text-neutral-500 mt-0.5">Kelola informasi akun dan keamanan</p>
             </div>
 
-            {/* Info readonly — kelas & angkatan */}
+            {/* Info bar — full width, hanya tampil jika ada data kelas */}
             {user.student_class && (
-                <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-xl border border-neutral-200 dark:border-neutral-700 px-5 py-3 flex gap-6 text-sm">
+                <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-xl border border-neutral-200 dark:border-neutral-700 px-5 py-3 flex flex-wrap gap-6 text-sm">
                     <div>
                         <span className="text-neutral-400 text-xs">Kelas</span>
                         <p className="font-medium text-neutral-900 dark:text-neutral-100 mt-0.5">
@@ -469,10 +470,20 @@ export default function ProfilePage() {
                 </div>
             )}
 
-            <AvatarSection avatarUrl={user.avatar_url} name={user.name} email={user.email} />
-            <EditProfileSection defaultName={user.name} defaultEmail={user.email} />
-            <ChangePasswordSection />
-            <GoogleBindingSection googleId={user.google_id} />
+            {/* 2-column grid di desktop, stack di mobile */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
+                {/* Kolom kiri — Foto Profil + Informasi Profil */}
+                <div className="space-y-5">
+                    <AvatarSection avatarUrl={user.avatar_url} name={user.name} email={user.email} />
+                    <EditProfileSection defaultName={user.name} defaultEmail={user.email} />
+                </div>
+
+                {/* Kolom kanan — Ganti Password + Akun Google */}
+                <div className="space-y-5">
+                    <ChangePasswordSection />
+                    <GoogleBindingSection googleId={user.google_id} />
+                </div>
+            </div>
         </div>
     );
 }

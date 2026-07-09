@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { getDashboard } from '@/api/dashboard';
 import { useAuthStore } from '@/store/authStore';
 import type { ChartData, RecentBorrowing, RecentActivity } from '@/api/dashboard';
@@ -248,14 +248,63 @@ export default function Dashboard() {
         staleTime: 60_000,
     });
 
-    // Siswa: simple welcome view (dashboard data is guru/admin only)
+    // Siswa: welcome view dengan shortcut ke fitur utama
     if (!isGuruOrAdmin) {
         return (
-            <div className="bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800 p-8 shadow-sm">
-                <h2 className="text-2xl font-semibold mb-2">Selamat Datang, {user?.name}!</h2>
-                <p className="text-neutral-500 dark:text-neutral-400">
-                    Gunakan menu <strong>Peminjaman</strong> untuk mengajukan peminjaman barang inventaris TKJ.
-                </p>
+            <div className="space-y-6">
+                {/* Welcome banner */}
+                <div className="bg-indigo-600 rounded-2xl px-6 py-8 text-white shadow-md">
+                    <p className="text-sm font-medium text-indigo-200 mb-2">Selamat datang 👋</p>
+                    <h2 className="text-2xl font-bold">{user?.name}</h2>
+                    <p className="text-indigo-200 text-sm mt-2">
+                        Sistem Inventaris & Peminjaman Lab TKJ — SMKN 2 Singosari
+                    </p>
+                </div>
+
+                {/* Shortcut cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <Link
+                        to="/dashboard/borrowings/create"
+                        className="group bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800 p-5 hover:border-indigo-400 dark:hover:border-indigo-600 hover:shadow-sm transition-all"
+                    >
+                        <div className="w-10 h-10 rounded-lg bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center mb-3">
+                            <ClipboardList className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                        </div>
+                        <p className="font-semibold text-sm text-neutral-900 dark:text-neutral-100">Buat Peminjaman</p>
+                        <p className="text-xs text-neutral-500 mt-0.5">Ajukan permohonan peminjaman barang</p>
+                        <span className="inline-flex items-center gap-1 text-xs text-indigo-600 dark:text-indigo-400 mt-3 font-medium group-hover:underline">
+                            Mulai <ArrowRight className="w-3 h-3" />
+                        </span>
+                    </Link>
+
+                    <Link
+                        to="/dashboard/borrowings"
+                        className="group bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800 p-5 hover:border-indigo-400 dark:hover:border-indigo-600 hover:shadow-sm transition-all"
+                    >
+                        <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center mb-3">
+                            <Clock className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                        </div>
+                        <p className="font-semibold text-sm text-neutral-900 dark:text-neutral-100">Riwayat Peminjaman</p>
+                        <p className="text-xs text-neutral-500 mt-0.5">Pantau status peminjaman aktif</p>
+                        <span className="inline-flex items-center gap-1 text-xs text-indigo-600 dark:text-indigo-400 mt-3 font-medium group-hover:underline">
+                            Lihat <ArrowRight className="w-3 h-3" />
+                        </span>
+                    </Link>
+
+                    <Link
+                        to="/dashboard/guide"
+                        className="group bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800 p-5 hover:border-indigo-400 dark:hover:border-indigo-600 hover:shadow-sm transition-all"
+                    >
+                        <div className="w-10 h-10 rounded-lg bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center mb-3">
+                            <Package className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                        </div>
+                        <p className="font-semibold text-sm text-neutral-900 dark:text-neutral-100">Panduan Pengguna</p>
+                        <p className="text-xs text-neutral-500 mt-0.5">Cara pakai sistem step by step</p>
+                        <span className="inline-flex items-center gap-1 text-xs text-indigo-600 dark:text-indigo-400 mt-3 font-medium group-hover:underline">
+                            Baca <ArrowRight className="w-3 h-3" />
+                        </span>
+                    </Link>
+                </div>
             </div>
         );
     }

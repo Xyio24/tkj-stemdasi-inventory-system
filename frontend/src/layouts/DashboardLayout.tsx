@@ -18,6 +18,7 @@ import {
     LogOut,
     ChevronRight,
     UserCircle,
+    BookOpen,
 } from 'lucide-react';
 
 // ─── Nav structure ────────────────────────────────────────────────────────────
@@ -77,7 +78,8 @@ const NAV_GROUPS: NavGroup[] = [
     {
         label: 'Akun',
         items: [
-            { to: '/dashboard/profile', label: 'Profil Saya', icon: <UserCircle className="w-4 h-4" /> },
+            { to: '/dashboard/profile', label: 'Profil Saya',      icon: <UserCircle className="w-4 h-4" /> },
+            { to: '/dashboard/guide',   label: 'Panduan Pengguna', icon: <BookOpen className="w-4 h-4" /> },
         ],
     },
 ];

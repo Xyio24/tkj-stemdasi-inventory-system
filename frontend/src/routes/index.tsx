@@ -17,6 +17,7 @@ import BorrowingDetail from '@/pages/borrowing/BorrowingDetail';
 import BorrowingReportPage from '@/pages/report/BorrowingReportPage';
 import ReturnReportPage from '@/pages/report/ReturnReportPage';
 import InventoryReportPage from '@/pages/report/InventoryReportPage';
+import UserGuidePage from '@/pages/dashboard/UserGuidePage';
 import ProfilePage from '@/pages/profile/ProfilePage';
 
 
@@ -102,6 +103,10 @@ export const router = createBrowserRouter([
             {
                 path: 'profile',
                 element: <ProfilePage />,
+            },
+            {
+                path: 'guide',
+                element: <UserGuidePage />,
             },
         ],
     },
