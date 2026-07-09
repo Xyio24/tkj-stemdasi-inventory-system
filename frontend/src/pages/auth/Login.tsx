@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { Package, Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
 import { loginWithGoogle } from '@/api/auth';
 import { useAuthStore } from '@/store/authStore';
 import { Button } from '@/components/ui/button';
@@ -106,7 +106,7 @@ export default function Login() {
                 {/* Logo & title */}
                 <div className="text-center mb-8">
                     <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-indigo-600 shadow-lg mb-4">
-                        <Package className="w-7 h-7 text-white" />
+                        <img src="/tkj.svg" alt="TKJ Logo" className="w-9 h-9 object-contain" />
                     </div>
                     <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100 tracking-tight">
                         Inventory TKJ

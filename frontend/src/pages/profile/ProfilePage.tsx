@@ -10,6 +10,7 @@ import { bindGoogle, unbindGoogle } from '@/api/auth';
 import { useAuthStore } from '@/store/authStore';
 import { Button } from '@/components/ui/button';
 import GeneratedAvatar from '@/components/common/GeneratedAvatar';
+import ImageCropModal from '@/components/common/ImageCropModal';
 import { GoogleLogin } from '@react-oauth/google';
 
 // ─── Schemas ──────────────────────────────────────────────────────────────────
@@ -58,6 +59,9 @@ function AvatarSection({ avatarUrl, name, email }: { avatarUrl: string | null; n
     const updateUser  = useAuthStore((s) => s.updateUser);
     const fileRef     = useRef<HTMLInputElement>(null);
 
+    // State untuk crop modal
+    const [cropSrc, setCropSrc]   = useState<string | null>(null);
+
     const uploadMutation = useMutation({
         mutationFn: (file: File) => uploadAvatar(file),
         onSuccess: (res) => {
@@ -80,69 +84,104 @@ function AvatarSection({ avatarUrl, name, email }: { avatarUrl: string | null; n
 
     const isBusy = uploadMutation.isPending || deleteMutation.isPending;
 
+    /** User pilih file → buka modal crop */
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        // Buat object URL untuk ditampilkan di crop modal
+        const objectUrl = URL.createObjectURL(file);
+        setCropSrc(objectUrl);
+        // Reset input agar onChange trigger lagi kalau user pilih file yang sama
+        e.target.value = '';
+    };
+
+    /** User konfirmasi crop → upload file hasil crop */
+    const handleCropConfirm = (croppedFile: File) => {
+        if (cropSrc) {
+            URL.revokeObjectURL(cropSrc);
+            setCropSrc(null);
+        }
+        uploadMutation.mutate(croppedFile);
+    };
+
+    /** User batal crop */
+    const handleCropCancel = () => {
+        if (cropSrc) {
+            URL.revokeObjectURL(cropSrc);
+            setCropSrc(null);
+        }
+    };
+
     return (
-        <Section title="Foto Profil">
-            <div className="flex items-center gap-5">
-                {/* Avatar display */}
-                <div className="relative shrink-0">
-                    {avatarUrl ? (
-                        <img
-                            src={avatarUrl}
-                            alt={name}
-                            className="w-20 h-20 rounded-full object-cover"
+        <>
+            <Section title="Foto Profil">
+                <div className="flex items-center gap-5">
+                    {/* Avatar display */}
+                    <div className="relative shrink-0">
+                        {avatarUrl ? (
+                            <img
+                                src={avatarUrl}
+                                alt={name}
+                                className="w-20 h-20 rounded-full object-cover"
+                            />
+                        ) : (
+                            <GeneratedAvatar name={name} email={email} size={80} />
+                        )}
+                        {isBusy && (
+                            <div className="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center">
+                                <Loader2 className="w-5 h-5 text-white animate-spin" />
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Actions */}
+                    <div className="space-y-2">
+                        <input
+                            ref={fileRef}
+                            type="file"
+                            accept="image/jpeg,image/jpg,image/png,image/webp"
+                            className="hidden"
+                            onChange={handleFileChange}
                         />
-                    ) : (
-                        <GeneratedAvatar name={name} email={email} size={80} />
-                    )}
-                    {isBusy && (
-                        <div className="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center">
-                            <Loader2 className="w-5 h-5 text-white animate-spin" />
-                        </div>
-                    )}
-                </div>
-
-                {/* Actions */}
-                <div className="space-y-2">
-                    <input
-                        ref={fileRef}
-                        type="file"
-                        accept="image/jpeg,image/jpg,image/png,image/webp"
-                        className="hidden"
-                        onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) uploadMutation.mutate(file);
-                            e.target.value = '';
-                        }}
-                    />
-                    <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        disabled={isBusy}
-                        onClick={() => fileRef.current?.click()}
-                        className="flex items-center gap-2"
-                    >
-                        <Camera className="w-3.5 h-3.5" />
-                        {avatarUrl ? 'Ganti Foto' : 'Upload Foto'}
-                    </Button>
-
-                    {avatarUrl && (
                         <Button
                             type="button"
-                            variant="destructive"
+                            variant="outline"
                             size="sm"
                             disabled={isBusy}
-                            onClick={() => deleteMutation.mutate()}
+                            onClick={() => fileRef.current?.click()}
                             className="flex items-center gap-2"
                         >
-                            <Trash2 className="w-3.5 h-3.5" />
-                            Hapus Foto
+                            <Camera className="w-3.5 h-3.5" />
+                            {avatarUrl ? 'Ganti Foto' : 'Upload Foto'}
                         </Button>
-                    )}
-                    <p className="text-xs text-neutral-400">JPEG, PNG, WebP — maks. 5 MB</p>
+
+                        {avatarUrl && (
+                            <Button
+                                type="button"
+                                variant="destructive"
+                                size="sm"
+                                disabled={isBusy}
+                                onClick={() => deleteMutation.mutate()}
+                                className="flex items-center gap-2"
+                            >
+                                <Trash2 className="w-3.5 h-3.5" />
+                                Hapus Foto
+                            </Button>
+                        )}
+                        <p className="text-xs text-neutral-400">JPEG, PNG, WebP — maks. 5 MB</p>
+                    </div>
                 </div>
-            </div>
-        </Section>
+            </Section>
+
+            {/* Crop Modal — render di luar Section agar tidak ter-clip */}
+            {cropSrc && (
+                <ImageCropModal
+                    imageSrc={cropSrc}
+                    onConfirm={handleCropConfirm}
+                    onCancel={handleCropCancel}
+                />
+            )}
+        </>
     );
 }
 

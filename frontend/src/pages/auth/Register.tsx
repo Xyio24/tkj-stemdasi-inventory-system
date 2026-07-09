@@ -50,6 +50,20 @@ const fetchClassesByYear = async (academicYearId: number): Promise<StudentClass[
     return res.data.data ?? [];
 };
 
+// ─── Helper: teks placeholder dropdown kelas ─────────────────────────────────
+
+function getClassPlaceholder(
+    selectedYearId: number | null,
+    loadingClasses: boolean,
+    classes: StudentClass[],
+    isFetched: boolean,
+): string {
+    if (!selectedYearId) return '-- Pilih angkatan dulu --';
+    if (loadingClasses) return 'Memuat kelas...';
+    if (isFetched && classes.length === 0) return 'Tidak ada kelas untuk angkatan ini';
+    return '-- Pilih Kelas --';
+}
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function Register() {
@@ -72,7 +86,11 @@ export default function Register() {
         queryFn: fetchActiveAcademicYears,
     });
 
-    const { data: classes = [], isLoading: loadingClasses } = useQuery({
+    const {
+        data: classes = [],
+        isLoading: loadingClasses,
+        isFetched: classesFetched,
+    } = useQuery({
         queryKey: ['public-classes', selectedYearId],
         queryFn: () => fetchClassesByYear(selectedYearId!),
         enabled: !!selectedYearId,
@@ -262,12 +280,12 @@ export default function Register() {
                             <select
                                 id="academic_year_id"
                                 disabled={registerMutation.isPending || loadingYears}
-                                {...register('academic_year_id')}
-                                onChange={(e) => {
-                                    setValue('academic_year_id', e.target.value);
-                                    setValue('class_id', '');
-                                    setSelectedYearId(Number(e.target.value) || null);
-                                }}
+                                {...register('academic_year_id', {
+                                    onChange: (e) => {
+                                        setValue('class_id', '');
+                                        setSelectedYearId(Number(e.target.value) || null);
+                                    },
+                                })}
                                 aria-invalid={!!errors.academic_year_id}
                                 className={inputClass}
                             >
@@ -292,17 +310,18 @@ export default function Register() {
                             </label>
                             <select
                                 id="class_id"
-                                disabled={registerMutation.isPending || !selectedYearId || loadingClasses}
+                                disabled={
+                                    registerMutation.isPending ||
+                                    !selectedYearId ||
+                                    loadingClasses ||
+                                    (classesFetched && classes.length === 0)
+                                }
                                 {...register('class_id')}
                                 aria-invalid={!!errors.class_id}
                                 className={inputClass}
                             >
                                 <option value="">
-                                    {!selectedYearId
-                                        ? '-- Pilih angkatan dulu --'
-                                        : loadingClasses
-                                            ? 'Memuat kelas...'
-                                            : '-- Pilih Kelas --'}
+                                    {getClassPlaceholder(selectedYearId, loadingClasses, classes, classesFetched)}
                                 </option>
                                 {classes.map((cls) => (
                                     <option key={cls.id} value={cls.id}>
@@ -310,6 +329,12 @@ export default function Register() {
                                     </option>
                                 ))}
                             </select>
+                            {/* Pesan khusus saat angkatan dipilih tapi tidak ada kelas */}
+                            {selectedYearId && classesFetched && !loadingClasses && classes.length === 0 && (
+                                <p className="text-xs text-amber-600 dark:text-amber-400">
+                                    Belum ada kelas yang terdaftar untuk angkatan ini. Hubungi admin.
+                                </p>
+                            )}
                             {errors.class_id && (
                                 <p className="text-xs text-red-500">{errors.class_id.message}</p>
                             )}

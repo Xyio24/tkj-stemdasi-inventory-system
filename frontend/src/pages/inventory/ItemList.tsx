@@ -9,7 +9,7 @@ import { Plus, Search, Package, Pencil, Trash2, AlertTriangle } from 'lucide-rea
 import { useAuthStore } from '@/store/authStore';
 import AdjustConditionModal from '@/components/inventory/AdjustConditionModal';
 
-const STORAGE_URL = (import.meta.env.VITE_API_URL ?? 'http://localhost:8000/api').replace('/api', '/storage');
+const STORAGE_URL = (import.meta.env.VITE_STORAGE_URL ?? 'http://localhost:8000/storage').replace(/\/+$/, '');
 
 const CONDITION_BADGE: Record<string, string> = {
     baik:         'bg-green-100 text-green-700',

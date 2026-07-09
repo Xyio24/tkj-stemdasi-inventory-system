@@ -123,7 +123,7 @@ function SidebarContent({ role, onClose }: { role: string; onClose?: () => void 
             <div className="px-4 py-5 border-b border-neutral-200 dark:border-neutral-800">
                 <div className="flex items-center gap-2.5">
                     <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center flex-shrink-0">
-                        <Package className="w-4 h-4 text-white" />
+                        <img src="/tkj.svg" alt="TKJ" className="w-5 h-5 object-contain" />
                     </div>
                     <div>
                         <p className="text-sm font-bold text-neutral-900 dark:text-neutral-100 leading-none">Inventory TKJ</p>
@@ -246,14 +246,14 @@ export default function DashboardLayout() {
                     </button>
                     <div className="flex items-center gap-2">
                         <div className="w-6 h-6 rounded-md bg-indigo-600 flex items-center justify-center">
-                            <Package className="w-3.5 h-3.5 text-white" />
+                            <img src="/tkj.svg" alt="TKJ" className="w-4 h-4 object-contain" />
                         </div>
                         <span className="font-semibold text-sm text-neutral-900 dark:text-neutral-100">Inventory TKJ</span>
                     </div>
                 </header>
 
                 {/* Page content */}
-                <main className="flex-1 p-5 md:p-7">
+                <main className="flex-1 p-5 md:p-7 min-w-0 overflow-x-hidden">
                     <Outlet />
                 </main>
             </div>

@@ -4,8 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getCategories, createItem, updateItem, getItem, deleteItemImage } from '@/api/inventory';
 import { toast } from 'sonner';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
-const STORAGE_URL = API_URL.replace('/api', '/storage');
+const STORAGE_URL = (import.meta.env.VITE_STORAGE_URL ?? 'http://localhost:8000/storage').replace(/\/+$/, '');
 
 export default function ItemForm() {
     const { id } = useParams();
