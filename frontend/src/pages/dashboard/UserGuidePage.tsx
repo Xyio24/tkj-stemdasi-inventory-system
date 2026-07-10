@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
 import {
@@ -287,13 +287,26 @@ const ROLE_CONFIG = {
 // ─── AccordionItem ────────────────────────────────────────────────────────────
 
 function AccordionItem({ section, index }: { section: GuideSection; index: number }) {
-    const [open, setOpen] = useState(false);
+    const [open, setOpen]       = useState(false);
+    const [visible, setVisible] = useState(false);  // controls render after close anim
+    const bodyRef               = useRef<HTMLDivElement>(null);
+
+    function toggle() {
+        if (!open) {
+            setVisible(true);
+            // small rAF so the element is in DOM before we remove max-h-0
+            requestAnimationFrame(() => setOpen(true));
+        } else {
+            setOpen(false);
+            // wait for transition to finish (300ms) then unmount
+            setTimeout(() => setVisible(false), 300);
+        }
+    }
 
     return (
         <div
             className={[
-                'glass-card overflow-hidden transition-all duration-300 animate-fade-up',
-                `delay-${Math.min(index * 50, 300)}`,
+                'glass-card overflow-hidden transition-all duration-300 ease-ios animate-fade-up',
                 open ? 'ring-2 ring-primary/20 dark:ring-primary/15' : '',
             ].filter(Boolean).join(' ')}
             style={{ animationDelay: `${index * 40}ms` }}
@@ -301,13 +314,13 @@ function AccordionItem({ section, index }: { section: GuideSection; index: numbe
             {/* Header button */}
             <button
                 type="button"
-                onClick={() => setOpen((v) => !v)}
+                onClick={toggle}
                 className="w-full flex items-center gap-4 px-5 py-4 text-left hover:bg-accent/30 transition-colors duration-150 group"
                 aria-expanded={open}
             >
                 {/* Icon badge */}
                 <div className={[
-                    'flex-shrink-0 w-9 h-9 rounded-2xl flex items-center justify-center transition-all duration-200',
+                    'flex-shrink-0 w-9 h-9 rounded-2xl flex items-center justify-center transition-all duration-300 ease-spring',
                     open
                         ? 'bg-primary text-primary-foreground shadow-glow-blue-sm scale-105'
                         : 'bg-accent text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary',
@@ -327,58 +340,63 @@ function AccordionItem({ section, index }: { section: GuideSection; index: numbe
 
                 {/* Chevron */}
                 <ChevronDown className={[
-                    'w-4 h-4 flex-shrink-0 transition-all duration-300',
+                    'w-4 h-4 flex-shrink-0 transition-transform duration-300 ease-ios',
                     open ? 'rotate-180 text-primary' : 'text-muted-foreground/60',
                 ].join(' ')} />
             </button>
 
-            {/* Body */}
-            {open && (
-                <div className="px-5 pb-5 border-t border-border/40 animate-fade-up">
+            {/* Body — CSS height transition for smooth open & close */}
+            <div
+                ref={bodyRef}
+                className="transition-all duration-300 ease-ios overflow-hidden"
+                style={{ maxHeight: open ? (bodyRef.current?.scrollHeight ?? 2000) + 'px' : '0px', opacity: open ? 1 : 0 }}
+            >
+                {visible && (
+                    <div className="px-5 pb-5 border-t border-border/40">
 
-                    {/* Steps */}
-                    <ol className="space-y-3 mt-4">
-                        {section.steps.map((step, i) => (
-                            <li key={i} className="flex gap-3 items-start animate-fade-up" style={{ animationDelay: `${i * 40}ms` }}>
-                                {/* Step number badge */}
-                                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center mt-0.5 shadow-glow-blue-sm">
-                                    {i + 1}
-                                </span>
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-sm text-foreground/80 leading-snug">{step.text}</p>
-                                    {step.note && (
-                                        <div className="flex items-start gap-1.5 mt-1.5">
-                                            <Info className="w-3 h-3 text-muted-foreground/60 flex-shrink-0 mt-px" />
-                                            <p className="text-xs text-muted-foreground leading-snug">{step.note}</p>
-                                        </div>
-                                    )}
-                                </div>
-                            </li>
-                        ))}
-                    </ol>
+                        {/* Steps */}
+                        <ol className="space-y-3 mt-4">
+                            {section.steps.map((step, i) => (
+                                <li key={i} className="flex gap-3 items-start animate-fade-up" style={{ animationDelay: `${i * 35}ms` }}>
+                                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center mt-0.5 shadow-glow-blue-sm">
+                                        {i + 1}
+                                    </span>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-sm text-foreground/80 leading-snug">{step.text}</p>
+                                        {step.note && (
+                                            <div className="flex items-start gap-1.5 mt-1.5">
+                                                <Info className="w-3 h-3 text-muted-foreground/60 flex-shrink-0 mt-px" />
+                                                <p className="text-xs text-muted-foreground leading-snug">{step.note}</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                </li>
+                            ))}
+                        </ol>
 
-                    {/* Tip box */}
-                    {section.tip && (
-                        <div className="mt-4 flex gap-3 bg-amber-50 dark:bg-amber-900/15 border border-amber-200/60 dark:border-amber-700/30 rounded-2xl px-4 py-3 animate-fade-up">
-                            <AlertTriangle className="w-4 h-4 text-amber-500 dark:text-amber-400 flex-shrink-0 mt-0.5" />
-                            <p className="text-xs text-amber-700 dark:text-amber-400 leading-relaxed">{section.tip}</p>
-                        </div>
-                    )}
+                        {/* Tip box */}
+                        {section.tip && (
+                            <div className="mt-4 flex gap-3 bg-amber-50 dark:bg-amber-900/15 border border-amber-200/60 dark:border-amber-700/30 rounded-2xl px-4 py-3 animate-fade-up">
+                                <AlertTriangle className="w-4 h-4 text-amber-500 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+                                <p className="text-xs text-amber-700 dark:text-amber-400 leading-relaxed">{section.tip}</p>
+                            </div>
+                        )}
 
-                    {/* Link */}
-                    {section.link && (
-                        <div className="mt-4 animate-fade-up">
-                            <Link
-                                to={section.link.to}
-                                className="inline-flex items-center gap-1.5 text-sm text-primary font-semibold hover:gap-2 transition-all duration-150 px-3 py-1.5 rounded-xl hover:bg-primary/8 dark:hover:bg-primary/15 -ml-3"
-                            >
-                                {section.link.label}
-                                <ArrowRight className="w-3.5 h-3.5" />
-                            </Link>
-                        </div>
-                    )}
-                </div>
-            )}
+                        {/* Link */}
+                        {section.link && (
+                            <div className="mt-4 animate-fade-up">
+                                <Link
+                                    to={section.link.to}
+                                    className="inline-flex items-center gap-1.5 text-sm text-primary font-semibold hover:gap-2 transition-all duration-150 px-3 py-1.5 rounded-xl hover:bg-primary/8 dark:hover:bg-primary/15 -ml-3"
+                                >
+                                    {section.link.label}
+                                    <ArrowRight className="w-3.5 h-3.5" />
+                                </Link>
+                            </div>
+                        )}
+                    </div>
+                )}
+            </div>
         </div>
     );
 }

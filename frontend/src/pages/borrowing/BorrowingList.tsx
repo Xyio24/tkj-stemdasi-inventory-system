@@ -150,9 +150,9 @@ export default function BorrowingList() {
             </div>
 
             {/* ── Table ── */}
-            <div className="glass rounded-3xl overflow-hidden animate-fade-up delay-150">
-                <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
+            <div className="glass rounded-3xl animate-fade-up delay-150">
+                <div className="overflow-x-auto rounded-3xl">
+                    <table className="w-full text-sm min-w-[540px]">
                         <thead>
                             <tr className="border-b border-border/50">
                                 <th className="px-5 py-3.5 text-[10px] font-bold text-muted-foreground uppercase tracking-widest text-left">Kode / Keperluan</th>
@@ -237,7 +237,7 @@ export default function BorrowingList() {
                                                 <div className="flex items-center justify-end gap-1.5">
                                                     <Link
                                                         to={`/dashboard/borrowings/${b.id}`}
-                                                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-primary/8 dark:bg-primary/15 text-primary text-xs font-semibold hover:bg-primary/15 transition-all duration-150 active:scale-[0.95] opacity-0 group-hover:opacity-100"
+                                                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-primary/8 dark:bg-primary/15 text-primary text-xs font-semibold hover:bg-primary/15 transition-all duration-150 active:scale-[0.95] sm:opacity-0 sm:group-hover:opacity-100"
                                                     >
                                                         Detail <ArrowRight className="w-3 h-3" />
                                                     </Link>
@@ -247,7 +247,7 @@ export default function BorrowingList() {
                                                             size="icon-sm"
                                                             onClick={() => handleDelete(b)}
                                                             disabled={deleteMutation.isPending}
-                                                            className="text-destructive hover:bg-destructive/8 dark:hover:bg-destructive/15 opacity-0 group-hover:opacity-100 transition-all duration-150"
+                                                            className="text-destructive hover:bg-destructive/8 dark:hover:bg-destructive/15 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-150"
                                                             title="Hapus"
                                                         >
                                                             <Trash2 className="w-3.5 h-3.5" />

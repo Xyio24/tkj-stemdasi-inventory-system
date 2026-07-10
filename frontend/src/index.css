@@ -246,13 +246,44 @@
   .shadow-glow-blue  { box-shadow: var(--glow-blue); }
   .shadow-glow-blue-sm { box-shadow: var(--glow-blue-sm); }
 
-  /* ── Gradient mesh background (iOS 16 style) ── */
+  /* ── Gradient mesh background (iOS 16 style — login/auth) ── */
   .bg-mesh {
     background-color: oklch(0.97 0.008 247);
     background-image:
       radial-gradient(ellipse 80% 60% at 20%  20%, oklch(0.88 0.06 264 / 0.35) 0%, transparent 60%),
       radial-gradient(ellipse 60% 50% at 80%  10%, oklch(0.85 0.08 290 / 0.25) 0%, transparent 55%),
       radial-gradient(ellipse 70% 60% at 50% 100%, oklch(0.92 0.05 230 / 0.20) 0%, transparent 60%);
+  }
+
+  /* ── Calm mesh background (dashboard main content) ── */
+  .bg-mesh-calm {
+    background-color: oklch(var(--background));
+    background-image:
+      radial-gradient(ellipse 90% 70% at 0%   0%,   oklch(0.92 0.03 264 / 0.18) 0%, transparent 65%),
+      radial-gradient(ellipse 70% 50% at 100% 0%,   oklch(0.90 0.04 290 / 0.12) 0%, transparent 60%),
+      radial-gradient(ellipse 80% 60% at 50%  100%, oklch(0.94 0.02 230 / 0.10) 0%, transparent 65%);
+    background-attachment: local;
+  }
+
+  .dark .bg-mesh-calm {
+    background-image:
+      radial-gradient(ellipse 90% 70% at 0%   0%,   oklch(0.30 0.04 264 / 0.15) 0%, transparent 65%),
+      radial-gradient(ellipse 70% 50% at 100% 0%,   oklch(0.28 0.05 290 / 0.10) 0%, transparent 60%),
+      radial-gradient(ellipse 80% 60% at 50%  100%, oklch(0.25 0.03 230 / 0.08) 0%, transparent 65%);
+  }
+
+  /* ── Touch active: show hover-only elements on mobile touch ── */
+  @media (hover: none) {
+    .group:active .group-hover\:opacity-100 {
+      opacity: 1 !important;
+    }
+    .group:active .group-hover\:opacity-60 {
+      opacity: 0.6 !important;
+    }
+    /* Keep action buttons always visible on touch devices */
+    .touch-always-visible {
+      opacity: 1 !important;
+    }
   }
 
   /* ── Shimmer skeleton ── */

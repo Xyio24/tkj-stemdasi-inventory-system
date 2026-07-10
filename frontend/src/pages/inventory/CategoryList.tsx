@@ -172,7 +172,7 @@ export default function CategoryList() {
             )}
 
             {/* ── Table ── */}
-            <div className="glass rounded-3xl overflow-hidden animate-fade-up delay-100">
+            <div className="glass rounded-3xl animate-fade-up delay-100">
 
                 {/* Table meta */}
                 {data?.data && (
@@ -183,9 +183,9 @@ export default function CategoryList() {
                     </div>
                 )}
 
-                {/* overflow-x untuk horizontal scroll, biarkan page scroll vertikal secara normal */}
-                <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
+                {/* overflow-x untuk horizontal scroll mobile */}
+                <div className="overflow-x-auto rounded-b-3xl">
+                    <table className="w-full text-sm min-w-[480px]">
                         <thead>
                             <tr className="border-b border-border/50">
                                 <th className="px-5 py-3.5 text-[10px] font-bold text-muted-foreground uppercase tracking-widest text-left">Nama Kategori</th>
@@ -257,7 +257,7 @@ export default function CategoryList() {
                                             {cat.description || <span className="text-muted-foreground/40">—</span>}
                                         </td>
 
-                                        {/* Actions */}
+                                        {/* Actions — always visible on mobile, hover-reveal on desktop */}
                                         {canManage && (
                                             <td className="px-5 py-3.5 text-right">
                                                 <div className="flex justify-end gap-1.5">
@@ -265,7 +265,7 @@ export default function CategoryList() {
                                                         variant="ghost"
                                                         size="icon-sm"
                                                         onClick={() => handleEdit(cat)}
-                                                        className="text-primary hover:bg-primary/8 dark:hover:bg-primary/15 hover:text-primary opacity-0 group-hover:opacity-100 transition-all duration-150"
+                                                        className="text-primary hover:bg-primary/8 dark:hover:bg-primary/15 hover:text-primary sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-150"
                                                         aria-label={`Edit ${cat.name}`}
                                                         title="Edit"
                                                     >
@@ -280,7 +280,7 @@ export default function CategoryList() {
                                                             }
                                                         }}
                                                         disabled={deleteMutation.isPending}
-                                                        className="text-destructive hover:bg-destructive/8 dark:hover:bg-destructive/15 hover:text-destructive opacity-0 group-hover:opacity-100 transition-all duration-150 disabled:opacity-30"
+                                                        className="text-destructive hover:bg-destructive/8 dark:hover:bg-destructive/15 hover:text-destructive sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-150 disabled:opacity-30"
                                                         aria-label={`Hapus ${cat.name}`}
                                                         title="Hapus"
                                                     >

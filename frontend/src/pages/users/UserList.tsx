@@ -170,10 +170,10 @@ function ActiveTable({
     currentUserId: number;
     showClassCol?: boolean;
 }) {
-    const colSpan = showClassCol ? 6 : 5;
+    const colSpan = showClassCol ? 5 : 4;
     const headers = showClassCol
-        ? ['Pengguna', 'Role', 'Kelas', 'NIS / NIP', 'Status', 'Aksi']
-        : ['Pengguna', 'Role', 'NIS / NIP', 'Status', 'Aksi'];
+        ? ['Pengguna', 'Role', 'Kelas', 'Status', 'Aksi']
+        : ['Pengguna', 'Role', 'Status', 'Aksi'];
 
     return (
         <div className="overflow-x-auto">
@@ -239,24 +239,20 @@ function ActiveTable({
                                         ) : <span className="text-muted-foreground/40 text-sm">—</span>}
                                     </td>
                                 )}
-                                {/* NIS/NIP */}
-                                <td className="px-5 py-3.5 font-mono text-xs text-muted-foreground">
-                                    {user.nis_nip ?? <span className="text-muted-foreground/40">—</span>}
-                                </td>
                                 {/* Status */}
                                 <td className="px-5 py-3.5">
                                     <span className={['badge-pill', STATUS_BADGE[user.status] ?? STATUS_BADGE.active].join(' ')}>
                                         {STATUS_LABEL[user.status] ?? '—'}
                                     </span>
                                 </td>
-                                {/* Aksi */}
+                                {/* Aksi — always visible on mobile, hover-reveal on sm+ */}
                                 <td className="px-5 py-3.5 text-right">
                                     {user.status === 'blocked' ? (
-                                        <Button variant="ghost" size="sm" onClick={() => unblockMutation.mutate(user.id)} disabled={isSelf || (unblockMutation.isPending as boolean)} className="gap-1.5 text-green-600 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/20 opacity-0 group-hover:opacity-100 transition-all duration-150">
+                                        <Button variant="ghost" size="sm" onClick={() => unblockMutation.mutate(user.id)} disabled={isSelf || (unblockMutation.isPending as boolean)} className="gap-1.5 text-green-600 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/20 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-150">
                                             {unblockMutation.isPending ? <ButtonSpinner className="w-3.5 h-3.5" /> : <ShieldCheck className="w-3.5 h-3.5" />} Aktifkan
                                         </Button>
                                     ) : (
-                                        <Button variant="ghost" size="sm" onClick={() => blockMutation.mutate(user.id)} disabled={isSelf || (blockMutation.isPending as boolean)} className="gap-1.5 text-destructive hover:bg-destructive/8 dark:hover:bg-destructive/15 opacity-0 group-hover:opacity-100 transition-all duration-150">
+                                        <Button variant="ghost" size="sm" onClick={() => blockMutation.mutate(user.id)} disabled={isSelf || (blockMutation.isPending as boolean)} className="gap-1.5 text-destructive hover:bg-destructive/8 dark:hover:bg-destructive/15 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-150">
                                             {blockMutation.isPending ? <ButtonSpinner className="w-3.5 h-3.5 text-destructive" /> : <ShieldOff className="w-3.5 h-3.5" />} Blokir
                                         </Button>
                                     )}

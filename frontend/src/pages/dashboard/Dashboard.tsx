@@ -332,16 +332,16 @@ function StudentWelcome({ name }: { name: string }) {
     return (
         <div className="space-y-5 animate-fade-up">
             {/* Hero banner */}
-            <div className="relative overflow-hidden rounded-3xl bg-primary px-8 py-10 text-white shadow-glow-blue">
+            <div className="relative overflow-hidden rounded-3xl bg-primary px-8 py-10 text-white shadow-glow-blue animate-spring-in">
                 {/* Glass orb decorations */}
-                <div className="absolute -right-10 -top-10 w-52 h-52 rounded-full bg-white/8 pointer-events-none" />
-                <div className="absolute -right-4 bottom-0 w-36 h-36 rounded-full bg-white/5 pointer-events-none" />
-                <div className="absolute left-1/2 top-0 w-64 h-64 rounded-full bg-white/4 pointer-events-none -translate-x-1/4 -translate-y-1/2" />
+                <div className="absolute -right-10 -top-10 w-52 h-52 rounded-full bg-white/8 pointer-events-none animate-float" style={{ animationDuration: '6s' }} />
+                <div className="absolute -right-4 bottom-0 w-36 h-36 rounded-full bg-white/5 pointer-events-none animate-float" style={{ animationDuration: '8s', animationDelay: '-3s' }} />
+                <div className="absolute left-1/2 top-0 w-64 h-64 rounded-full bg-white/4 pointer-events-none -translate-x-1/4 -translate-y-1/2 animate-float" style={{ animationDuration: '10s', animationDelay: '-5s' }} />
 
-                <p className="relative text-sm font-medium text-white/70 mb-1.5">Selamat datang 👋</p>
-                <h2 className="relative text-2xl font-bold tracking-tight leading-tight">{name}</h2>
-                <p className="relative text-white/60 text-sm mt-2 leading-relaxed">
-                    Sistem Inventaris & Peminjaman Lab TKJ<br />SMKN 2 Singosari
+                <p className="relative text-sm font-medium text-white/70 mb-1.5 animate-fade-up">Selamat datang 👋</p>
+                <h2 className="relative text-2xl font-bold tracking-tight leading-tight animate-fade-up delay-75">{name}</h2>
+                <p className="relative text-white/60 text-sm mt-2 leading-relaxed animate-fade-up delay-150">
+                    Sistem Inventaris &amp; Peminjaman Lab TKJ<br />SMKN 2 Singosari
                 </p>
             </div>
 
@@ -378,13 +378,13 @@ function StudentWelcome({ name }: { name: string }) {
                         to={card.to}
                         className={[
                             'glass-card p-5 flex flex-col gap-3 group',
-                            'hover:shadow-float hover:-translate-y-0.5',
+                            'hover:shadow-float hover:-translate-y-1',
                             'transition-all duration-300 ease-spring',
                             'animate-fade-up',
                             card.delay,
                         ].join(' ')}
                     >
-                        <div className={['w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0 transition-transform duration-200 group-hover:scale-110', card.iconBg].join(' ')}>
+                        <div className={['w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0 transition-transform duration-300 ease-spring group-hover:scale-110', card.iconBg].join(' ')}>
                             {card.icon}
                         </div>
                         <div>
@@ -503,11 +503,21 @@ export default function Dashboard() {
         <div className="space-y-5">
 
             {/* ── Page Header ── */}
-            <div className="animate-fade-up">
-                <h1 className="text-2xl font-bold tracking-tight text-foreground">Dashboard</h1>
-                <p className="text-sm text-muted-foreground mt-0.5">
-                    Ringkasan sistem inventaris & peminjaman TKJ
-                </p>
+            <div className="animate-fade-up flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                    <h1 className="text-2xl font-bold tracking-tight text-foreground">Dashboard</h1>
+                    <p className="text-sm text-muted-foreground mt-0.5">
+                        Ringkasan sistem inventaris &amp; peminjaman TKJ
+                    </p>
+                </div>
+                <button
+                    onClick={() => refetch()}
+                    className="self-start sm:self-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl text-xs font-medium text-muted-foreground hover:bg-accent hover:text-foreground transition-all duration-150 active:scale-[0.95]"
+                    title="Refresh"
+                >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                    Refresh
+                </button>
             </div>
 
             {/* ── Top stat cards (4 grid) ── */}
@@ -520,7 +530,7 @@ export default function Dashboard() {
             {/* ── Alert cards (3 grid) ── */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {alertCards.map((card, i) => (
-                    <StatCard key={card.label} {...card} delay={`delay-${[75, 150, 200][i]}`} />
+                    <StatCard key={card.label} {...card} delay={`delay-${[100, 175, 250][i]}`} />
                 ))}
             </div>
 

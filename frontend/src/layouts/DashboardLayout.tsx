@@ -279,7 +279,7 @@ export default function DashboardLayout() {
          * - main: flex-1 + overflow-y-auto → SATU-SATUNYA scrollable area
          * Ini pola yang benar untuk sidebar layout agar mobile scroll bekerja.
          */
-        <div className="h-dvh bg-background flex overflow-hidden">
+        <div className="h-dvh bg-mesh-calm flex overflow-hidden">
 
             {/* ── Desktop Sidebar ── */}
             <aside className="hidden lg:flex lg:flex-col w-64 flex-shrink-0 fixed inset-y-0 left-0 z-30 glass-sidebar">
