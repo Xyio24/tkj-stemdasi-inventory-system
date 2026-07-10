@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Outlet, Navigate, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
+import { useThemeStore } from '@/store/themeStore';
 import GeneratedAvatar from '@/components/common/GeneratedAvatar';
 import {
     LayoutDashboard,
@@ -18,6 +19,8 @@ import {
     LogOut,
     UserCircle,
     BookOpen,
+    Sun,
+    Moon,
 } from 'lucide-react';
 
 // ─── Nav structure ────────────────────────────────────────────────────────────
@@ -82,6 +85,76 @@ const NAV_GROUPS: NavGroup[] = [
         ],
     },
 ];
+
+// ─── ThemeToggle ──────────────────────────────────────────────────────────────
+
+function ThemeToggle({ compact = false }: { compact?: boolean }) {
+    const { theme, setTheme, resolvedTheme } = useThemeStore();
+    const isDark = resolvedTheme() === 'dark';
+
+    function toggle() {
+        // light → dark → system → light
+        if (theme === 'light') setTheme('dark');
+        else if (theme === 'dark') setTheme('system');
+        else setTheme('light');
+    }
+
+    const label =
+        theme === 'system' ? 'Sistem' :
+        theme === 'dark'   ? 'Gelap'  : 'Terang';
+
+    if (compact) {
+        return (
+            <button
+                onClick={toggle}
+                title={`Mode: ${label}`}
+                aria-label="Toggle dark mode"
+                className={[
+                    'p-2 rounded-xl transition-all duration-150 active:scale-[0.93]',
+                    'text-foreground/60 hover:text-foreground',
+                    'hover:bg-white/50 dark:hover:bg-white/8',
+                    'hover:shadow-[inset_0_1px_0_oklch(1_0_0/0.5)] dark:hover:shadow-[inset_0_1px_0_oklch(1_0_0/0.08)]',
+                    'border border-transparent hover:border-white/30 dark:hover:border-white/8',
+                ].join(' ')}
+            >
+                {isDark ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
+            </button>
+        );
+    }
+
+    return (
+        <button
+            onClick={toggle}
+            aria-label="Toggle dark mode"
+            className={[
+                'w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl text-sm font-medium',
+                'transition-all duration-150 ease-out active:scale-[0.98]',
+                'text-foreground/50 border border-transparent',
+                'hover:text-foreground/90',
+                'hover:bg-white/60 dark:hover:bg-white/[0.05]',
+                'hover:border-white/50 dark:hover:border-white/[0.07]',
+                'hover:shadow-[inset_0_1px_0_oklch(1_0_0/0.70)]',
+                'dark:hover:shadow-[inset_0_1px_0_oklch(1_0_0/0.08)]',
+                'group',
+            ].join(' ')}
+        >
+            <span className={[
+                'flex items-center justify-center w-[26px] h-[26px] rounded-lg flex-shrink-0',
+                'transition-all duration-150',
+                'bg-black/[0.04] dark:bg-white/[0.06]',
+                'text-foreground/40 group-hover:text-foreground/70',
+                'group-hover:bg-black/[0.06] dark:group-hover:bg-white/[0.09]',
+            ].join(' ')}>
+                {isDark ? <Moon className="w-3.5 h-3.5" /> : <Sun className="w-3.5 h-3.5" />}
+            </span>
+            <span className="flex-1 leading-none tracking-tight">{label}</span>
+            {/* Pill indicator */}
+            <span className="text-[10px] font-semibold text-foreground/25 uppercase tracking-wide">
+                {theme === 'system' ? 'Auto' : ''}
+            </span>
+        </button>
+    );
+}
 
 // ─── SideNavItem ──────────────────────────────────────────────────────────────
 
@@ -288,6 +361,9 @@ function SidebarContent({ role, onClose }: { role: string; onClose?: () => void 
                     </div>
                 </div>
 
+                {/* Theme toggle */}
+                <ThemeToggle />
+
                 {/* Logout */}
                 <button
                     onClick={handleLogout}
@@ -447,7 +523,8 @@ export default function DashboardLayout() {
                         </span>
                     </div>
 
-                    <div className="flex-shrink-0">
+                    <div className="flex items-center gap-1 flex-shrink-0">
+                        <ThemeToggle compact />
                         {user?.avatar && user.avatar_type === 'upload' ? (
                             <img
                                 src={user.avatar}

@@ -7,6 +7,7 @@ import { Toaster } from 'sonner';
 
 import { router } from '@/routes';
 import { queryClient } from '@/lib/queryClient';
+import ThemeProvider from '@/providers/ThemeProvider';
 import './index.css';
 
 // TODO: Replace with env variable
@@ -14,11 +15,13 @@ const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '1013444632832
 
 createRoot(document.getElementById('root')!).render(
     <StrictMode>
-        <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
-            <QueryClientProvider client={queryClient}>
-                <RouterProvider router={router} />
-                <Toaster richColors position="top-right" />
-            </QueryClientProvider>
-        </GoogleOAuthProvider>
+        <ThemeProvider>
+            <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+                <QueryClientProvider client={queryClient}>
+                    <RouterProvider router={router} />
+                    <Toaster richColors position="top-right" />
+                </QueryClientProvider>
+            </GoogleOAuthProvider>
+        </ThemeProvider>
     </StrictMode>
 );
