@@ -1,4 +1,5 @@
 @import "tw-animate-css";
+@import "tw-animate-css";
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/geist";
 
@@ -227,72 +228,130 @@
   }
 
   .glass-sidebar {
-    /* iOS 26 / macOS Tahoe liquid glass — very low opacity, extreme blur, specular highlight */
-    background:
-      linear-gradient(
-        160deg,
-        oklch(1 0 0 / 0.18) 0%,
-        oklch(1 0 0 / 0.08) 50%,
-        oklch(0.96 0.01 264 / 0.12) 100%
-      );
-    backdrop-filter: saturate(250%) blur(40px) brightness(1.04);
-    -webkit-backdrop-filter: saturate(250%) blur(40px) brightness(1.04);
-    border-right: 1px solid oklch(1 0 0 / 0.30);
+    /*
+     * Liquid glass needs a coloured, low-opacity tint. A near-white base on a
+     * light mesh reads as paper, even when backdrop-filter is enabled.
+     */
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    background: oklch(0.86 0.035 250 / 0.16);
+    backdrop-filter: saturate(145%) blur(16px);
+    -webkit-backdrop-filter: saturate(145%) blur(16px);
+    border-right: 1px solid oklch(1 0 0 / 0.38);
     box-shadow:
-      /* specular inner-top highlight */
-      inset 0 1px 0 oklch(1 0 0 / 0.55),
-      /* specular inner-right edge */
-      inset -1px 0 0 oklch(1 0 0 / 0.15),
-      /* outer shadow */
-      2px 0 32px oklch(0.13 0.02 264 / 0.08);
+      inset 0 1px 0 oklch(1 0 0 / 0.42),
+      inset -1px 0 0 oklch(1 0 0 / 0.12),
+      1px 0 1px oklch(0.30 0.03 260 / 0.04),
+      10px 0 32px oklch(0.20 0.04 264 / 0.10);
+  }
+
+  /* A pair of low-opacity caustics gives the transparent panel a liquid edge. */
+  .glass-sidebar::before {
+    position: absolute;
+    z-index: 0;
+    inset: -12% -55% 42% -28%;
+    content: '';
+    pointer-events: none;
+    background:
+      radial-gradient(ellipse at 18% 34%, oklch(0.66 0.16 264 / 0.30) 0%, transparent 56%),
+      radial-gradient(ellipse at 82% 12%, oklch(0.76 0.11 290 / 0.18) 0%, transparent 52%);
+    filter: blur(18px);
+  }
+
+  .glass-sidebar::after {
+    position: absolute;
+    z-index: 0;
+    inset: 0 0 0 auto;
+    width: 1px;
+    content: '';
+    pointer-events: none;
+    background: linear-gradient(
+      180deg,
+      transparent 0%,
+      oklch(0.70 0.16 264 / 0.40) 24%,
+      oklch(1 0 0 / 0.44) 52%,
+      transparent 100%
+    );
+  }
+
+  .glass-sidebar > * {
+    position: relative;
+    z-index: 1;
   }
 
   .dark .glass-sidebar {
-    background:
-      linear-gradient(
-        160deg,
-        oklch(1 0 0 / 0.06) 0%,
-        oklch(0.16 0.01 260 / 0.35) 50%,
-        oklch(0.20 0.03 264 / 0.20) 100%
-      );
-    backdrop-filter: saturate(200%) blur(40px) brightness(0.96);
-    -webkit-backdrop-filter: saturate(200%) blur(40px) brightness(0.96);
-    border-right: 1px solid oklch(1 0 0 / 0.09);
+    background: oklch(0.18 0.030 260 / 0.34);
+    backdrop-filter: saturate(135%) blur(16px);
+    -webkit-backdrop-filter: saturate(135%) blur(16px);
+    border-right: 1px solid oklch(1 0 0 / 0.10);
     box-shadow:
       inset 0 1px 0 oklch(1 0 0 / 0.12),
-      inset -1px 0 0 oklch(1 0 0 / 0.05),
-      2px 0 32px oklch(0 0 0 / 0.30);
+      inset -1px 0 0 oklch(1 0 0 / 0.04),
+      10px 0 32px oklch(0 0 0 / 0.26);
+  }
+
+  .dark .glass-sidebar::before {
+    background:
+      radial-gradient(ellipse at 18% 34%, oklch(0.54 0.16 264 / 0.26) 0%, transparent 56%),
+      radial-gradient(ellipse at 82% 12%, oklch(0.62 0.11 290 / 0.16) 0%, transparent 52%);
+  }
+
+  /* ── Sidebar scrollbar — overlay style, fades when idle ── */
+  .sidebar-scroll {
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+    transition: scrollbar-color 0.3s;
+  }
+  .sidebar-scroll:hover,
+  .sidebar-scroll:focus-within {
+    scrollbar-color: oklch(0.70 0 0 / 0.25) transparent;
+  }
+  .sidebar-scroll::-webkit-scrollbar {
+    width: 3px;
+  }
+  .sidebar-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .sidebar-scroll::-webkit-scrollbar-thumb {
+    background: transparent;
+    border-radius: 99px;
+    transition: background 0.3s;
+  }
+  .sidebar-scroll:hover::-webkit-scrollbar-thumb,
+  .sidebar-scroll:focus-within::-webkit-scrollbar-thumb {
+    background: oklch(0.60 0 0 / 0.20);
+  }
+  .dark .sidebar-scroll:hover::-webkit-scrollbar-thumb,
+  .dark .sidebar-scroll:focus-within::-webkit-scrollbar-thumb {
+    background: oklch(1 0 0 / 0.15);
   }
 
   .glass-topbar {
     background:
-      linear-gradient(
-        180deg,
-        oklch(1 0 0 / 0.22) 0%,
-        oklch(1 0 0 / 0.10) 100%
-      );
-    backdrop-filter: saturate(250%) blur(36px) brightness(1.04);
-    -webkit-backdrop-filter: saturate(250%) blur(36px) brightness(1.04);
-    border-bottom: 1px solid oklch(1 0 0 / 0.28);
+      radial-gradient(ellipse 44% 140% at 0% 0%, oklch(0.66 0.16 264 / 0.20) 0%, transparent 78%),
+      oklch(0.86 0.030 250 / 0.14);
+    backdrop-filter: saturate(145%) blur(16px);
+    -webkit-backdrop-filter: saturate(145%) blur(16px);
+    border-bottom: 1px solid oklch(1 0 0 / 0.25);
     box-shadow:
-      inset 0 1px 0 oklch(1 0 0 / 0.60),
-      0 1px 0 oklch(1 0 0 / 0.20),
-      0 4px 20px oklch(0.13 0.02 264 / 0.05);
+      inset 0 1px 0 oklch(1 0 0 / 0.40),
+      inset 0 -1px 0 oklch(1 0 0 / 0.06),
+      0 8px 24px oklch(0.20 0.04 264 / 0.08);
   }
 
   .dark .glass-topbar {
     background:
-      linear-gradient(
-        180deg,
-        oklch(1 0 0 / 0.07) 0%,
-        oklch(0.16 0.01 260 / 0.40) 100%
-      );
-    backdrop-filter: saturate(200%) blur(36px) brightness(0.95);
-    -webkit-backdrop-filter: saturate(200%) blur(36px) brightness(0.95);
-    border-bottom: 1px solid oklch(1 0 0 / 0.08);
+      radial-gradient(ellipse 44% 140% at 0% 0%, oklch(0.54 0.16 264 / 0.18) 0%, transparent 78%),
+      oklch(0.18 0.030 260 / 0.30);
+    backdrop-filter: saturate(135%) blur(16px);
+    -webkit-backdrop-filter: saturate(135%) blur(16px);
+    border-bottom: 1px solid oklch(1 0 0 / 0.09);
     box-shadow:
-      inset 0 1px 0 oklch(1 0 0 / 0.10),
-      0 4px 20px oklch(0 0 0 / 0.20);
+      inset 0 1px 0 oklch(1 0 0 / 0.11),
+      inset 0 -1px 0 oklch(1 0 0 / 0.03),
+      0 8px 24px oklch(0 0 0 / 0.20);
   }
 
   /* ── Shadows ── */
@@ -427,6 +486,7 @@
   .delay-500 { animation-delay: 500ms; }
 
   /* Spring timing */
+  .ease-spring     { transition-timing-function: cubic-bezier(0.32, 0.72, 0, 1); }
   .transition-spring { transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1); }
 
   /* Reduced motion */

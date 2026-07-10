@@ -16,7 +16,6 @@ import {
     Menu,
     X,
     LogOut,
-    ChevronRight,
     UserCircle,
     BookOpen,
 } from 'lucide-react';
@@ -94,31 +93,68 @@ function SideNavItem({ item, onClose }: { item: NavItem; onClose?: () => void })
             onClick={onClose}
             className={({ isActive }) =>
                 [
-                    'group flex items-center gap-2.5 px-3 py-2 rounded-2xl text-sm transition-all duration-200',
-                    isActive
-                        ? 'bg-primary/12 dark:bg-primary/20 text-primary font-semibold shadow-glow-blue-sm border border-primary/20 dark:border-primary/30 backdrop-blur-sm'
-                        : 'text-foreground/60 font-medium hover:bg-white/40 dark:hover:bg-white/8 hover:text-foreground',
+                    // Base
+                    'group relative flex items-center gap-3 px-3 py-2.5 rounded-2xl text-sm',
+                    'transition-all duration-150 ease-out',
+                    'outline-none focus-visible:ring-2 focus-visible:ring-primary/50',
+
+                    isActive ? [
+                        // Glass capsule — active
+                        'font-semibold text-primary',
+                        // Frosted glass bg
+                        'bg-primary/[0.09] dark:bg-primary/[0.15]',
+                        // Premium border
+                        'border border-primary/[0.18] dark:border-primary/[0.22]',
+                        // Layered shadow: inner specular + outer glow
+                        'shadow-[inset_0_1px_0_oklch(1_0_0/0.55),inset_0_-1px_0_oklch(0.545_0.22_264/0.08),0_1px_6px_oklch(0.545_0.22_264/0.12)]',
+                        'dark:shadow-[inset_0_1px_0_oklch(1_0_0/0.12),0_1px_6px_oklch(0_0_0/0.25)]',
+                    ].join(' ') : [
+                        // Idle
+                        'font-medium text-foreground/50 dark:text-foreground/45',
+                        'border border-transparent',
+                        // Hover: glass micro-card lift
+                        'hover:text-foreground/90',
+                        'hover:bg-white/60 dark:hover:bg-white/[0.05]',
+                        'hover:border-white/50 dark:hover:border-white/[0.07]',
+                        'hover:shadow-[inset_0_1px_0_oklch(1_0_0/0.70),0_1px_4px_oklch(0.13_0.01_260/0.06)]',
+                        'dark:hover:shadow-[inset_0_1px_0_oklch(1_0_0/0.08)]',
+                        'hover:-translate-y-px',
+                    ].join(' '),
                 ].join(' ')
             }
         >
             {({ isActive }) => (
                 <>
-                    {/* Icon wrapper */}
+                    {/* Icon */}
                     <span className={[
-                        'flex items-center justify-center w-7 h-7 rounded-xl flex-shrink-0 transition-all duration-200',
+                        'flex items-center justify-center w-[26px] h-[26px] rounded-lg flex-shrink-0',
+                        'transition-all duration-150 ease-out',
                         isActive
-                            ? 'bg-primary text-primary-foreground shadow-glow-blue-sm'
-                            : 'bg-accent/60 text-foreground/50 group-hover:bg-accent group-hover:text-foreground',
+                            ? [
+                                // Solid primary with internal highlight
+                                'bg-primary text-white',
+                                'shadow-[0_2px_6px_oklch(0.545_0.22_264/0.30),inset_0_1px_0_oklch(1_0_0/0.20)]',
+                                'dark:shadow-[0_2px_6px_oklch(0.60_0.22_264/0.35),inset_0_1px_0_oklch(1_0_0/0.15)]',
+                              ].join(' ')
+                            : [
+                                'bg-black/[0.04] dark:bg-white/[0.06]',
+                                'text-foreground/40 dark:text-foreground/35',
+                                'group-hover:bg-black/[0.06] dark:group-hover:bg-white/[0.09]',
+                                'group-hover:text-foreground/70',
+                              ].join(' '),
                     ].join(' ')}>
                         {item.icon}
                     </span>
 
-                    <span className="flex-1 leading-none">{item.label}</span>
+                    {/* Label */}
+                    <span className="flex-1 leading-none tracking-tight">
+                        {item.label}
+                    </span>
 
-                    <ChevronRight className={[
-                        'w-3 h-3 transition-all duration-200',
-                        isActive ? 'opacity-60 text-primary' : 'opacity-0 group-hover:opacity-40',
-                    ].join(' ')} />
+                    {/* Active indicator dot — subtle */}
+                    {isActive && (
+                        <span className="w-1 h-1 rounded-full bg-primary/60 flex-shrink-0" />
+                    )}
                 </>
             )}
         </NavLink>
@@ -138,24 +174,35 @@ function SidebarContent({ role, onClose }: { role: string; onClose?: () => void 
     }
 
     return (
-        <div className="flex flex-col h-full">
+        <div className="flex flex-col h-full select-none">
 
-            {/* ── Logo ── */}
-            <div className="px-4 py-5">
-                <div className="flex items-center gap-3 px-1">
-                    {/* Logo badge — glass pill */}
-                    <div className="relative flex-shrink-0">
-                        <div className="w-9 h-9 rounded-2xl bg-primary flex items-center justify-center shadow-glow-blue-sm">
-                            <img src="/tkj.svg" alt="TKJ" className="w-5 h-5 object-contain brightness-0 invert" />
-                        </div>
-                        {/* Subtle glow ring */}
-                        <div className="absolute inset-0 rounded-2xl ring-2 ring-primary/20 pointer-events-none" />
+            {/* ── Header / Logo ── */}
+            <div className="flex-shrink-0 px-4 pt-5 pb-4">
+                <div className="flex items-center gap-3">
+                    {/*
+                     * Logo badge — NO bg-primary, NO brightness-0/invert.
+                     * Logo SVG tampil warna asli di atas glass surface.
+                     * Pakai ring tipis sebagai border, bukan solid bg.
+                     */}
+                    <div className={[
+                        'relative w-9 h-9 rounded-2xl flex-shrink-0 overflow-hidden',
+                        'bg-white/35 dark:bg-white/[0.06]',
+                        'ring-1 ring-black/[0.08] dark:ring-white/[0.10]',
+                        'shadow-[0_2px_8px_oklch(0.13_0.01_260/0.10),inset_0_1px_0_oklch(1_0_0/0.80)]',
+                        'dark:shadow-[0_2px_8px_oklch(0_0_0/0.30),inset_0_1px_0_oklch(1_0_0/0.10)]',
+                    ].join(' ')}>
+                        <img
+                            src="/tkj.svg"
+                            alt="TKJ"
+                            className="w-full h-full object-contain p-1.5"
+                        />
                     </div>
-                    <div>
-                        <p className="text-sm font-bold text-foreground leading-none tracking-tight">
+
+                    <div className="min-w-0">
+                        <p className="text-[13px] font-bold text-foreground leading-none tracking-tight">
                             Inventory TKJ
                         </p>
-                        <p className="text-xs text-muted-foreground mt-0.5 capitalize font-medium">
+                        <p className="text-[11px] text-foreground/40 mt-0.5 capitalize font-medium leading-none">
                             {role}
                         </p>
                     </div>
@@ -163,58 +210,79 @@ function SidebarContent({ role, onClose }: { role: string; onClose?: () => void 
             </div>
 
             {/* Divider */}
-            <div className="mx-4 h-px bg-border/60" />
+            <div className="flex-shrink-0 mx-4 mb-1">
+                <div className="h-px bg-gradient-to-r from-transparent via-foreground/10 to-transparent" />
+            </div>
 
-            {/* ── Nav groups ── */}
-            <nav className="flex-1 overflow-y-auto px-3 py-3 space-y-5">
-                {NAV_GROUPS.map(group => {
-                    if (group.roles && !group.roles.includes(role)) return null;
+            {/* ── Nav ── */}
+            <nav className="flex-1 min-h-0 sidebar-scroll px-3 py-2">
+                <div className="space-y-4 pb-2">
+                    {NAV_GROUPS.map(group => {
+                        if (group.roles && !group.roles.includes(role)) return null;
 
-                    const visibleItems = group.items.filter(
-                        item => !item.roles || item.roles.includes(role)
-                    );
-                    if (visibleItems.length === 0) return null;
+                        const visibleItems = group.items.filter(
+                            item => !item.roles || item.roles.includes(role)
+                        );
+                        if (visibleItems.length === 0) return null;
 
-                    return (
-                        <div key={group.label}>
-                            <p className="px-3 mb-1.5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70 select-none">
-                                {group.label}
-                            </p>
-                            <div className="space-y-0.5">
-                                {visibleItems.map(item => (
-                                    <SideNavItem key={item.to} item={item} onClose={onClose} />
-                                ))}
+                        return (
+                            <div key={group.label}>
+                                <p className="px-3 mb-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-foreground/35 dark:text-foreground/30">
+                                    {group.label}
+                                </p>
+                                <div className="space-y-px">
+                                    {visibleItems.map(item => (
+                                        <SideNavItem key={item.to} item={item} onClose={onClose} />
+                                    ))}
+                                </div>
                             </div>
-                        </div>
-                    );
-                })}
+                        );
+                    })}
+                </div>
             </nav>
 
             {/* Divider */}
-            <div className="mx-4 h-px bg-border/60" />
+            <div className="flex-shrink-0 mx-4 mt-1">
+                <div className="h-px bg-gradient-to-r from-transparent via-foreground/10 to-transparent" />
+            </div>
 
-            {/* ── User profile + logout ── */}
-            <div className="px-3 py-3">
-                {/* User info */}
-                <div className="flex items-center gap-2.5 px-3 py-2 mb-1 rounded-2xl hover:bg-white/40 dark:hover:bg-white/8 transition-all duration-200 cursor-default">
+            {/* ── Profile + Logout ── */}
+            <div className="flex-shrink-0 px-3 py-3 space-y-0.5">
+
+                {/* Profile row */}
+                <div className={[
+                    'flex items-center gap-2.5 px-3 py-2.5 rounded-2xl',
+                    'transition-all duration-150 ease-out',
+                    'border border-transparent',
+                    'hover:bg-white/60 dark:hover:bg-white/[0.05]',
+                    'hover:border-white/50 dark:hover:border-white/[0.07]',
+                    'hover:shadow-[inset_0_1px_0_oklch(1_0_0/0.70)]',
+                    'dark:hover:shadow-[inset_0_1px_0_oklch(1_0_0/0.08)]',
+                    'cursor-default group',
+                ].join(' ')}>
+                    {/* Avatar */}
                     <div className="flex-shrink-0">
                         {user?.avatar && user.avatar_type === 'upload' ? (
                             <img
                                 src={user.avatar}
                                 alt={user.name}
-                                className="w-8 h-8 rounded-2xl object-cover ring-2 ring-border"
+                                className="w-8 h-8 rounded-xl object-cover ring-1 ring-black/[0.08] dark:ring-white/10"
                             />
                         ) : user ? (
-                            <GeneratedAvatar name={user.name} email={user.email} size={32} />
+                            <div className="rounded-xl overflow-hidden ring-1 ring-black/[0.08] dark:ring-white/10">
+                                <GeneratedAvatar name={user.name} email={user.email} size={32} />
+                            </div>
                         ) : (
-                            <div className="w-8 h-8 rounded-2xl bg-muted" />
+                            <div className="w-8 h-8 rounded-xl bg-muted" />
                         )}
                     </div>
+
+                    {/* Name + email */}
                     <div className="min-w-0 flex-1">
-                        <p className="text-sm font-semibold text-foreground truncate leading-none">
+                        <p className="text-[13px] font-semibold text-foreground truncate leading-none">
                             {user?.name}
                         </p>
-                        <p className="text-xs text-muted-foreground truncate mt-0.5">
+                        <p className="text-[11px] text-foreground/40 truncate mt-0.5 leading-none">
                             {user?.email}
                         </p>
                     </div>
@@ -223,10 +291,25 @@ function SidebarContent({ role, onClose }: { role: string; onClose?: () => void 
                 {/* Logout */}
                 <button
                     onClick={handleLogout}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-2xl text-sm font-medium text-destructive hover:bg-destructive/10 dark:hover:bg-destructive/15 transition-all duration-200 active:scale-[0.97] group"
+                    className={[
+                        'w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl text-sm font-medium',
+                        'transition-all duration-150 ease-out active:scale-[0.98]',
+                        'text-foreground/50 border border-transparent',
+                        'hover:text-red-500 dark:hover:text-red-400',
+                        'hover:bg-red-50/80 dark:hover:bg-red-500/[0.08]',
+                        'hover:border-red-200/50 dark:hover:border-red-500/[0.12]',
+                        'hover:shadow-[inset_0_1px_0_oklch(1_0_0/0.70)] dark:hover:shadow-none',
+                        'group',
+                    ].join(' ')}
                 >
-                    <span className="flex items-center justify-center w-7 h-7 rounded-xl bg-destructive/8 dark:bg-destructive/15 flex-shrink-0 group-hover:bg-destructive/15 transition-all duration-200">
-                        <LogOut className="w-4 h-4" />
+                    <span className={[
+                        'flex items-center justify-center w-[26px] h-[26px] rounded-lg flex-shrink-0',
+                        'transition-all duration-150',
+                        'bg-black/[0.04] dark:bg-white/[0.06]',
+                        'text-foreground/40 group-hover:text-red-500 dark:group-hover:text-red-400',
+                        'group-hover:bg-red-100/80 dark:group-hover:bg-red-500/[0.12]',
+                    ].join(' ')}>
+                        <LogOut className="w-3.5 h-3.5" />
                     </span>
                     Keluar
                 </button>
@@ -279,44 +362,57 @@ export default function DashboardLayout() {
          * - main: flex-1 + overflow-y-auto → SATU-SATUNYA scrollable area
          * Ini pola yang benar untuk sidebar layout agar mobile scroll bekerja.
          */
-        <div className="h-dvh bg-mesh-calm flex overflow-clip isolate">
+        <div className="h-dvh bg-mesh-calm flex overflow-clip">
 
             {/* ── Desktop Sidebar ── */}
             <aside className="hidden lg:flex lg:flex-col w-64 flex-shrink-0 fixed inset-y-0 left-0 z-30 glass-sidebar">
                 <SidebarContent role={role} />
             </aside>
 
-            {/* ── Mobile Overlay (blurred backdrop) ── */}
+            {/* ── Mobile Overlay + Sidebar Drawer ── */}
+            {/*
+             * Teknik: overlay diposisikan relative terhadap sidebar container.
+             * Container (w-64) slide bersama sidebar via translateX.
+             * Overlay dimulai dari right-edge container (left: 100%) dan melebar ke kanan (right: -100vw).
+             * Hasilnya: left edge overlay selalu menempel di tepi kanan sidebar — satu gerakan kohesif.
+             */}
             <div
+                style={{ willChange: 'transform' }}
                 className={[
-                    'fixed inset-0 z-40 lg:hidden transition-all duration-300',
-                    sidebarOpen
-                        ? 'opacity-100 pointer-events-auto backdrop-blur-sm bg-black/30'
-                        : 'opacity-0 pointer-events-none',
+                    'fixed inset-y-0 left-0 z-40 w-64 lg:hidden',
+                    'transition-transform duration-300 ease-out',
+                    sidebarOpen ? 'translate-x-0' : '-translate-x-full',
                 ].join(' ')}
-                onClick={() => setSidebarOpen(false)}
-                aria-hidden="true"
-            />
-
-            {/* ── Mobile Sidebar Drawer ── */}
-            <aside
-                className={[
-                    'fixed inset-y-0 left-0 z-50 w-64 lg:hidden',
-                    'glass-sidebar',
-                    'transition-transform duration-300 ease-ios',
-                    sidebarOpen ? 'translate-x-0 shadow-float' : '-translate-x-full',
-                ].join(' ')}
-                aria-label="Navigasi"
             >
-                <button
+                {/* Overlay — mengembang ke kanan dari tepi sidebar */}
+                <div
+                    aria-hidden="true"
                     onClick={() => setSidebarOpen(false)}
-                    className="absolute top-4 right-3 p-1.5 rounded-xl text-muted-foreground hover:bg-accent hover:text-foreground transition-all duration-150 z-10"
-                    aria-label="Tutup menu"
+                    style={{ willChange: 'opacity' }}
+                    className={[
+                        'absolute inset-y-0 left-full z-0 bg-black/40 backdrop-blur-sm',
+                        'transition-opacity duration-300 ease-out',
+                        // 100vw cukup untuk menutupi sisa layar di semua ukuran
+                        'w-[100vw]',
+                        sidebarOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none',
+                    ].join(' ')}
+                />
+
+                {/* Sidebar */}
+                <aside
+                    aria-label="Navigasi"
+                    className="relative z-10 h-full glass-sidebar"
                 >
-                    <X className="w-4 h-4" />
-                </button>
-                <SidebarContent role={role} onClose={() => setSidebarOpen(false)} />
-            </aside>
+                    <button
+                        onClick={() => setSidebarOpen(false)}
+                        className="absolute top-4 right-3 p-1.5 rounded-xl text-muted-foreground hover:bg-accent hover:text-foreground transition-all duration-150 z-10"
+                        aria-label="Tutup menu"
+                    >
+                        <X className="w-4 h-4" />
+                    </button>
+                    <SidebarContent role={role} onClose={() => setSidebarOpen(false)} />
+                </aside>
+            </div>
 
             {/* ── Main Content Area ── */}
             <div className="flex-1 min-w-0 flex flex-col h-full lg:pl-64">
@@ -325,15 +421,26 @@ export default function DashboardLayout() {
                 <header className="lg:hidden flex-shrink-0 z-20 glass-topbar h-14 flex items-center gap-3 px-4">
                     <button
                         onClick={() => setSidebarOpen(true)}
-                        className="p-2 rounded-xl text-muted-foreground hover:bg-accent hover:text-foreground transition-all duration-150 active:scale-[0.93]"
+                        className={[
+                            'p-2 rounded-xl transition-all duration-150 active:scale-[0.93]',
+                            'text-foreground/60 hover:text-foreground',
+                            'bg-white/0 hover:bg-white/50 dark:hover:bg-white/8',
+                            'hover:shadow-[inset_0_1px_0_oklch(1_0_0/0.5)] dark:hover:shadow-[inset_0_1px_0_oklch(1_0_0/0.08)]',
+                            'border border-transparent hover:border-white/30 dark:hover:border-white/8',
+                        ].join(' ')}
                         aria-label="Buka menu"
                     >
                         <Menu className="w-5 h-5" />
                     </button>
 
                     <div className="flex items-center gap-2 flex-1 min-w-0">
-                        <div className="w-7 h-7 rounded-xl bg-primary flex items-center justify-center flex-shrink-0 shadow-glow-blue-sm">
-                            <img src="/tkj.svg" alt="TKJ" className="w-4 h-4 object-contain brightness-0 invert" />
+                        <div className={[
+                            'w-7 h-7 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden',
+                            'bg-white/35 dark:bg-white/[0.06]',
+                            'ring-1 ring-black/[0.08] dark:ring-white/[0.10]',
+                            'shadow-[0_2px_8px_oklch(0.13_0.01_260/0.10),inset_0_1px_0_oklch(1_0_0/0.40)]',
+                        ].join(' ')}>
+                            <img src="/tkj.svg" alt="TKJ" className="w-full h-full object-contain p-1" />
                         </div>
                         <span className="font-bold text-sm text-foreground tracking-tight truncate">
                             Inventory TKJ
@@ -345,7 +452,7 @@ export default function DashboardLayout() {
                             <img
                                 src={user.avatar}
                                 alt={user.name}
-                                className="w-8 h-8 rounded-2xl object-cover ring-2 ring-border"
+                                className="w-8 h-8 rounded-2xl object-cover ring-2 ring-white/40 dark:ring-white/10"
                             />
                         ) : user ? (
                             <GeneratedAvatar name={user.name} email={user.email} size={32} />
