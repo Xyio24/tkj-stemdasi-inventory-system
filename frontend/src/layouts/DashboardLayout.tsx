@@ -96,8 +96,8 @@ function SideNavItem({ item, onClose }: { item: NavItem; onClose?: () => void })
                 [
                     'group flex items-center gap-2.5 px-3 py-2 rounded-2xl text-sm transition-all duration-200',
                     isActive
-                        ? 'bg-primary/10 dark:bg-primary/20 text-primary font-semibold shadow-glow-blue-sm border border-primary/15 dark:border-primary/25'
-                        : 'text-foreground/60 font-medium hover:bg-accent hover:text-foreground',
+                        ? 'bg-primary/12 dark:bg-primary/20 text-primary font-semibold shadow-glow-blue-sm border border-primary/20 dark:border-primary/30 backdrop-blur-sm'
+                        : 'text-foreground/60 font-medium hover:bg-white/40 dark:hover:bg-white/8 hover:text-foreground',
                 ].join(' ')
             }
         >
@@ -196,7 +196,7 @@ function SidebarContent({ role, onClose }: { role: string; onClose?: () => void 
             {/* ── User profile + logout ── */}
             <div className="px-3 py-3">
                 {/* User info */}
-                <div className="flex items-center gap-2.5 px-3 py-2 mb-1 rounded-2xl hover:bg-accent transition-all duration-200 cursor-default">
+                <div className="flex items-center gap-2.5 px-3 py-2 mb-1 rounded-2xl hover:bg-white/40 dark:hover:bg-white/8 transition-all duration-200 cursor-default">
                     <div className="flex-shrink-0">
                         {user?.avatar && user.avatar_type === 'upload' ? (
                             <img
@@ -223,7 +223,7 @@ function SidebarContent({ role, onClose }: { role: string; onClose?: () => void 
                 {/* Logout */}
                 <button
                     onClick={handleLogout}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-2xl text-sm font-medium text-destructive hover:bg-destructive/8 dark:hover:bg-destructive/15 transition-all duration-200 active:scale-[0.97] group"
+                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-2xl text-sm font-medium text-destructive hover:bg-destructive/10 dark:hover:bg-destructive/15 transition-all duration-200 active:scale-[0.97] group"
                 >
                     <span className="flex items-center justify-center w-7 h-7 rounded-xl bg-destructive/8 dark:bg-destructive/15 flex-shrink-0 group-hover:bg-destructive/15 transition-all duration-200">
                         <LogOut className="w-4 h-4" />
@@ -279,7 +279,7 @@ export default function DashboardLayout() {
          * - main: flex-1 + overflow-y-auto → SATU-SATUNYA scrollable area
          * Ini pola yang benar untuk sidebar layout agar mobile scroll bekerja.
          */
-        <div className="h-dvh bg-mesh-calm flex overflow-hidden">
+        <div className="h-dvh bg-mesh-calm flex overflow-clip isolate">
 
             {/* ── Desktop Sidebar ── */}
             <aside className="hidden lg:flex lg:flex-col w-64 flex-shrink-0 fixed inset-y-0 left-0 z-30 glass-sidebar">

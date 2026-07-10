@@ -192,7 +192,7 @@ export default function CategoryList() {
                                 <th className="px-5 py-3.5 text-[10px] font-bold text-muted-foreground uppercase tracking-widest text-left hidden sm:table-cell">Slug</th>
                                 <th className="px-5 py-3.5 text-[10px] font-bold text-muted-foreground uppercase tracking-widest text-left hidden md:table-cell">Deskripsi</th>
                                 {canManage && (
-                                    <th className="px-5 py-3.5 text-[10px] font-bold text-muted-foreground uppercase tracking-widest text-right">Aksi</th>
+                                    <th className="px-5 py-3.5 text-[10px] font-bold text-muted-foreground uppercase tracking-widest text-left">Aksi</th>
                                 )}
                             </tr>
                         </thead>
@@ -259,13 +259,13 @@ export default function CategoryList() {
 
                                         {/* Actions — always visible on mobile, hover-reveal on desktop */}
                                         {canManage && (
-                                            <td className="px-5 py-3.5 text-right">
-                                                <div className="flex justify-end gap-1.5">
+                                            <td className="px-5 py-3.5">
+                                                <div className="flex gap-1.5">
                                                     <Button
                                                         variant="ghost"
                                                         size="icon-sm"
                                                         onClick={() => handleEdit(cat)}
-                                                        className="text-primary hover:bg-primary/8 dark:hover:bg-primary/15 hover:text-primary sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-150"
+                                                        className="text-primary hover:bg-primary/8 dark:hover:bg-primary/15 hover:text-primary  transition-all duration-150"
                                                         aria-label={`Edit ${cat.name}`}
                                                         title="Edit"
                                                     >
@@ -280,7 +280,7 @@ export default function CategoryList() {
                                                             }
                                                         }}
                                                         disabled={deleteMutation.isPending}
-                                                        className="text-destructive hover:bg-destructive/8 dark:hover:bg-destructive/15 hover:text-destructive sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-150 disabled:opacity-30"
+                                                        className="text-destructive hover:bg-destructive/8 dark:hover:bg-destructive/15 hover:text-destructive  transition-all duration-150 disabled:opacity-30"
                                                         aria-label={`Hapus ${cat.name}`}
                                                         title="Hapus"
                                                     >

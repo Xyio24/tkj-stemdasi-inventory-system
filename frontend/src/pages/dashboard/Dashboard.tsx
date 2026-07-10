@@ -77,37 +77,95 @@ interface StatCardProps {
     value:       number;
     icon:        React.ReactNode;
     iconBg:      string;      // bg + text color classes for icon badge
-    accent:      string;      // top border accent color
     note?:       string;
     delay?:      string;
     alert?:      boolean;     // red glow for alerts
+    wide?:       boolean;     // full-width horizontal layout
 }
 
-function StatCard({ label, value, icon, iconBg, accent, note, delay, alert }: StatCardProps) {
+function StatCard({ label, value, icon, iconBg, note, delay, alert, wide }: StatCardProps) {
+    if (wide) {
+        return (
+            <div className={[
+                'glass-card relative overflow-hidden px-5 py-4 group',
+                'flex items-center gap-4',
+                'hover:shadow-float hover:-translate-y-0.5 transition-all duration-300 ease-spring',
+                'animate-fade-up',
+                delay ?? '',
+                alert && value > 0 ? 'ring-2 ring-red-400/30 dark:ring-red-500/20' : '',
+            ].filter(Boolean).join(' ')}>
+                {/* Icon */}
+                <div className={[
+                    'w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0',
+                    'transition-transform duration-300 ease-spring group-hover:scale-110',
+                    iconBg,
+                ].join(' ')}>
+                    {icon}
+                </div>
+
+                {/* Value + label side by side */}
+                <div className="flex items-center gap-3 min-w-0">
+                    <div className="flex items-center gap-2">
+                        <p className="text-2xl font-bold text-foreground tabular-nums leading-none tracking-tight">
+                            {value.toLocaleString('id-ID')}
+                        </p>
+                        {alert && value > 0 && (
+                            <div className="w-2 h-2 rounded-full bg-red-400 animate-pulse-glow flex-shrink-0" />
+                        )}
+                    </div>
+                    <p className="text-xs font-semibold text-foreground/55 uppercase tracking-wide leading-none">
+                        {label}
+                    </p>
+                </div>
+
+                {note && (
+                    <p className="ml-auto text-[11px] text-muted-foreground/60 font-medium flex-shrink-0 hidden sm:block">
+                        {note}
+                    </p>
+                )}
+            </div>
+        );
+    }
+
     return (
         <div className={[
-            'glass-card relative overflow-hidden p-5 flex flex-col gap-3 group',
+            'glass-card relative overflow-hidden p-4 group',
             'hover:shadow-float hover:-translate-y-0.5 transition-all duration-300 ease-spring',
             'animate-fade-up',
             delay ?? '',
             alert && value > 0 ? 'ring-2 ring-red-400/30 dark:ring-red-500/20' : '',
         ].filter(Boolean).join(' ')}>
 
-            {/* Colored top accent line */}
-            <div className={['absolute top-0 left-0 right-0 h-0.5 rounded-t-3xl', accent].join(' ')} />
+            {/* Icon + Value row */}
+            <div className="flex items-center gap-3">
+                {/* iOS-style icon badge */}
+                <div className={[
+                    'w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0',
+                    'transition-transform duration-300 ease-spring group-hover:scale-110',
+                    iconBg,
+                ].join(' ')}>
+                    {icon}
+                </div>
 
-            {/* Icon badge */}
-            <div className={['w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0 transition-transform duration-200 group-hover:scale-110', iconBg].join(' ')}>
-                {icon}
+                {/* Value + alert dot */}
+                <div className="flex items-center gap-2 min-w-0">
+                    <p className="text-2xl font-bold text-foreground tabular-nums leading-none tracking-tight">
+                        {value.toLocaleString('id-ID')}
+                    </p>
+                    {alert && value > 0 && (
+                        <div className="w-2 h-2 rounded-full bg-red-400 animate-pulse-glow flex-shrink-0" />
+                    )}
+                </div>
             </div>
 
-            {/* Value */}
-            <div>
-                <p className="text-2xl font-bold text-foreground tabular-nums leading-none">
-                    {value.toLocaleString('id-ID')}
+            {/* Label + note */}
+            <div className="mt-3">
+                <p className="text-xs font-semibold text-foreground/55 leading-snug uppercase tracking-wide">
+                    {label}
                 </p>
-                <p className="text-xs font-medium text-muted-foreground mt-1 leading-snug">{label}</p>
-                {note && <p className="text-[10px] text-muted-foreground/60 mt-0.5">{note}</p>}
+                {note && (
+                    <p className="text-[10px] text-muted-foreground/60 mt-0.5 font-medium">{note}</p>
+                )}
             </div>
         </div>
     );
@@ -209,7 +267,7 @@ function RecentBorrowingsTable({ data }: { data: RecentBorrowing[] }) {
                 </div>
                 <button
                     onClick={() => navigate('/dashboard/borrowings')}
-                    className="flex items-center gap-1 text-xs text-primary font-semibold hover:gap-1.5 transition-all duration-200 active:scale-[0.96] px-2.5 py-1.5 rounded-xl hover:bg-primary/8 dark:hover:bg-primary/15"
+                    className="flex items-center gap-1 text-xs text-primary font-semibold hover:gap-1.5 transition-all duration-200 active:scale-[0.96] px-2.5 py-1.5 rounded-xl hover:bg-primary/10 dark:hover:bg-primary/15"
                 >
                     Lihat semua <ArrowRight className="w-3 h-3" />
                 </button>
@@ -444,57 +502,48 @@ export default function Dashboard() {
         {
             label:   'Total Barang',
             value:   stats.total_items,
-            icon:    <Package    className="w-5 h-5" />,
-            iconBg:  'bg-blue-100   dark:bg-blue-900/30   text-blue-600   dark:text-blue-400',
-            accent:  'bg-blue-400',
+            icon:    <Package    className="w-5 h-5 text-blue-500 dark:text-blue-400" />,
+            iconBg:  'bg-blue-100/80 dark:bg-blue-500/20',
         },
         {
             label:   'Kategori',
             value:   stats.total_categories,
-            icon:    <Tag         className="w-5 h-5" />,
-            iconBg:  'bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400',
-            accent:  'bg-violet-400',
+            icon:    <Tag         className="w-5 h-5 text-violet-500 dark:text-violet-400" />,
+            iconBg:  'bg-violet-100/80 dark:bg-violet-500/20',
         },
         {
             label:   'Total Pengguna',
             value:   stats.total_users,
-            icon:    <Users       className="w-5 h-5" />,
-            iconBg:  'bg-cyan-100   dark:bg-cyan-900/30   text-cyan-600   dark:text-cyan-400',
-            accent:  'bg-cyan-400',
+            icon:    <Users       className="w-5 h-5 text-cyan-500 dark:text-cyan-400" />,
+            iconBg:  'bg-cyan-100/80 dark:bg-cyan-500/20',
         },
         {
             label:   'Sedang Dipinjam',
             value:   stats.active_borrowings,
-            icon:    <ClipboardList className="w-5 h-5" />,
-            iconBg:  'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400',
-            accent:  'bg-indigo-400',
+            icon:    <ClipboardList className="w-5 h-5 text-indigo-500 dark:text-indigo-400" />,
+            iconBg:  'bg-indigo-100/80 dark:bg-indigo-500/20',
         },
     ];
 
     const alertCards: StatCardProps[] = [
         {
-            label:   'Pending Approval',
+            label:   'Persetujuan',
             value:   stats.pending_approvals,
-            icon:    <Clock         className="w-5 h-5" />,
-            iconBg:  'bg-amber-100  dark:bg-amber-900/30  text-amber-600  dark:text-amber-400',
-            accent:  'bg-amber-400',
-            note:    'Menunggu disetujui',
+            icon:    <Clock         className="w-5 h-5 text-amber-500 dark:text-amber-400" />,
+            iconBg:  'bg-amber-100/80 dark:bg-amber-500/20',
             alert:   stats.pending_approvals > 0,
         },
         {
             label:   'Proses Kembali',
             value:   stats.returning_count,
-            icon:    <RotateCcw     className="w-5 h-5" />,
-            iconBg:  'bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400',
-            accent:  'bg-violet-400',
+            icon:    <RotateCcw     className="w-5 h-5 text-violet-500 dark:text-violet-400" />,
+            iconBg:  'bg-violet-100/80 dark:bg-violet-500/20',
         },
         {
             label:   'Stok Menipis',
             value:   stats.items_low_stock,
-            icon:    <AlertTriangle className="w-5 h-5" />,
-            iconBg:  'bg-red-100    dark:bg-red-900/30    text-red-600    dark:text-red-400',
-            accent:  'bg-red-400',
-            note:    'Di bawah stok minimum',
+            icon:    <AlertTriangle className="w-5 h-5 text-red-500 dark:text-red-400" />,
+            iconBg:  'bg-red-100/80 dark:bg-red-500/20',
             alert:   stats.items_low_stock > 0,
         },
     ];
@@ -520,18 +569,19 @@ export default function Dashboard() {
                 </button>
             </div>
 
-            {/* ── Top stat cards (4 grid) ── */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            {/* ── Stat cards — 6 kotak (2 baris × 3 kolom mobile, 1 baris × 6 kolom lg) ── */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
                 {topCards.map((card, i) => (
-                    <StatCard key={card.label} {...card} delay={`delay-${[0, 75, 150, 200][i]}`} />
+                    <StatCard key={card.label} {...card} delay={`delay-${[0, 75, 150, 200, 100, 175][i]}`} />
+                ))}
+                {alertCards.slice(0, 2).map((card, i) => (
+                    <StatCard key={card.label} {...card} delay={`delay-${[100, 175][i]}`} />
                 ))}
             </div>
 
-            {/* ── Alert cards (3 grid) ── */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {alertCards.map((card, i) => (
-                    <StatCard key={card.label} {...card} delay={`delay-${[100, 175, 250][i]}`} />
-                ))}
+            {/* ── Wide alert card — Stok Menipis ── */}
+            <div>
+                <StatCard {...alertCards[2]} delay="delay-250" wide />
             </div>
 
             {/* ── Chart ── */}

@@ -91,7 +91,7 @@ function PendingTable({
                 <thead>
                     <tr className="border-b border-border/50">
                         {['Pendaftar', 'Kelas', 'No. Absen', 'Tgl. Daftar', 'Aksi'].map((h, i) => (
-                            <th key={h} className={['px-5 py-3.5 text-[10px] font-bold text-muted-foreground uppercase tracking-widest', i === 4 ? 'text-right' : 'text-left', i === 2 ? 'hidden sm:table-cell' : '', i === 3 ? 'hidden md:table-cell' : ''].join(' ')}>{h}</th>
+                            <th key={h} className={['px-5 py-3.5 text-[10px] font-bold text-muted-foreground uppercase tracking-widest text-left', i === 2 ? 'hidden sm:table-cell' : '', i === 3 ? 'hidden md:table-cell' : ''].join(' ')}>{h}</th>
                         ))}
                     </tr>
                 </thead>
@@ -181,7 +181,7 @@ function ActiveTable({
                 <thead>
                     <tr className="border-b border-border/50">
                         {headers.map((h, i) => (
-                            <th key={h} className={['px-5 py-3.5 text-[10px] font-bold text-muted-foreground uppercase tracking-widest', i === headers.length - 1 ? 'text-right' : 'text-left'].join(' ')}>{h}</th>
+                            <th key={h} className="px-5 py-3.5 text-[10px] font-bold text-muted-foreground uppercase tracking-widest text-left">{h}</th>
                         ))}
                     </tr>
                 </thead>
@@ -246,13 +246,13 @@ function ActiveTable({
                                     </span>
                                 </td>
                                 {/* Aksi — always visible on mobile, hover-reveal on sm+ */}
-                                <td className="px-5 py-3.5 text-right">
+                                <td className="px-5 py-3.5">
                                     {user.status === 'blocked' ? (
-                                        <Button variant="ghost" size="sm" onClick={() => unblockMutation.mutate(user.id)} disabled={isSelf || (unblockMutation.isPending as boolean)} className="gap-1.5 text-green-600 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/20 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-150">
+                                        <Button variant="ghost" size="sm" onClick={() => unblockMutation.mutate(user.id)} disabled={isSelf || (unblockMutation.isPending as boolean)} className="gap-1.5 text-green-600 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/20  transition-all duration-150">
                                             {unblockMutation.isPending ? <ButtonSpinner className="w-3.5 h-3.5" /> : <ShieldCheck className="w-3.5 h-3.5" />} Aktifkan
                                         </Button>
                                     ) : (
-                                        <Button variant="ghost" size="sm" onClick={() => blockMutation.mutate(user.id)} disabled={isSelf || (blockMutation.isPending as boolean)} className="gap-1.5 text-destructive hover:bg-destructive/8 dark:hover:bg-destructive/15 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-150">
+                                        <Button variant="ghost" size="sm" onClick={() => blockMutation.mutate(user.id)} disabled={isSelf || (blockMutation.isPending as boolean)} className="gap-1.5 text-destructive hover:bg-destructive/8 dark:hover:bg-destructive/15  transition-all duration-150">
                                             {blockMutation.isPending ? <ButtonSpinner className="w-3.5 h-3.5 text-destructive" /> : <ShieldOff className="w-3.5 h-3.5" />} Blokir
                                         </Button>
                                     )}

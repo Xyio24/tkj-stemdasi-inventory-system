@@ -303,7 +303,7 @@ export default function AcademicYearList() {
 
                                         {/* Aksi */}
                                         <td className="px-5 py-3.5">
-                                            <div className="flex items-center justify-end gap-2">
+                                            <div className="flex items-center gap-2">
                                                 {/* Toggle aktif */}
                                                 <Button
                                                     variant="glass-primary"
@@ -311,7 +311,7 @@ export default function AcademicYearList() {
                                                     onClick={() => handleToggleActive(year)}
                                                     disabled={updateMutation.isPending || (!year.is_active && atMaxActive)}
                                                     className={[
-                                                        'opacity-0 group-hover:opacity-100 transition-all duration-150',
+                                                        ' transition-all duration-150',
                                                         !year.is_active && atMaxActive ? '!opacity-30 cursor-not-allowed' : '',
                                                     ].join(' ')}
                                                 >
@@ -331,7 +331,7 @@ export default function AcademicYearList() {
                                                         }
                                                     }}
                                                     disabled={deleteMutation.isPending}
-                                                    className="text-destructive hover:bg-destructive/8 dark:hover:bg-destructive/15 opacity-0 group-hover:opacity-100 transition-all duration-150"
+                                                    className="text-destructive hover:bg-destructive/8 dark:hover:bg-destructive/15  transition-all duration-150"
                                                 >
                                                     {deleteMutation.isPending
                                                         ? <ButtonSpinner className="w-3.5 h-3.5 text-destructive" />

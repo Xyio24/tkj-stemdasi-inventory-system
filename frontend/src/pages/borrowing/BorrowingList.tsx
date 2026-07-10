@@ -1,12 +1,11 @@
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getBorrowings, deleteBorrowing } from '@/api/borrowing';
+import { useQuery } from '@tanstack/react-query';
+import { getBorrowings } from '@/api/borrowing';
 import type { Borrowing } from '@/api/borrowing';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
-import { toast } from 'sonner';
 import {
-    ClipboardList, Plus, Search, Trash2,
+    ClipboardList, Plus, Search,
     ChevronLeft, ChevronRight, ArrowRight,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -37,7 +36,6 @@ const STATUS_TABS = [
     { value: 'cancelled', label: 'Dibatalkan'  },
 ];
 
-const TERMINAL = ['returned', 'rejected', 'cancelled'];
 
 function formatDate(iso?: string) {
     if (!iso) return '-';
@@ -65,33 +63,15 @@ export default function BorrowingList() {
     const [status, setStatus] = useState('');
     const [search, setSearch] = useState('');
 
-    const user        = useAuthStore(s => s.user);
-    const queryClient = useQueryClient();
-    const navigate    = useNavigate();
+    const user     = useAuthStore(s => s.user);
+    const navigate = useNavigate();
 
     const isSiswa = user?.role === 'siswa';
-    const isAdmin = user?.role === 'admin';
 
     const { data, isLoading } = useQuery({
         queryKey: ['borrowings', page, status, search],
         queryFn: () => getBorrowings({ page, status: status || undefined, search: search || undefined }),
     });
-
-    const deleteMutation = useMutation({
-        mutationFn: deleteBorrowing,
-        onSuccess: () => {
-            toast.success('Data peminjaman berhasil dihapus');
-            queryClient.invalidateQueries({ queryKey: ['borrowings'] });
-        },
-        onError: (err: { response?: { data?: { message?: string } } }) =>
-            toast.error(err.response?.data?.message || 'Gagal menghapus data peminjaman'),
-    });
-
-    function handleDelete(b: Borrowing) {
-        if (confirm(`Hapus data peminjaman "${b.code}"?\nTindakan ini tidak dapat dibatalkan.`)) {
-            deleteMutation.mutate(b.id);
-        }
-    }
 
     return (
         <div className="space-y-5">
@@ -162,7 +142,7 @@ export default function BorrowingList() {
                                 <th className="px-5 py-3.5 text-[10px] font-bold text-muted-foreground uppercase tracking-widest text-left hidden md:table-cell">Tgl Pinjam</th>
                                 <th className="px-5 py-3.5 text-[10px] font-bold text-muted-foreground uppercase tracking-widest text-left hidden md:table-cell">Tenggat</th>
                                 <th className="px-5 py-3.5 text-[10px] font-bold text-muted-foreground uppercase tracking-widest text-left">Status</th>
-                                <th className="px-5 py-3.5 text-[10px] font-bold text-muted-foreground uppercase tracking-widest text-right">Aksi</th>
+                                <th className="px-5 py-3.5 text-[10px] font-bold text-muted-foreground uppercase tracking-widest text-left">Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -233,26 +213,14 @@ export default function BorrowingList() {
                                             </td>
 
                                             {/* Actions */}
-                                            <td className="px-5 py-3.5 text-right" onClick={e => e.stopPropagation()}>
-                                                <div className="flex items-center justify-end gap-1.5">
+                                            <td className="px-5 py-3.5" onClick={e => e.stopPropagation()}>
+                                                <div className="flex items-center gap-1.5">
                                                     <Link
                                                         to={`/dashboard/borrowings/${b.id}`}
-                                                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-primary/8 dark:bg-primary/15 text-primary text-xs font-semibold hover:bg-primary/15 transition-all duration-150 active:scale-[0.95] sm:opacity-0 sm:group-hover:opacity-100"
+                                                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-primary/8 dark:bg-primary/15 text-primary text-xs font-semibold hover:bg-primary/15 transition-all duration-150 active:scale-[0.95] "
                                                     >
                                                         Detail <ArrowRight className="w-3 h-3" />
                                                     </Link>
-                                                    {isAdmin && TERMINAL.includes(b.status) && (
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="icon-sm"
-                                                            onClick={() => handleDelete(b)}
-                                                            disabled={deleteMutation.isPending}
-                                                            className="text-destructive hover:bg-destructive/8 dark:hover:bg-destructive/15 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-150"
-                                                            title="Hapus"
-                                                        >
-                                                            <Trash2 className="w-3.5 h-3.5" />
-                                                        </Button>
-                                                    )}
                                                 </div>
                                             </td>
                                         </tr>

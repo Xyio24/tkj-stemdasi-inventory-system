@@ -467,14 +467,14 @@ export default function UserGuidePage() {
                         <div
                             key={row.status}
                             className={[
-                                'flex items-center gap-4 px-5 py-3.5 transition-colors duration-150 hover:bg-accent/30',
+                                'grid grid-cols-[7rem_1fr] items-center gap-4 px-5 py-3.5 transition-colors duration-150 hover:bg-accent/30',
                                 i < STATUS_TABLE.length - 1 ? 'border-b border-border/40' : '',
                             ].join(' ')}
                         >
-                            <span className={['badge-pill flex-shrink-0', row.color].join(' ')}>
+                            <span className={['badge-pill justify-center text-center', row.color].join(' ')}>
                                 {row.status}
                             </span>
-                            <p className="text-sm text-muted-foreground">{row.desc}</p>
+                            <p className="text-sm text-muted-foreground leading-snug">{row.desc}</p>
                         </div>
                     ))}
                 </div>

@@ -406,7 +406,7 @@ export default function ItemList() {
                                         <th className="px-4 py-3.5 text-[10px] font-bold text-red-600   dark:text-red-400    uppercase tracking-widest text-center">Rusak ∙ B</th>
                                         <th className="px-4 py-3.5 text-[10px] font-bold text-muted-foreground uppercase tracking-widest text-center">Hilang</th>
                                         <th className="px-4 py-3.5 text-[10px] font-bold text-muted-foreground uppercase tracking-widest text-center">Kondisi</th>
-                                        {isAdmin && <th className="px-4 py-3.5 text-[10px] font-bold text-muted-foreground uppercase tracking-widest text-right">Aksi</th>}
+                                        {isAdmin && <th className="px-4 py-3.5 text-[10px] font-bold text-muted-foreground uppercase tracking-widest text-left">Aksi</th>}
                                     </tr>
                                 </thead>
                                 <tbody>
