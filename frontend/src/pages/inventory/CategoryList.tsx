@@ -172,7 +172,7 @@ export default function CategoryList() {
             )}
 
             {/* ── Table ── */}
-            <div className="glass-card overflow-hidden animate-fade-up delay-100">
+            <div className="glass rounded-3xl overflow-hidden animate-fade-up delay-100">
 
                 {/* Table meta */}
                 {data?.data && (
@@ -183,6 +183,7 @@ export default function CategoryList() {
                     </div>
                 )}
 
+                {/* overflow-x untuk horizontal scroll, biarkan page scroll vertikal secara normal */}
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                         <thead>

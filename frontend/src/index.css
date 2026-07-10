@@ -7,37 +7,50 @@
 @tailwind utilities;
 
 /* ─── Base Variables ──────────────────────────────────────────────────────── */
+/*
+ * PENTING: Variabel warna untuk Tailwind harus berisi CHANNEL ONLY (L C H),
+ * bukan full oklch() function, karena Tailwind compose sendiri:
+ *   "oklch(var(--primary) / <alpha-value>)"
+ * Kalau disimpan sebagai "oklch(0.5 0.2 264)" hasilnya invalid:
+ *   "oklch(oklch(0.5 0.2 264) / 1.0)"
+ *
+ * Glass tokens dan glow tetap pakai oklch() penuh karena dipakai langsung di CSS.
+ */
 
 @layer base {
   :root {
     --font-sans: 'Geist Variable', system-ui, sans-serif;
 
-    /* ── iOS Color Palette (light) ── */
-    --background:         oklch(0.985 0.002 247);
-    --foreground:         oklch(0.13  0.01  260);
-    --card:               oklch(1     0     0);
-    --card-foreground:    oklch(0.13  0.01  260);
-    --popover:            oklch(1     0     0);
-    --popover-foreground: oklch(0.13  0.01  260);
+    /* ── Tailwind color channels (L C H only) ── */
+    --background:           0.985 0.002 247;
+    --foreground:           0.13  0.01  260;
+    --card:                 1     0     0;
+    --card-foreground:      0.13  0.01  260;
+    --popover:              1     0     0;
+    --popover-foreground:   0.13  0.01  260;
+    --primary:              0.545 0.22  264;
+    --primary-foreground:   1     0     0;
+    --secondary:            0.95  0.005 247;
+    --secondary-foreground: 0.25  0.01  260;
+    --muted:                0.94  0.005 247;
+    --muted-foreground:     0.52  0.01  260;
+    --accent:               0.92  0.01  264;
+    --accent-foreground:    0.25  0.01  260;
+    --destructive:          0.62  0.22  25;
+    --destructive-foreground: 1   0     0;
+    --border:               0.88  0.005 247;
+    --input:                0.88  0.005 247;
+    --ring:                 0.545 0.22  264;
 
-    --primary:            oklch(0.545 0.22  264);   /* iOS Blue */
-    --primary-foreground: oklch(1     0     0);
-
-    --secondary:          oklch(0.95  0.005 247);
-    --secondary-foreground: oklch(0.25 0.01 260);
-
-    --muted:              oklch(0.94  0.005 247);
-    --muted-foreground:   oklch(0.52  0.01  260);
-
-    --accent:             oklch(0.92  0.01  264);
-    --accent-foreground:  oklch(0.25  0.01  260);
-
-    --destructive:        oklch(0.62  0.22  25);
-    --destructive-foreground: oklch(1 0 0);
-
-    --border:             oklch(0.88  0.005 247);
-    --input:              oklch(0.88  0.005 247);
-    --ring:               oklch(0.545 0.22  264);
+    /* ── Sidebar color channels ── */
+    --sidebar:                    0.985 0.002 247;
+    --sidebar-foreground:         0.13  0.01  260;
+    --sidebar-primary:            0.545 0.22  264;
+    --sidebar-primary-foreground: 1     0     0;
+    --sidebar-accent:             0.93  0.01  264;
+    --sidebar-accent-foreground:  0.35  0.015 264;
+    --sidebar-border:             0.88  0.005 247;
+    --sidebar-ring:               0.545 0.22  264;
 
     /* ── Border Radius (iOS scale) ── */
     --radius:     1rem;
@@ -48,17 +61,7 @@
     --radius-2xl: 2rem;
     --radius-3xl: 2.5rem;
 
-    /* ── Sidebar ── */
-    --sidebar:                    oklch(0.985 0.002 247);
-    --sidebar-foreground:         oklch(0.13  0.01  260);
-    --sidebar-primary:            oklch(0.545 0.22  264);
-    --sidebar-primary-foreground: oklch(1     0     0);
-    --sidebar-accent:             oklch(0.93  0.01  264);
-    --sidebar-accent-foreground:  oklch(0.35  0.015 264);
-    --sidebar-border:             oklch(0.88  0.005 247);
-    --sidebar-ring:               oklch(0.545 0.22  264);
-
-    /* ── Glass tokens ── */
+    /* ── Glass tokens (full oklch, dipakai langsung di CSS class) ── */
     --glass-bg:           oklch(1 0 0 / 0.72);
     --glass-bg-strong:    oklch(1 0 0 / 0.88);
     --glass-border:       oklch(1 0 0 / 0.45);
@@ -77,40 +80,34 @@
   }
 
   .dark {
-    --background:         oklch(0.10  0.01  260);
-    --foreground:         oklch(0.96  0.005 247);
-    --card:               oklch(0.14  0.01  260);
-    --card-foreground:    oklch(0.96  0.005 247);
-    --popover:            oklch(0.14  0.01  260);
-    --popover-foreground: oklch(0.96  0.005 247);
+    --background:           0.10  0.01  260;
+    --foreground:           0.96  0.005 247;
+    --card:                 0.14  0.01  260;
+    --card-foreground:      0.96  0.005 247;
+    --popover:              0.14  0.01  260;
+    --popover-foreground:   0.96  0.005 247;
+    --primary:              0.60  0.22  264;
+    --primary-foreground:   1     0     0;
+    --secondary:            0.20  0.01  260;
+    --secondary-foreground: 0.90  0.005 247;
+    --muted:                0.18  0.01  260;
+    --muted-foreground:     0.62  0.01  260;
+    --accent:               0.22  0.015 264;
+    --accent-foreground:    0.96  0.005 247;
+    --destructive:          0.65  0.22  25;
+    --destructive-foreground: 1   0     0;
+    --border:               0.60  0     0; /* oklch(0.60 0 0 / alpha) ≈ gray */
+    --input:                0.60  0     0;
+    --ring:                 0.60  0.22  264;
 
-    --primary:            oklch(0.60  0.22  264);
-    --primary-foreground: oklch(1     0     0);
-
-    --secondary:          oklch(0.20  0.01  260);
-    --secondary-foreground: oklch(0.90 0.005 247);
-
-    --muted:              oklch(0.18  0.01  260);
-    --muted-foreground:   oklch(0.62  0.01  260);
-
-    --accent:             oklch(0.22  0.015 264);
-    --accent-foreground:  oklch(0.96  0.005 247);
-
-    --destructive:        oklch(0.65  0.22  25);
-    --destructive-foreground: oklch(1 0 0);
-
-    --border:             oklch(1 0 0 / 0.10);
-    --input:              oklch(1 0 0 / 0.12);
-    --ring:               oklch(0.60  0.22  264);
-
-    --sidebar:                    oklch(0.13  0.01  260);
-    --sidebar-foreground:         oklch(0.96  0.005 247);
-    --sidebar-primary:            oklch(0.60  0.22  264);
-    --sidebar-primary-foreground: oklch(1     0     0);
-    --sidebar-accent:             oklch(0.22  0.015 264);
-    --sidebar-accent-foreground:  oklch(0.80  0.01  264);
-    --sidebar-border:             oklch(1 0 0 / 0.08);
-    --sidebar-ring:               oklch(0.60  0.22  264);
+    --sidebar:                    0.13  0.01  260;
+    --sidebar-foreground:         0.96  0.005 247;
+    --sidebar-primary:            0.60  0.22  264;
+    --sidebar-primary-foreground: 1     0     0;
+    --sidebar-accent:             0.22  0.015 264;
+    --sidebar-accent-foreground:  0.80  0.01  264;
+    --sidebar-border:             0.60  0     0;
+    --sidebar-ring:               0.60  0.22  264;
 
     /* ── Glass tokens (dark) ── */
     --glass-bg:           oklch(0.16 0.01 260 / 0.75);
@@ -145,19 +142,10 @@
   }
 
   /* ── Scrollbar (iOS feel) ── */
-  ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
-  ::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  ::-webkit-scrollbar-thumb {
-    @apply rounded-full bg-neutral-300 dark:bg-neutral-600;
-  }
-  ::-webkit-scrollbar-thumb:hover {
-    @apply bg-neutral-400 dark:bg-neutral-500;
-  }
+  ::-webkit-scrollbar        { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track  { background: transparent; }
+  ::-webkit-scrollbar-thumb  { @apply rounded-full bg-neutral-300 dark:bg-neutral-600; }
+  ::-webkit-scrollbar-thumb:hover { @apply bg-neutral-400 dark:bg-neutral-500; }
 
   /* ── Selection ── */
   ::selection {
@@ -169,72 +157,42 @@
 
 @layer base {
   @keyframes fade-up {
-    from {
-      opacity: 0;
-      transform: translateY(12px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
   }
-
   @keyframes fade-in {
     from { opacity: 0; }
     to   { opacity: 1; }
   }
-
   @keyframes scale-in {
-    from {
-      opacity: 0;
-      transform: scale(0.94);
-    }
-    to {
-      opacity: 1;
-      transform: scale(1);
-    }
+    from { opacity: 0; transform: scale(0.94); }
+    to   { opacity: 1; transform: scale(1); }
   }
-
   @keyframes spring-in {
     0%   { opacity: 0; transform: scale(0.88); }
     60%  { opacity: 1; transform: scale(1.03); }
     100% { transform: scale(1); }
   }
-
   @keyframes slide-in-left {
     from { transform: translateX(-100%); }
     to   { transform: translateX(0); }
   }
-
-  @keyframes slide-in-right {
-    from { transform: translateX(100%); }
-    to   { transform: translateX(0); }
-  }
-
   @keyframes shimmer {
     0%   { background-position: -200% center; }
     100% { background-position:  200% center; }
   }
-
   @keyframes pulse-glow {
     0%, 100% { box-shadow: var(--glow-blue-sm); }
     50%       { box-shadow: var(--glow-blue); }
   }
-
   @keyframes float {
-    0%, 100% { transform: translateY(0px);   }
+    0%, 100% { transform: translateY(0px); }
     50%       { transform: translateY(-6px); }
   }
-
   @keyframes blob-drift {
-    0%, 100% { transform: translate(0,    0)    scale(1); }
-    33%       { transform: translate(30px,-20px) scale(1.05); }
-    66%       { transform: translate(-20px,15px) scale(0.97); }
-  }
-
-  @keyframes spin {
-    from { transform: rotate(0deg); }
-    to   { transform: rotate(360deg); }
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33%       { transform: translate(30px, -20px) scale(1.05); }
+    66%       { transform: translate(-20px, 15px) scale(0.97); }
   }
 }
 
@@ -282,14 +240,11 @@
     border-bottom: 1px solid var(--glass-border-dark);
   }
 
-  /* ── Float shadow ── */
-  .shadow-float {
-    box-shadow: var(--glass-shadow-float);
-  }
-
-  .shadow-glow-blue {
-    box-shadow: var(--glow-blue);
-  }
+  /* ── Shadows ── */
+  .shadow-float      { box-shadow: var(--glass-shadow-float); }
+  .shadow-float-sm   { box-shadow: 0 4px 16px oklch(0.13 0.01 260 / 0.08); }
+  .shadow-glow-blue  { box-shadow: var(--glow-blue); }
+  .shadow-glow-blue-sm { box-shadow: var(--glow-blue-sm); }
 
   /* ── Gradient mesh background (iOS 16 style) ── */
   .bg-mesh {
@@ -298,14 +253,6 @@
       radial-gradient(ellipse 80% 60% at 20%  20%, oklch(0.88 0.06 264 / 0.35) 0%, transparent 60%),
       radial-gradient(ellipse 60% 50% at 80%  10%, oklch(0.85 0.08 290 / 0.25) 0%, transparent 55%),
       radial-gradient(ellipse 70% 60% at 50% 100%, oklch(0.92 0.05 230 / 0.20) 0%, transparent 60%);
-  }
-
-  .dark .bg-mesh {
-    background-color: oklch(0.10 0.01 260);
-    background-image:
-      radial-gradient(ellipse 80% 60% at 20%  20%, oklch(0.35 0.10 264 / 0.30) 0%, transparent 60%),
-      radial-gradient(ellipse 60% 50% at 80%  10%, oklch(0.30 0.12 290 / 0.20) 0%, transparent 55%),
-      radial-gradient(ellipse 70% 60% at 50% 100%, oklch(0.25 0.08 230 / 0.15) 0%, transparent 60%);
   }
 
   /* ── Shimmer skeleton ── */
@@ -321,17 +268,6 @@
     border-radius: var(--radius-md);
   }
 
-  .dark .skeleton {
-    background: linear-gradient(
-      90deg,
-      oklch(0.18 0.01 260) 25%,
-      oklch(0.22 0.01 260) 50%,
-      oklch(0.18 0.01 260) 75%
-    );
-    background-size: 200% 100%;
-    animation: shimmer 1.6s ease-in-out infinite;
-  }
-
   /* ── iOS Segmented Control ── */
   .segmented-control {
     @apply flex p-1 rounded-2xl;
@@ -339,24 +275,14 @@
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
   }
-
-  .dark .segmented-control {
-    background: oklch(0.20 0.01 260 / 0.8);
-  }
-
   .segmented-control-item {
     @apply flex-1 text-center text-sm font-medium px-4 py-1.5 rounded-xl transition-all duration-200 cursor-pointer select-none;
     color: oklch(0.45 0.01 260);
   }
-
-  .dark .segmented-control-item {
-    color: oklch(0.65 0.01 260);
-  }
-
   .segmented-control-item.active {
     @apply text-foreground;
     background: var(--glass-bg-strong);
-    box-shadow: 0 2px 8px oklch(0.13 0.01 260 / 0.12), 0 1px 3px oklch(0.13 0.01 260 / 0.08);
+    box-shadow: 0 2px 8px oklch(0.13 0.01 260 / 0.12);
   }
 
   /* ── Pill badge ── */
@@ -372,24 +298,14 @@
     border: 1px solid var(--glass-border-dark);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
+    color: oklch(var(--foreground));
   }
-
   .input-ios:focus {
-    border-color: oklch(0.545 0.22 264 / 0.6);
-    box-shadow: 0 0 0 4px oklch(0.545 0.22 264 / 0.12), var(--glow-blue-sm);
+    border-color: oklch(var(--primary) / 0.6);
+    box-shadow: 0 0 0 4px oklch(var(--primary) / 0.12), var(--glow-blue-sm);
   }
 
-  .dark .input-ios {
-    background: oklch(0.18 0.01 260 / 0.8);
-    border-color: oklch(1 0 0 / 0.10);
-  }
-
-  .dark .input-ios:focus {
-    border-color: oklch(0.60 0.22 264 / 0.6);
-    box-shadow: 0 0 0 4px oklch(0.60 0.22 264 / 0.15);
-  }
-
-  /* ── Animated blob (auth background) ── */
+  /* ── Animated blob ── */
   .blob {
     position: absolute;
     border-radius: 9999px;
@@ -398,7 +314,6 @@
     pointer-events: none;
     will-change: transform;
   }
-
   .blob:nth-child(2) { animation-delay: -4s; }
   .blob:nth-child(3) { animation-delay: -8s; }
 }
@@ -406,43 +321,17 @@
 /* ─── Animation Utilities ─────────────────────────────────────────────────── */
 
 @layer utilities {
-  .animate-fade-up {
-    animation: fade-up 0.4s cubic-bezier(0.34, 1.2, 0.64, 1) both;
-  }
+  .animate-fade-up    { animation: fade-up    0.4s  cubic-bezier(0.34, 1.2,  0.64, 1) both; }
+  .animate-fade-in    { animation: fade-in    0.3s  ease both; }
+  .animate-scale-in   { animation: scale-in   0.3s  cubic-bezier(0.34, 1.2,  0.64, 1) both; }
+  .animate-spring-in  { animation: spring-in  0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+  .animate-slide-in-left { animation: slide-in-left 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) both; }
+  .animate-shimmer    { animation: shimmer    1.6s  ease-in-out infinite; }
+  .animate-pulse-glow { animation: pulse-glow 2.5s  ease-in-out infinite; }
+  .animate-float      { animation: float      4s    ease-in-out infinite; }
+  .animate-blob       { animation: blob-drift 12s   ease-in-out infinite; }
 
-  .animate-fade-in {
-    animation: fade-in 0.3s ease both;
-  }
-
-  .animate-scale-in {
-    animation: scale-in 0.3s cubic-bezier(0.34, 1.2, 0.64, 1) both;
-  }
-
-  .animate-spring-in {
-    animation: spring-in 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both;
-  }
-
-  .animate-slide-in-left {
-    animation: slide-in-left 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
-  }
-
-  .animate-shimmer {
-    animation: shimmer 1.6s ease-in-out infinite;
-  }
-
-  .animate-pulse-glow {
-    animation: pulse-glow 2.5s ease-in-out infinite;
-  }
-
-  .animate-float {
-    animation: float 4s ease-in-out infinite;
-  }
-
-  .animate-blob {
-    animation: blob-drift 12s ease-in-out infinite;
-  }
-
-  /* ── Stagger delay helpers ── */
+  /* Stagger delays */
   .delay-75  { animation-delay: 75ms; }
   .delay-100 { animation-delay: 100ms; }
   .delay-150 { animation-delay: 150ms; }
@@ -450,24 +339,14 @@
   .delay-300 { animation-delay: 300ms; }
   .delay-500 { animation-delay: 500ms; }
 
-  /* ── Transition spring ── */
-  .transition-spring {
-    transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
-  }
+  /* Spring timing */
+  .transition-spring { transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1); }
 
-  /* ── Reduced motion ── */
+  /* Reduced motion */
   @media (prefers-reduced-motion: reduce) {
-    .animate-fade-up,
-    .animate-fade-in,
-    .animate-scale-in,
-    .animate-spring-in,
-    .animate-slide-in-left,
-    .animate-shimmer,
-    .animate-pulse-glow,
-    .animate-float,
-    .animate-blob,
-    .blob,
-    .skeleton {
+    .animate-fade-up, .animate-fade-in, .animate-scale-in,
+    .animate-spring-in, .animate-slide-in-left, .animate-shimmer,
+    .animate-pulse-glow, .animate-float, .animate-blob, .blob, .skeleton {
       animation: none !important;
       transition: none !important;
     }

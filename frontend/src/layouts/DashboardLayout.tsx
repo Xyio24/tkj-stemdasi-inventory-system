@@ -272,7 +272,14 @@ export default function DashboardLayout() {
     const role = user?.role ?? 'siswa';
 
     return (
-        <div className="min-h-dvh bg-background flex overflow-x-hidden">
+        /*
+         * Layout strategy:
+         * - Outer div: h-dvh + overflow-hidden → fixed viewport container
+         * - Inner flex column (lg:pl-64): h-full → mengisi tinggi penuh
+         * - main: flex-1 + overflow-y-auto → SATU-SATUNYA scrollable area
+         * Ini pola yang benar untuk sidebar layout agar mobile scroll bekerja.
+         */
+        <div className="h-dvh bg-background flex overflow-hidden">
 
             {/* ── Desktop Sidebar ── */}
             <aside className="hidden lg:flex lg:flex-col w-64 flex-shrink-0 fixed inset-y-0 left-0 z-30 glass-sidebar">
@@ -301,7 +308,6 @@ export default function DashboardLayout() {
                 ].join(' ')}
                 aria-label="Navigasi"
             >
-                {/* Close button */}
                 <button
                     onClick={() => setSidebarOpen(false)}
                     className="absolute top-4 right-3 p-1.5 rounded-xl text-muted-foreground hover:bg-accent hover:text-foreground transition-all duration-150 z-10"
@@ -309,15 +315,14 @@ export default function DashboardLayout() {
                 >
                     <X className="w-4 h-4" />
                 </button>
-
                 <SidebarContent role={role} onClose={() => setSidebarOpen(false)} />
             </aside>
 
             {/* ── Main Content Area ── */}
-            <div className="flex-1 min-w-0 flex flex-col lg:pl-64">
+            <div className="flex-1 min-w-0 flex flex-col h-full lg:pl-64">
 
                 {/* ── Mobile Topbar ── */}
-                <header className="lg:hidden sticky top-0 z-20 glass-topbar h-14 flex items-center gap-3 px-4">
+                <header className="lg:hidden flex-shrink-0 z-20 glass-topbar h-14 flex items-center gap-3 px-4">
                     <button
                         onClick={() => setSidebarOpen(true)}
                         className="p-2 rounded-xl text-muted-foreground hover:bg-accent hover:text-foreground transition-all duration-150 active:scale-[0.93]"
@@ -326,7 +331,6 @@ export default function DashboardLayout() {
                         <Menu className="w-5 h-5" />
                     </button>
 
-                    {/* Brand */}
                     <div className="flex items-center gap-2 flex-1 min-w-0">
                         <div className="w-7 h-7 rounded-xl bg-primary flex items-center justify-center flex-shrink-0 shadow-glow-blue-sm">
                             <img src="/tkj.svg" alt="TKJ" className="w-4 h-4 object-contain brightness-0 invert" />
@@ -336,7 +340,6 @@ export default function DashboardLayout() {
                         </span>
                     </div>
 
-                    {/* Avatar */}
                     <div className="flex-shrink-0">
                         {user?.avatar && user.avatar_type === 'upload' ? (
                             <img
@@ -352,10 +355,11 @@ export default function DashboardLayout() {
                     </div>
                 </header>
 
-                {/* ── Page Content ── */}
+                {/* ── Page Content — satu-satunya area scroll ── */}
                 <main
                     className={[
-                        'flex-1 p-4 md:p-6 lg:p-8 min-w-0 overflow-x-hidden',
+                        'flex-1 min-h-0 overflow-y-auto overflow-x-hidden',
+                        'p-4 md:p-6 lg:p-8',
                         'transition-opacity duration-300',
                         mounted ? 'opacity-100' : 'opacity-0',
                     ].join(' ')}

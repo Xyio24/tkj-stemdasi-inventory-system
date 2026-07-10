@@ -151,12 +151,13 @@ function SuccessScreen() {
                     Kamu bisa masuk setelah akun disetujui.
                 </p>
 
-                <Button asChild size="lg" className="w-full gap-2">
-                    <Link to="/login">
-                        Kembali ke Halaman Masuk
-                        <ArrowRight className="w-4 h-4" />
-                    </Link>
-                </Button>
+                <Link
+                    to="/login"
+                    className="w-full inline-flex items-center justify-center gap-2 h-12 px-6 rounded-2xl bg-primary text-primary-foreground text-base font-semibold shadow-[0_1px_3px_oklch(0_0_0/0.15),inset_0_1px_0_oklch(1_0_0/0.15)] hover:brightness-110 hover:scale-[1.02] active:scale-[0.95] transition-all duration-200 ease-spring"
+                >
+                    Kembali ke Halaman Masuk
+                    <ArrowRight className="w-4 h-4" />
+                </Link>
             </div>
         </div>
     );

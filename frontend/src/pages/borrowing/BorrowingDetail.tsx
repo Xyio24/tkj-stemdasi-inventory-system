@@ -1,41 +1,162 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { 
-    getBorrowingById, 
-    cancelBorrowing, 
-    approveBorrowing, 
-    rejectBorrowing, 
+import {
+    getBorrowingById,
+    cancelBorrowing,
+    approveBorrowing,
+    rejectBorrowing,
     uploadBorrowingPhoto,
     approveReturn,
-    deleteBorrowing
+    deleteBorrowing,
 } from '@/api/borrowing';
-import type { BorrowingPhoto, BorrowingItemDetail, ApproveReturnItemPayload, ReturnConditionEntry } from '@/api/borrowing';
+import type {
+    BorrowingPhoto,
+    BorrowingItemDetail,
+    ApproveReturnItemPayload,
+    ReturnConditionEntry,
+} from '@/api/borrowing';
 import { useAuthStore } from '@/store/authStore';
 import { toast } from 'sonner';
-import { Plus, Trash2 } from 'lucide-react';
+import {
+    ArrowLeft, Plus, Trash2, Camera, CheckCircle2, XCircle,
+    RotateCcw, Clock, Package, FileText, AlertTriangle,
+    ChevronDown, Image as ImageIcon,
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+
+// ─── Status config ────────────────────────────────────────────────────────────
+
+const STATUS_CONFIG: Record<string, { label: string; badge: string; dot: string }> = {
+    pending:   { label: 'Menunggu Persetujuan', badge: 'bg-amber-100/80  text-amber-700  dark:bg-amber-900/30  dark:text-amber-400',  dot: 'bg-amber-400'  },
+    approved:  { label: 'Disetujui',            badge: 'bg-blue-100/80   text-blue-700   dark:bg-blue-900/30   dark:text-blue-400',   dot: 'bg-blue-400'   },
+    rejected:  { label: 'Ditolak',              badge: 'bg-red-100/80    text-red-700    dark:bg-red-900/30    dark:text-red-400',    dot: 'bg-red-400'    },
+    borrowing: { label: 'Sedang Dipinjam',      badge: 'bg-indigo-100/80 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400', dot: 'bg-indigo-400' },
+    returning: { label: 'Proses Pengembalian',  badge: 'bg-violet-100/80 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400', dot: 'bg-violet-400' },
+    returned:  { label: 'Dikembalikan',         badge: 'bg-green-100/80  text-green-700  dark:bg-green-900/30  dark:text-green-400',  dot: 'bg-green-400'  },
+    overdue:   { label: 'Terlambat',            badge: 'bg-red-100/80    text-red-700    dark:bg-red-900/30    dark:text-red-400',    dot: 'bg-red-500'    },
+    cancelled: { label: 'Dibatalkan',           badge: 'bg-neutral-100   text-neutral-500 dark:bg-neutral-800  dark:text-neutral-400', dot: 'bg-neutral-400' },
+};
+
+const TERMINAL = ['returned', 'rejected', 'cancelled'];
+
+function formatDate(iso?: string) {
+    if (!iso) return '-';
+    return new Date(iso).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
+}
+
+function formatDateTime(iso?: string) {
+    if (!iso) return '-';
+    return new Date(iso).toLocaleString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
+// ─── Skeleton ─────────────────────────────────────────────────────────────────
+
+function DetailSkeleton() {
+    return (
+        <div className="max-w-4xl mx-auto space-y-5 animate-fade-in">
+            <div className="skeleton h-8 w-48 rounded-2xl" />
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                <div className="lg:col-span-2 space-y-4">
+                    <div className="skeleton h-52 rounded-3xl" />
+                    <div className="skeleton h-40 rounded-3xl" />
+                </div>
+                <div className="space-y-4">
+                    <div className="skeleton h-36 rounded-3xl" />
+                    <div className="skeleton h-36 rounded-3xl" />
+                </div>
+            </div>
+        </div>
+    );
+}
+
+// ─── Info Row ─────────────────────────────────────────────────────────────────
+
+function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
+    return (
+        <div className="flex flex-col gap-0.5">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">{label}</span>
+            <span className="text-sm font-medium text-foreground">{value || '-'}</span>
+        </div>
+    );
+}
+
+// ─── Section Card ─────────────────────────────────────────────────────────────
+
+function Section({
+    title, icon, children, className,
+}: {
+    title: string; icon: React.ReactNode; children: React.ReactNode; className?: string;
+}) {
+    return (
+        <div className={['glass-card animate-fade-up', className].filter(Boolean).join(' ')}>
+            <div className="flex items-center gap-2.5 px-5 py-4 border-b border-border/40">
+                <div className="w-7 h-7 rounded-xl bg-primary/10 dark:bg-primary/20 flex items-center justify-center flex-shrink-0">
+                    {icon}
+                </div>
+                <h3 className="font-semibold text-sm text-foreground">{title}</h3>
+            </div>
+            <div className="px-5 py-4">{children}</div>
+        </div>
+    );
+}
+
+// ─── Photo Dropzone ───────────────────────────────────────────────────────────
+
+function PhotoUploadArea({
+    label, hint, accept, file, onChange,
+}: {
+    label: string; hint?: string; accept: string;
+    file: File | null; onChange: (f: File | null) => void;
+}) {
+    return (
+        <label className={[
+            'relative flex flex-col items-center justify-center gap-2 p-5 rounded-3xl border-2 border-dashed cursor-pointer',
+            'transition-all duration-200',
+            file
+                ? 'border-primary/40 bg-primary/5 dark:bg-primary/10'
+                : 'border-border/60 hover:border-primary/40 hover:bg-accent/20',
+        ].join(' ')}>
+            <input
+                type="file"
+                accept={accept}
+                className="sr-only"
+                onChange={e => onChange(e.target.files?.[0] ?? null)}
+            />
+            <div className={['w-10 h-10 rounded-2xl flex items-center justify-center transition-all duration-200', file ? 'bg-primary text-primary-foreground' : 'bg-accent text-muted-foreground'].join(' ')}>
+                <Camera className="w-5 h-5" />
+            </div>
+            <div className="text-center">
+                <p className="text-sm font-semibold text-foreground">{label}</p>
+                {file
+                    ? <p className="text-xs text-primary mt-0.5 truncate max-w-[180px]">{file.name}</p>
+                    : <p className="text-xs text-muted-foreground mt-0.5">{hint ?? 'Klik untuk pilih foto'}</p>
+                }
+            </div>
+        </label>
+    );
+}
+
+
+// ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function BorrowingDetail() {
-    const { id } = useParams<{ id: string }>();
-    const navigate = useNavigate();
+    const { id }      = useParams<{ id: string }>();
+    const navigate    = useNavigate();
     const queryClient = useQueryClient();
-    const user = useAuthStore((state) => state.user);
+    const user        = useAuthStore(s => s.user);
 
-    const [notes, setNotes] = useState('');
-    const [rejectionReason, setRejectionReason] = useState('');
-    const [isRejecting, setIsRejecting] = useState(false);
-    
-    // Return State
-    const [returnNotes, setReturnNotes] = useState('');
-    const [returnItems, setReturnItems] = useState<ApproveReturnItemPayload[]>([]);
-
-    // Photo Upload State
-    const [photoFile, setPhotoFile] = useState<File | null>(null);
+    const [notes,            setNotes]           = useState('');
+    const [rejectionReason,  setRejectionReason] = useState('');
+    const [isRejecting,      setIsRejecting]     = useState(false);
+    const [returnNotes,      setReturnNotes]     = useState('');
+    const [returnItems,      setReturnItems]     = useState<ApproveReturnItemPayload[]>([]);
+    const [photoFile,        setPhotoFile]       = useState<File | null>(null);
 
     const { data: response, isLoading } = useQuery({
         queryKey: ['borrowings', id],
-        queryFn: () => getBorrowingById(Number(id)),
-        enabled: !!id
+        queryFn:  () => getBorrowingById(Number(id)),
+        enabled:  !!id,
     });
 
     const borrowing = response?.data;
@@ -45,451 +166,401 @@ export default function BorrowingDetail() {
             setReturnItems(
                 borrowing.items.map((item: BorrowingItemDetail) => ({
                     borrowing_item_id: item.borrowing_item_id,
-                    return_conditions: [
-                        {
-                            condition: (item.item_condition_out || 'baik') as ReturnConditionEntry['condition'],
-                            quantity: item.quantity,
-                        }
-                    ],
+                    return_conditions: [{
+                        condition: (item.item_condition_out || 'baik') as ReturnConditionEntry['condition'],
+                        quantity:  item.quantity,
+                    }],
                 }))
             );
         }
     }, [borrowing]);
 
-    // Mutations
+    // ── Mutations ──
     const cancelMutation = useMutation({
         mutationFn: () => cancelBorrowing(Number(id)),
-        onSuccess: () => {
-            toast.success('Peminjaman berhasil dibatalkan');
-            queryClient.invalidateQueries({ queryKey: ['borrowings', id] });
-        },
-        onError: (err: { response?: { data?: { message?: string } } }) => toast.error(err.response?.data?.message || 'Gagal membatalkan')
+        onSuccess: () => { toast.success('Peminjaman dibatalkan'); queryClient.invalidateQueries({ queryKey: ['borrowings', id] }); },
+        onError: (e: any) => toast.error(e.response?.data?.message || 'Gagal membatalkan'),
     });
 
     const approveMutation = useMutation({
         mutationFn: () => approveBorrowing(Number(id), notes),
-        onSuccess: () => {
-            toast.success('Peminjaman disetujui');
-            queryClient.invalidateQueries({ queryKey: ['borrowings', id] });
-        },
-        onError: (err: { response?: { data?: { message?: string } } }) => toast.error(err.response?.data?.message || 'Gagal menyetujui')
+        onSuccess: () => { toast.success('Peminjaman disetujui'); queryClient.invalidateQueries({ queryKey: ['borrowings', id] }); },
+        onError: (e: any) => toast.error(e.response?.data?.message || 'Gagal menyetujui'),
     });
 
     const rejectMutation = useMutation({
         mutationFn: () => rejectBorrowing(Number(id), rejectionReason),
-        onSuccess: () => {
-            toast.success('Peminjaman ditolak');
-            setIsRejecting(false);
-            queryClient.invalidateQueries({ queryKey: ['borrowings', id] });
-        },
-        onError: (err: { response?: { data?: { message?: string } } }) => toast.error(err.response?.data?.message || 'Gagal menolak')
+        onSuccess: () => { toast.success('Peminjaman ditolak'); setIsRejecting(false); queryClient.invalidateQueries({ queryKey: ['borrowings', id] }); },
+        onError: (e: any) => toast.error(e.response?.data?.message || 'Gagal menolak'),
     });
 
     const uploadPhotoMutation = useMutation({
-        mutationFn: (formData: FormData) => uploadBorrowingPhoto(Number(id), formData),
-        onSuccess: () => {
-            toast.success('Foto berhasil diunggah');
-            setPhotoFile(null);
-            queryClient.invalidateQueries({ queryKey: ['borrowings', id] });
-        },
-        onError: (err: { response?: { data?: { message?: string } } }) => toast.error(err.response?.data?.message || 'Gagal mengunggah foto')
+        mutationFn: (fd: FormData) => uploadBorrowingPhoto(Number(id), fd),
+        onSuccess: () => { toast.success('Foto berhasil diunggah'); setPhotoFile(null); queryClient.invalidateQueries({ queryKey: ['borrowings', id] }); },
+        onError: (e: any) => toast.error(e.response?.data?.message || 'Gagal mengunggah foto'),
     });
 
     const approveReturnMutation = useMutation({
         mutationFn: () => approveReturn(Number(id), { return_notes: returnNotes, items: returnItems }),
-        onSuccess: () => {
-            toast.success('Pengembalian berhasil dikonfirmasi');
-            queryClient.invalidateQueries({ queryKey: ['borrowings', id] });
-        },
-        onError: (err: { response?: { data?: { message?: string } } }) => toast.error(err.response?.data?.message || 'Gagal mengonfirmasi pengembalian')
+        onSuccess: () => { toast.success('Pengembalian dikonfirmasi'); queryClient.invalidateQueries({ queryKey: ['borrowings', id] }); },
+        onError: (e: any) => toast.error(e.response?.data?.message || 'Gagal mengonfirmasi'),
     });
 
     const deleteMutation = useMutation({
         mutationFn: () => deleteBorrowing(Number(id)),
-        onSuccess: () => {
-            toast.success('Data peminjaman berhasil dihapus');
-            queryClient.invalidateQueries({ queryKey: ['borrowings'] });
-            navigate('/dashboard/borrowings');
-        },
-        onError: (err: { response?: { data?: { message?: string } } }) => toast.error(err.response?.data?.message || 'Gagal menghapus data peminjaman')
+        onSuccess: () => { toast.success('Data peminjaman dihapus'); navigate('/dashboard/borrowings'); },
+        onError: (e: any) => toast.error(e.response?.data?.message || 'Gagal menghapus'),
     });
 
-    if (isLoading) return <div className="p-8 text-center text-neutral-500">Loading detail...</div>;
-    if (!borrowing) return <div className="p-8 text-center text-red-500">Peminjaman tidak ditemukan</div>;
-
-    const handleCancel = () => {
-        if (confirm('Apakah Anda yakin ingin membatalkan pengajuan ini?')) {
-            cancelMutation.mutate();
-        }
-    };
+    if (isLoading) return <DetailSkeleton />;
+    if (!borrowing) return (
+        <div className="glass-card px-6 py-10 text-center animate-spring-in max-w-md mx-auto mt-10">
+            <AlertTriangle className="w-10 h-10 text-amber-400 mx-auto mb-3" />
+            <p className="font-semibold text-foreground">Peminjaman tidak ditemukan</p>
+            <button onClick={() => navigate('/dashboard/borrowings')} className="mt-4 text-sm text-primary hover:underline">
+                ← Kembali ke daftar
+            </button>
+        </div>
+    );
 
     const handleUpload = (e: React.FormEvent, type: 'borrow' | 'return') => {
         e.preventDefault();
         if (!photoFile) return;
-        const formData = new FormData();
-        formData.append('photo', photoFile);
-        formData.append('type', type);
-        uploadPhotoMutation.mutate(formData);
+        const fd = new FormData();
+        fd.append('photo', photoFile);
+        fd.append('type', type);
+        uploadPhotoMutation.mutate(fd);
     };
 
     const hasBorrowPhoto = borrowing?.photos?.some((p: BorrowingPhoto) => p.type === 'borrow');
     const hasReturnPhoto = borrowing?.photos?.some((p: BorrowingPhoto) => p.type === 'return');
 
-    const isSiswa = user?.role === 'siswa';
+    const isSiswa      = user?.role === 'siswa';
     const isGuruOrAdmin = user?.role === 'admin' || user?.role === 'guru';
-    const isAdmin = user?.role === 'admin';
+    const isAdmin      = user?.role === 'admin';
 
-    const TERMINAL_STATUSES = ['returned', 'rejected', 'cancelled'];
+    const st = STATUS_CONFIG[borrowing.status] ?? STATUS_CONFIG.pending;
 
-    function handleDelete() {
-        if (confirm(`Hapus data peminjaman "${borrowing.code}"?\n\nTindakan ini tidak dapat dibatalkan.`)) {
-            deleteMutation.mutate();
-        }
-    }
-
-    const getStatusBadge = (status: string) => {
-        const styles: Record<string, string> = {
-            pending: 'bg-yellow-100 text-yellow-800',
-            approved: 'bg-blue-100 text-blue-800',
-            rejected: 'bg-red-100 text-red-800',
-            borrowing: 'bg-indigo-100 text-indigo-800',
-            returning: 'bg-purple-100 text-purple-800',
-            returned: 'bg-green-100 text-green-800',
-            overdue: 'bg-red-100 text-red-800',
-            cancelled: 'bg-neutral-100 text-neutral-800',
-        };
-        const labels: Record<string, string> = {
-            pending: 'Menunggu Persetujuan',
-            approved: 'Disetujui',
-            rejected: 'Ditolak',
-            borrowing: 'Sedang Dipinjam',
-            returning: 'Proses Pengembalian',
-            returned: 'Dikembalikan',
-            overdue: 'Terlambat',
-            cancelled: 'Dibatalkan',
-        };
-        return (
-            <span className={`px-3 py-1 text-sm font-semibold rounded-full ${styles[status] || styles.pending}`}>
-                {labels[status] || status}
-            </span>
-        );
-    };
-
+    // ── Render ──
     return (
-        <div className="max-w-5xl mx-auto space-y-6">
-            <div className="flex items-center gap-4">
-                <button onClick={() => navigate('/dashboard/borrowings')} className="text-neutral-500 hover:text-neutral-900">
-                    &larr; Kembali
+        <div className="max-w-4xl mx-auto space-y-5">
+
+            {/* Header */}
+            <div className="flex items-center gap-3 animate-fade-up">
+                <button
+                    onClick={() => navigate('/dashboard/borrowings')}
+                    className="p-2 rounded-2xl text-muted-foreground hover:bg-accent hover:text-foreground transition-all duration-150 active:scale-[0.93] flex-shrink-0"
+                >
+                    <ArrowLeft className="w-5 h-5" />
                 </button>
-                <h2 className="text-2xl font-semibold">Detail Peminjaman</h2>
+                <div>
+                    <h1 className="text-xl font-bold tracking-tight text-foreground">Detail Peminjaman</h1>
+                    <p className="text-xs text-muted-foreground mt-0.5">Dibuat: {formatDateTime(borrowing.created_at)}</p>
+                </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* Info Utama */}
-                <div className="md:col-span-2 space-y-6">
-                    <div className="bg-white dark:bg-neutral-900 shadow-sm rounded-xl border border-neutral-200 dark:border-neutral-800 p-6 space-y-6">
-                        <div className="flex justify-between items-start">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+
+                {/* ── Left: main info ── */}
+                <div className="lg:col-span-2 space-y-4">
+
+                    {/* Info utama */}
+                    <Section title="Informasi Peminjaman" icon={<FileText className="w-4 h-4 text-primary" />} className="delay-75">
+                        {/* Code + status */}
+                        <div className="flex items-start justify-between gap-3 mb-4">
                             <div>
-                                <h3 className="text-xl font-bold text-indigo-600 dark:text-indigo-400">{borrowing.code}</h3>
-                                <p className="text-neutral-500 mt-1">{new Date(borrowing.created_at).toLocaleString('id-ID')}</p>
+                                <p className="font-mono text-lg font-bold text-primary">{borrowing.code}</p>
+                                <p className="text-xs text-muted-foreground mt-0.5">{formatDateTime(borrowing.created_at)}</p>
                             </div>
-                            <div>{getStatusBadge(borrowing.status)}</div>
+                            <span className={['badge-pill text-xs', st.badge].join(' ')}>{st.label}</span>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4 text-sm">
-                            <div>
-                                <span className="block text-neutral-500">Peminjam</span>
-                                <span className="font-medium">{borrowing.user?.name}</span>
-                            </div>
-                            <div>
-                                <span className="block text-neutral-500">Keperluan</span>
-                                <span className="font-medium">{borrowing.purpose}</span>
-                            </div>
-                            <div>
-                                <span className="block text-neutral-500">Tanggal Ambil (Rencana)</span>
-                                <span className="font-medium">{new Date(borrowing.borrow_date).toLocaleDateString('id-ID')}</span>
-                            </div>
-                            <div>
-                                <span className="block text-neutral-500">Tanggal Kembali (Rencana)</span>
-                                <span className="font-medium">{new Date(borrowing.expected_return_date).toLocaleDateString('id-ID')}</span>
-                            </div>
+                        {/* Grid info */}
+                        <div className="grid grid-cols-2 gap-4">
+                            <InfoRow label="Peminjam"        value={borrowing.user?.name} />
+                            <InfoRow label="Keperluan"       value={borrowing.purpose} />
+                            <InfoRow label="Tgl Pinjam"      value={formatDate(borrowing.borrow_date)} />
+                            <InfoRow label="Tenggat Kembali" value={formatDate(borrowing.expected_return_date)} />
                         </div>
 
+                        {/* Notes */}
                         {borrowing.notes && (
-                            <div className="p-3 bg-neutral-50 dark:bg-neutral-800 rounded-md border border-neutral-100 dark:border-neutral-700">
-                                <span className="block text-neutral-500 text-xs mb-1">Catatan Siswa</span>
-                                <p className="text-sm">{borrowing.notes}</p>
-                            </div>
-                        )}
-                        
-                        {borrowing.rejection_reason && (
-                            <div className="p-3 bg-red-50 dark:bg-red-900/20 rounded-md border border-red-100 dark:border-red-800">
-                                <span className="block text-red-600 dark:text-red-400 text-xs font-medium mb-1">Alasan Penolakan</span>
-                                <p className="text-sm text-red-800 dark:text-red-200">{borrowing.rejection_reason}</p>
+                            <div className="mt-4 p-3.5 bg-accent/40 rounded-2xl border border-border/40">
+                                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70 mb-1">Catatan Siswa</p>
+                                <p className="text-sm text-foreground">{borrowing.notes}</p>
                             </div>
                         )}
 
-                        <div className="border-t border-neutral-100 dark:border-neutral-800 pt-4">
-                            <h4 className="font-semibold mb-4">Daftar Barang</h4>
-                            <div className="space-y-3">
-                                {borrowing.items?.map((item: BorrowingItemDetail) => (
-                                    <div key={item.id} className="flex justify-between items-center p-3 border border-neutral-200 dark:border-neutral-700 rounded-lg">
-                                        <div>
-                                            <div className="font-medium">{item.name}</div>
-                                            <div className="text-xs text-neutral-500">{item.brand} {item.model}</div>
-                                        </div>
-                                        <div className="font-semibold px-3 py-1 bg-neutral-100 dark:bg-neutral-800 rounded-md">
-                                            {item.quantity} Unit
-                                        </div>
+                        {/* Rejection reason */}
+                        {borrowing.rejection_reason && (
+                            <div className="mt-4 p-3.5 bg-red-50/60 dark:bg-red-900/15 rounded-2xl border border-red-200/50 dark:border-red-800/30">
+                                <p className="text-[10px] font-bold uppercase tracking-widest text-red-500 mb-1">Alasan Penolakan</p>
+                                <p className="text-sm text-red-700 dark:text-red-300">{borrowing.rejection_reason}</p>
+                            </div>
+                        )}
+                    </Section>
+
+                    {/* Daftar barang */}
+                    <Section title="Daftar Barang" icon={<Package className="w-4 h-4 text-primary" />} className="delay-100">
+                        <div className="space-y-2">
+                            {borrowing.items?.map((item: BorrowingItemDetail) => (
+                                <div key={item.id} className="flex items-center justify-between p-3.5 bg-accent/30 rounded-2xl border border-border/30 hover:bg-accent/50 transition-colors duration-150">
+                                    <div className="min-w-0">
+                                        <p className="font-semibold text-sm text-foreground truncate">{item.name}</p>
+                                        {(item.brand || item.model) && (
+                                            <p className="text-xs text-muted-foreground">{[item.brand, item.model].filter(Boolean).join(' · ')}</p>
+                                        )}
+                                    </div>
+                                    <span className="badge-pill bg-primary/10 dark:bg-primary/20 text-primary ml-3 flex-shrink-0">
+                                        {item.quantity} unit
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+                    </Section>
+
+                    {/* Lampiran foto */}
+                    {borrowing.photos && borrowing.photos.length > 0 && (
+                        <Section title="Lampiran Foto" icon={<ImageIcon className="w-4 h-4 text-primary" />} className="delay-150">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                {borrowing.photos.map((photo: BorrowingPhoto) => (
+                                    <div key={photo.id} className="space-y-2">
+                                        <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">
+                                            Bukti {photo.type === 'borrow' ? 'Pengambilan' : 'Pengembalian'}
+                                        </p>
+                                        <a href={photo.url ?? photo.path} target="_blank" rel="noopener noreferrer"
+                                            className="block rounded-2xl overflow-hidden border border-border/40 hover:opacity-90 transition-opacity duration-150 shadow-glass">
+                                            <img
+                                                src={photo.url ?? photo.path}
+                                                alt={`Bukti ${photo.type}`}
+                                                className="w-full h-auto object-cover"
+                                                onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                                            />
+                                        </a>
+                                        <p className="text-[10px] text-muted-foreground/60">
+                                            {photo.uploaded_at ? formatDateTime(photo.uploaded_at) : '-'}
+                                        </p>
                                     </div>
                                 ))}
                             </div>
-                        </div>
-                    </div>
+                        </Section>
+                    )}
                 </div>
 
-                {/* Sidebar Actions */}
-                <div className="space-y-6">
-                    
-                    {/* Action: Siswa - Cancel */}
+                {/* ── Right: action panels ── */}
+                <div className="space-y-4">
+
+                    {/* Siswa: batalkan */}
                     {isSiswa && borrowing.status === 'pending' && (
-                        <div className="bg-white dark:bg-neutral-900 shadow-sm rounded-xl border border-neutral-200 dark:border-neutral-800 p-6 space-y-4">
-                            <h3 className="font-medium text-lg">Aksi Siswa</h3>
-                            <button
-                                onClick={handleCancel}
-                                disabled={cancelMutation.isPending}
-                                className="w-full bg-red-50 text-red-600 border border-red-200 py-2 rounded-md hover:bg-red-100 font-medium transition-colors"
+                        <Section title="Aksi" icon={<Clock className="w-4 h-4 text-primary" />} className="delay-75">
+                            <p className="text-xs text-muted-foreground mb-3">Pengajuan masih menunggu persetujuan. Kamu bisa membatalkannya.</p>
+                            <Button
+                                variant="destructive"
+                                className="w-full"
+                                loading={cancelMutation.isPending}
+                                onClick={() => confirm('Batalkan pengajuan ini?') && cancelMutation.mutate()}
                             >
-                                {cancelMutation.isPending ? 'Membatalkan...' : 'Batalkan Pengajuan'}
-                            </button>
-                        </div>
+                                Batalkan Pengajuan
+                            </Button>
+                        </Section>
                     )}
 
-                    {/* Action: Siswa - Upload Selfie Pengambilan */}
+                    {/* Siswa: upload selfie pengambilan */}
                     {isSiswa && borrowing.status === 'approved' && !hasBorrowPhoto && (
-                        <div className="bg-white dark:bg-neutral-900 shadow-sm rounded-xl border border-neutral-200 dark:border-neutral-800 p-6 space-y-4">
-                            <h3 className="font-medium text-lg border-b border-neutral-100 dark:border-neutral-800 pb-2">Upload Selfie Pengambilan</h3>
-                            <p className="text-sm text-neutral-500">Unggah foto selfie bersama barang sebagai bukti serah terima awal.</p>
-                            <form onSubmit={(e) => handleUpload(e, 'borrow')} className="space-y-4">
-                                <input
-                                    type="file"
-                                    accept="image/jpeg, image/png, image/webp"
-                                    required
-                                    onChange={e => setPhotoFile(e.target.files?.[0] || null)}
-                                    className="block w-full text-sm text-neutral-500
-                                        file:mr-4 file:py-2 file:px-4
-                                        file:rounded-md file:border-0
-                                        file:text-sm file:font-medium
-                                        file:bg-indigo-50 file:text-indigo-700
-                                        hover:file:bg-indigo-100"
+                        <Section title="Selfie Pengambilan" icon={<Camera className="w-4 h-4 text-primary" />} className="delay-100">
+                            <p className="text-xs text-muted-foreground mb-3">Unggah foto selfie bersama barang sebagai bukti serah terima.</p>
+                            <form onSubmit={e => handleUpload(e, 'borrow')} className="space-y-3">
+                                <PhotoUploadArea
+                                    label="Pilih Foto Selfie"
+                                    hint="JPG, PNG, WebP"
+                                    accept="image/jpeg,image/png,image/webp"
+                                    file={photoFile}
+                                    onChange={setPhotoFile}
                                 />
-                                <button
-                                    type="submit"
-                                    disabled={!photoFile || uploadPhotoMutation.isPending}
-                                    className="w-full bg-indigo-600 text-white py-2 rounded-md font-medium hover:bg-indigo-700 disabled:opacity-50"
-                                >
-                                    {uploadPhotoMutation.isPending ? 'Mengunggah...' : 'Unggah Foto Bukti'}
-                                </button>
+                                <Button type="submit" className="w-full" disabled={!photoFile} loading={uploadPhotoMutation.isPending}>
+                                    Unggah Foto Bukti
+                                </Button>
                             </form>
-                        </div>
+                        </Section>
                     )}
 
-                    {/* Action: Siswa - Upload Selfie Pengembalian */}
+                    {/* Siswa: upload selfie pengembalian */}
                     {isSiswa && borrowing.status === 'approved' && hasBorrowPhoto && !hasReturnPhoto && (
-                        <div className="bg-white dark:bg-neutral-900 shadow-sm rounded-xl border border-neutral-200 dark:border-neutral-800 p-6 space-y-4">
-                            <h3 className="font-medium text-lg border-b border-neutral-100 dark:border-neutral-800 pb-2">Upload Selfie Pengembalian</h3>
-                            <p className="text-sm text-neutral-500">Barang sudah selesai digunakan? Unggah foto selfie bersama barang untuk memulai proses pengembalian.</p>
-                            <form onSubmit={(e) => handleUpload(e, 'return')} className="space-y-4">
-                                <input
-                                    type="file"
-                                    accept="image/jpeg, image/png, image/webp"
-                                    required
-                                    onChange={e => setPhotoFile(e.target.files?.[0] || null)}
-                                    className="block w-full text-sm text-neutral-500
-                                        file:mr-4 file:py-2 file:px-4
-                                        file:rounded-md file:border-0
-                                        file:text-sm file:font-medium
-                                        file:bg-purple-50 file:text-purple-700
-                                        hover:file:bg-purple-100"
+                        <Section title="Selfie Pengembalian" icon={<RotateCcw className="w-4 h-4 text-primary" />} className="delay-100">
+                            <p className="text-xs text-muted-foreground mb-3">Barang sudah selesai dipakai? Unggah selfie untuk memulai proses pengembalian.</p>
+                            <form onSubmit={e => handleUpload(e, 'return')} className="space-y-3">
+                                <PhotoUploadArea
+                                    label="Pilih Foto Selfie"
+                                    hint="JPG, PNG, WebP"
+                                    accept="image/jpeg,image/png,image/webp"
+                                    file={photoFile}
+                                    onChange={setPhotoFile}
                                 />
-                                <button
+                                <Button
                                     type="submit"
-                                    disabled={!photoFile || uploadPhotoMutation.isPending}
-                                    className="w-full bg-purple-600 text-white py-2 rounded-md font-medium hover:bg-purple-700 disabled:opacity-50"
+                                    className="w-full bg-violet-600 hover:bg-violet-700"
+                                    disabled={!photoFile}
+                                    loading={uploadPhotoMutation.isPending}
                                 >
-                                    {uploadPhotoMutation.isPending ? 'Mengunggah...' : 'Kembalikan Barang'}
-                                </button>
+                                    Kembalikan Barang
+                                </Button>
                             </form>
-                        </div>
+                        </Section>
                     )}
 
-                    {/* Action: Guru/Admin - Approve/Reject */}
+                    {/* Guru/Admin: approve / reject */}
                     {isGuruOrAdmin && borrowing.status === 'pending' && (
-                        <div className="bg-white dark:bg-neutral-900 shadow-sm rounded-xl border border-neutral-200 dark:border-neutral-800 p-6 space-y-4">
-                            <h3 className="font-medium text-lg border-b border-neutral-100 dark:border-neutral-800 pb-2">Persetujuan</h3>
-                            
+                        <Section title="Persetujuan" icon={<CheckCircle2 className="w-4 h-4 text-primary" />} className="delay-75">
                             {!isRejecting ? (
-                                <div className="space-y-4">
-                                    <div>
-                                        <label className="block text-sm font-medium mb-1">Catatan Persetujuan (Opsional)</label>
+                                <div className="space-y-3">
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                                            Catatan Persetujuan (Opsional)
+                                        </label>
                                         <textarea
                                             value={notes}
                                             onChange={e => setNotes(e.target.value)}
-                                            className="w-full border border-neutral-300 dark:border-neutral-700 rounded-md px-3 py-2 text-sm dark:bg-neutral-800"
                                             rows={2}
-                                            placeholder="Contoh: Harap dijaga dengan baik"
+                                            placeholder="Harap dijaga dengan baik..."
+                                            className="input-ios resize-none"
                                         />
                                     </div>
-                                    <button
+                                    <Button
+                                        className="w-full bg-green-600 hover:bg-green-700"
+                                        loading={approveMutation.isPending}
                                         onClick={() => approveMutation.mutate()}
-                                        disabled={approveMutation.isPending}
-                                        className="w-full bg-green-600 text-white py-2 rounded-md font-medium hover:bg-green-700 disabled:opacity-50"
                                     >
-                                        {approveMutation.isPending ? 'Menyimpan...' : 'Setujui Peminjaman'}
-                                    </button>
-                                    <button
+                                        <CheckCircle2 className="w-4 h-4" />
+                                        Setujui Peminjaman
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        className="w-full text-destructive border-destructive/30 hover:bg-destructive/8"
                                         onClick={() => setIsRejecting(true)}
-                                        className="w-full bg-white dark:bg-neutral-900 text-red-600 border border-red-200 dark:border-red-900 py-2 rounded-md font-medium hover:bg-red-50 dark:hover:bg-red-900/20"
                                     >
+                                        <XCircle className="w-4 h-4" />
                                         Tolak Pengajuan
-                                    </button>
+                                    </Button>
                                 </div>
                             ) : (
-                                <div className="space-y-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-red-600 mb-1">Alasan Penolakan *</label>
+                                <div className="space-y-3 animate-fade-up">
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-semibold text-red-500 uppercase tracking-wide">
+                                            Alasan Penolakan *
+                                        </label>
                                         <textarea
                                             value={rejectionReason}
                                             onChange={e => setRejectionReason(e.target.value)}
-                                            className="w-full border border-red-300 rounded-md px-3 py-2 text-sm focus:border-red-500 focus:ring-1 focus:ring-red-500"
                                             rows={3}
                                             placeholder="Minimal 10 karakter..."
+                                            className="input-ios resize-none border-red-400/60 focus:border-red-500/60"
                                         />
                                     </div>
                                     <div className="flex gap-2">
-                                        <button
-                                            onClick={() => setIsRejecting(false)}
-                                            className="flex-1 bg-neutral-100 text-neutral-700 py-2 rounded-md text-sm font-medium hover:bg-neutral-200"
-                                        >
+                                        <Button variant="outline" size="sm" className="flex-1" onClick={() => setIsRejecting(false)}>
                                             Batal
-                                        </button>
-                                        <button
+                                        </Button>
+                                        <Button
+                                            variant="destructive"
+                                            size="sm"
+                                            className="flex-1"
+                                            loading={rejectMutation.isPending}
+                                            disabled={rejectionReason.length < 10}
                                             onClick={() => rejectMutation.mutate()}
-                                            disabled={rejectMutation.isPending || rejectionReason.length < 10}
-                                            className="flex-1 bg-red-600 text-white py-2 rounded-md text-sm font-medium hover:bg-red-700 disabled:opacity-50"
                                         >
-                                            {rejectMutation.isPending ? 'Memproses...' : 'Tolak'}
-                                        </button>
+                                            Tolak
+                                        </Button>
                                     </div>
                                 </div>
                             )}
-                        </div>
+                        </Section>
                     )}
 
-                    {/* Action: Guru/Admin - Konfirmasi Pengembalian */}
+                    {/* Guru/Admin: konfirmasi pengembalian */}
                     {isGuruOrAdmin && borrowing.status === 'returning' && (
-                        <div className="bg-white dark:bg-neutral-900 shadow-sm rounded-xl border border-neutral-200 dark:border-neutral-800 p-6 space-y-4">
-                            <h3 className="font-medium text-lg border-b border-neutral-100 dark:border-neutral-800 pb-2">Konfirmasi Pengembalian</h3>
-                            <div className="space-y-4">
-                                {/* Per-item condition breakdown */}
+                        <Section title="Konfirmasi Pengembalian" icon={<RotateCcw className="w-4 h-4 text-primary" />} className="delay-75">
+                            <div className="space-y-3">
                                 {returnItems.map((rItem, itemIdx) => {
-                                    const originalItem = borrowing.items?.find((i: BorrowingItemDetail) => i.borrowing_item_id === rItem.borrowing_item_id);
+                                    const orig = borrowing.items?.find((i: BorrowingItemDetail) => i.borrowing_item_id === rItem.borrowing_item_id);
                                     const totalQty = rItem.return_conditions.reduce((s, c) => s + c.quantity, 0);
-                                    const isMatch = totalQty === (originalItem?.quantity ?? 0);
-                                    const isConsumable = originalItem?.type === 'consumable';
+                                    const isMatch  = totalQty === (orig?.quantity ?? 0);
+                                    const isConsumable = orig?.type === 'consumable';
 
-                                    const CONDITION_OPTIONS = [
-                                        { value: 'baik', label: 'Baik' },
+                                    const COND_OPTIONS = [
+                                        { value: 'baik',         label: 'Baik' },
                                         { value: 'rusak_ringan', label: 'Rusak Ringan' },
-                                        { value: 'rusak_berat', label: 'Rusak Berat' },
-                                        { value: 'hilang', label: 'Hilang' },
+                                        { value: 'rusak_berat',  label: 'Rusak Berat' },
+                                        { value: 'hilang',       label: 'Hilang' },
                                         ...(isConsumable ? [{ value: 'terpakai', label: 'Terpakai' }] : []),
                                     ];
 
                                     return (
-                                        <div key={rItem.borrowing_item_id} className="border border-neutral-200 dark:border-neutral-700 rounded-lg p-3 space-y-2">
+                                        <div key={rItem.borrowing_item_id} className="bg-accent/30 rounded-2xl border border-border/30 p-3.5 space-y-2.5">
                                             <div className="flex items-center justify-between">
-                                                <span className="font-medium text-sm text-indigo-600 dark:text-indigo-400">
-                                                    {originalItem?.name ?? '-'}
-                                                    {isConsumable && <span className="ml-1 text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full">Consumable</span>}
+                                                <span className="font-semibold text-sm text-foreground truncate">
+                                                    {orig?.name ?? '-'}
+                                                    {isConsumable && (
+                                                        <span className="ml-1.5 text-[9px] bg-amber-100/80 text-amber-700 px-1.5 py-0.5 rounded-full font-bold uppercase tracking-wide">Consumable</span>
+                                                    )}
                                                 </span>
-                                                <span className={`text-xs font-medium ${isMatch ? 'text-green-600' : 'text-red-500'}`}>
-                                                    {totalQty}/{originalItem?.quantity ?? 0} unit
+                                                <span className={['text-xs font-semibold', isMatch ? 'text-green-600 dark:text-green-400' : 'text-red-500'].join(' ')}>
+                                                    {totalQty}/{orig?.quantity ?? 0}
                                                 </span>
                                             </div>
 
-                                            {/* Condition rows */}
-                                            <div className="space-y-1.5">
-                                                {rItem.return_conditions.map((cond, condIdx) => (
-                                                    <div key={condIdx} className="flex gap-2 items-center">
-                                                        <select
-                                                            value={cond.condition}
-                                                            onChange={(e) => {
-                                                                const updated = returnItems.map((ri, ii) => {
-                                                                    if (ii !== itemIdx) return ri;
-                                                                    const conditions = ri.return_conditions.map((c, ci) =>
-                                                                        ci === condIdx ? { ...c, condition: e.target.value as ReturnConditionEntry['condition'] } : c
-                                                                    );
-                                                                    return { ...ri, return_conditions: conditions };
-                                                                });
-                                                                setReturnItems(updated);
-                                                            }}
-                                                            className="flex-1 border border-neutral-300 dark:border-neutral-600 rounded-md px-2 py-1.5 text-xs dark:bg-neutral-800"
+                                            {rItem.return_conditions.map((cond, condIdx) => (
+                                                <div key={condIdx} className="flex gap-2 items-center">
+                                                    <select
+                                                        value={cond.condition}
+                                                        onChange={e => {
+                                                            setReturnItems(prev => prev.map((ri, ii) => ii !== itemIdx ? ri : {
+                                                                ...ri,
+                                                                return_conditions: ri.return_conditions.map((c, ci) =>
+                                                                    ci !== condIdx ? c : { ...c, condition: e.target.value as ReturnConditionEntry['condition'] }
+                                                                ),
+                                                            }));
+                                                        }}
+                                                        className="input-ios flex-1 py-1.5 text-xs appearance-none cursor-pointer"
+                                                    >
+                                                        {COND_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                                                    </select>
+                                                    <input
+                                                        type="number"
+                                                        min={1}
+                                                        max={orig?.quantity}
+                                                        value={cond.quantity}
+                                                        onChange={e => {
+                                                            setReturnItems(prev => prev.map((ri, ii) => ii !== itemIdx ? ri : {
+                                                                ...ri,
+                                                                return_conditions: ri.return_conditions.map((c, ci) =>
+                                                                    ci !== condIdx ? c : { ...c, quantity: Number(e.target.value) }
+                                                                ),
+                                                            }));
+                                                        }}
+                                                        className="input-ios w-16 py-1.5 text-xs text-center"
+                                                    />
+                                                    {rItem.return_conditions.length > 1 && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setReturnItems(prev => prev.map((ri, ii) => ii !== itemIdx ? ri : {
+                                                                ...ri,
+                                                                return_conditions: ri.return_conditions.filter((_, ci) => ci !== condIdx),
+                                                            }))}
+                                                            className="p-1.5 rounded-xl text-destructive hover:bg-destructive/8 transition-all duration-150"
                                                         >
-                                                            {CONDITION_OPTIONS.map(o => (
-                                                                <option key={o.value} value={o.value}>{o.label}</option>
-                                                            ))}
-                                                        </select>
-                                                        <input
-                                                            type="number"
-                                                            min={1}
-                                                            max={originalItem?.quantity}
-                                                            value={cond.quantity}
-                                                            onChange={(e) => {
-                                                                const updated = returnItems.map((ri, ii) => {
-                                                                    if (ii !== itemIdx) return ri;
-                                                                    const conditions = ri.return_conditions.map((c, ci) =>
-                                                                        ci === condIdx ? { ...c, quantity: Number(e.target.value) } : c
-                                                                    );
-                                                                    return { ...ri, return_conditions: conditions };
-                                                                });
-                                                                setReturnItems(updated);
-                                                            }}
-                                                            className="w-16 border border-neutral-300 dark:border-neutral-600 rounded-md px-2 py-1.5 text-xs text-center dark:bg-neutral-800"
-                                                        />
-                                                        {rItem.return_conditions.length > 1 && (
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => {
-                                                                    const updated = returnItems.map((ri, ii) => {
-                                                                        if (ii !== itemIdx) return ri;
-                                                                        return { ...ri, return_conditions: ri.return_conditions.filter((_, ci) => ci !== condIdx) };
-                                                                    });
-                                                                    setReturnItems(updated);
-                                                                }}
-                                                                className="text-red-400 hover:text-red-600"
-                                                            >
-                                                                <Trash2 className="w-3.5 h-3.5" />
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                ))}
-                                            </div>
+                                                            <Trash2 className="w-3.5 h-3.5" />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            ))}
 
-                                            {/* Add condition row */}
                                             <button
                                                 type="button"
-                                                onClick={() => {
-                                                    const updated = returnItems.map((ri, ii) => {
-                                                        if (ii !== itemIdx) return ri;
-                                                        return {
-                                                            ...ri,
-                                                            return_conditions: [...ri.return_conditions, { condition: 'baik' as ReturnConditionEntry['condition'], quantity: 1 }],
-                                                        };
-                                                    });
-                                                    setReturnItems(updated);
-                                                }}
-                                                className="flex items-center gap-1 text-xs text-indigo-600 dark:text-indigo-400 hover:underline mt-1"
+                                                onClick={() => setReturnItems(prev => prev.map((ri, ii) => ii !== itemIdx ? ri : {
+                                                    ...ri,
+                                                    return_conditions: [...ri.return_conditions, { condition: 'baik' as ReturnConditionEntry['condition'], quantity: 1 }],
+                                                }))}
+                                                className="flex items-center gap-1 text-xs text-primary font-medium hover:gap-1.5 transition-all duration-150"
                                             >
                                                 <Plus className="w-3 h-3" /> Tambah Kondisi
                                             </button>
@@ -497,76 +568,55 @@ export default function BorrowingDetail() {
                                     );
                                 })}
 
-                                <div>
-                                    <label className="block text-sm font-medium mb-1">Catatan Pengembalian (Opsional)</label>
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                                        Catatan Pengembalian
+                                    </label>
                                     <textarea
                                         value={returnNotes}
                                         onChange={e => setReturnNotes(e.target.value)}
-                                        className="w-full border border-neutral-300 dark:border-neutral-700 rounded-md px-3 py-2 text-sm dark:bg-neutral-800"
                                         rows={2}
-                                        placeholder="Contoh: Barang dikembalikan dalam kondisi lengkap..."
+                                        placeholder="Catatan kondisi pengembalian..."
+                                        className="input-ios resize-none"
                                     />
                                 </div>
-                                <button
+
+                                <Button
+                                    className="w-full bg-violet-600 hover:bg-violet-700"
+                                    loading={approveReturnMutation.isPending}
+                                    disabled={returnItems.some(ri => {
+                                        const orig = borrowing.items?.find((i: BorrowingItemDetail) => i.borrowing_item_id === ri.borrowing_item_id);
+                                        return ri.return_conditions.reduce((s, c) => s + c.quantity, 0) !== (orig?.quantity ?? 0);
+                                    })}
                                     onClick={() => approveReturnMutation.mutate()}
-                                    disabled={
-                                        approveReturnMutation.isPending ||
-                                        returnItems.some(ri => {
-                                            const orig = borrowing.items?.find((i: BorrowingItemDetail) => i.borrowing_item_id === ri.borrowing_item_id);
-                                            return ri.return_conditions.reduce((s, c) => s + c.quantity, 0) !== (orig?.quantity ?? 0);
-                                        })
-                                    }
-                                    className="w-full bg-purple-600 text-white py-2 rounded-md font-medium hover:bg-purple-700 disabled:opacity-50"
                                 >
-                                    {approveReturnMutation.isPending ? 'Memproses...' : 'Konfirmasi Pengembalian'}
-                                </button>
+                                    <CheckCircle2 className="w-4 h-4" />
+                                    Konfirmasi Pengembalian
+                                </Button>
                             </div>
-                        </div>
+                        </Section>
                     )}
 
-                    {/* Foto Bukti Terlampir */}
-                    {borrowing.photos && borrowing.photos.length > 0 && (
-                        <div className="bg-white dark:bg-neutral-900 shadow-sm rounded-xl border border-neutral-200 dark:border-neutral-800 p-6 space-y-4">
-                            <h3 className="font-medium text-lg border-b border-neutral-100 dark:border-neutral-800 pb-2">Lampiran Foto</h3>
-                            <div className="space-y-4">
-                                {borrowing.photos.map((photo: BorrowingPhoto) => (
-                                    <div key={photo.id} className="space-y-2">
-                                        <span className="text-xs font-semibold uppercase tracking-wider text-neutral-500">
-                                            Bukti {photo.type === 'borrow' ? 'Pengambilan' : 'Pengembalian'}
-                                        </span>
-                                        <a href={photo.url ?? photo.path} target="_blank" rel="noopener noreferrer" className="block border border-neutral-200 dark:border-neutral-700 rounded-lg overflow-hidden hover:opacity-90 transition-opacity">
-                                            <img
-                                                src={photo.url ?? photo.path}
-                                                alt={`Bukti ${photo.type === 'borrow' ? 'pengambilan' : 'pengembalian'}`}
-                                                className="w-full h-auto object-cover"
-                                                onError={(e) => {
-                                                    (e.target as HTMLImageElement).style.display = 'none';
-                                                }}
-                                            />
-                                        </a>
-                                        <div className="text-xs text-neutral-400">
-                                            Diunggah: {photo.uploaded_at ? new Date(photo.uploaded_at).toLocaleString('id-ID') : '-'}
-                                        </div>
-                                    </div>
-                                ))}
+                    {/* Admin: danger zone */}
+                    {isAdmin && TERMINAL.includes(borrowing.status) && (
+                        <div className="glass-card border-red-200/50 dark:border-red-800/30 animate-fade-up delay-200">
+                            <div className="px-5 py-4 border-b border-red-200/40 dark:border-red-800/20">
+                                <p className="text-xs font-bold uppercase tracking-widest text-red-500">Zona Berbahaya</p>
                             </div>
-                        </div>
-                    )}
-
-                    {/* Action: Admin - Hapus Data */}
-                    {isAdmin && TERMINAL_STATUSES.includes(borrowing.status) && (
-                        <div className="bg-white dark:bg-neutral-900 shadow-sm rounded-xl border border-red-200 dark:border-red-900/40 p-6 space-y-3">
-                            <h3 className="font-medium text-sm text-red-600 dark:text-red-400">Zona Berbahaya</h3>
-                            <p className="text-xs text-neutral-500">
-                                Hapus permanen seluruh data peminjaman ini beserta foto bukti. Tindakan ini tidak dapat dibatalkan.
-                            </p>
-                            <button
-                                onClick={handleDelete}
-                                disabled={deleteMutation.isPending}
-                                className="w-full bg-red-600 text-white py-2 rounded-md font-medium hover:bg-red-700 disabled:opacity-50 text-sm transition-colors"
-                            >
-                                {deleteMutation.isPending ? 'Menghapus...' : 'Hapus Data Peminjaman'}
-                            </button>
+                            <div className="px-5 py-4 space-y-3">
+                                <p className="text-xs text-muted-foreground leading-relaxed">
+                                    Hapus permanen seluruh data peminjaman ini beserta foto bukti. Tidak dapat dibatalkan.
+                                </p>
+                                <Button
+                                    variant="destructive"
+                                    className="w-full"
+                                    loading={deleteMutation.isPending}
+                                    onClick={() => confirm(`Hapus data peminjaman "${borrowing.code}"?\nTidak dapat dibatalkan.`) && deleteMutation.mutate()}
+                                >
+                                    <Trash2 className="w-4 h-4" />
+                                    Hapus Data Peminjaman
+                                </Button>
+                            </div>
                         </div>
                     )}
                 </div>

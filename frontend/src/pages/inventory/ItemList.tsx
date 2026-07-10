@@ -126,12 +126,13 @@ function ItemCard({ item, canManage, isAdmin, onDelete }: {
             {/* Footer actions */}
             {canManage && (
                 <div className="px-3 pb-3 pt-0 flex gap-2">
-                    <Button asChild variant="outline" size="sm" className="flex-1 gap-1.5">
-                        <Link to={`/dashboard/items/${item.id}/edit`}>
-                            <Pencil className="w-3.5 h-3.5" />
-                            Edit
-                        </Link>
-                    </Button>
+                    <Link
+                        to={`/dashboard/items/${item.id}/edit`}
+                        className="flex-1 inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded-xl border border-border bg-background text-foreground text-xs font-semibold hover:bg-accent hover:scale-[1.02] active:scale-[0.95] transition-all duration-200 ease-spring"
+                    >
+                        <Pencil className="w-3.5 h-3.5" />
+                        Edit
+                    </Link>
                     {isAdmin && (
                         <Button
                             variant="ghost"
@@ -268,12 +269,13 @@ export default function ItemList() {
                     </p>
                 </div>
                 {canManage && activeTab === 'items' && (
-                    <Button asChild size="default" className="gap-2 flex-shrink-0">
-                        <Link to="/dashboard/items/create">
-                            <Plus className="w-4 h-4" />
-                            Tambah Barang
-                        </Link>
-                    </Button>
+                    <Link
+                        to="/dashboard/items/create"
+                        className="inline-flex items-center gap-2 h-10 px-4 py-2 rounded-2xl bg-primary text-primary-foreground text-sm font-semibold shadow-[0_1px_3px_oklch(0_0_0/0.15),inset_0_1px_0_oklch(1_0_0/0.15)] hover:brightness-110 hover:scale-[1.02] active:scale-[0.95] transition-all duration-200 ease-spring flex-shrink-0"
+                    >
+                        <Plus className="w-4 h-4" />
+                        Tambah Barang
+                    </Link>
                 )}
             </div>
 

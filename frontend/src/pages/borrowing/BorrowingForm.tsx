@@ -6,21 +6,76 @@ import type { Item } from '@/api/inventory';
 import { createBorrowing } from '@/api/borrowing';
 import type { CreateBorrowingPayload, BorrowingItemPayload } from '@/api/borrowing';
 import { toast } from 'sonner';
+import {
+    ArrowLeft, Search, Plus, X, Package,
+    CalendarDays, FileText, ShoppingCart,
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+type SelectedItem = BorrowingItemPayload & { name: string; max: number };
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+const CONDITION_LABEL: Record<string, string> = {
+    baik:         'Baik',
+    rusak_ringan: 'Rusak Ringan',
+    rusak_berat:  'Rusak Berat',
+};
+
+// ─── FormSection ──────────────────────────────────────────────────────────────
+
+function FormSection({
+    title, icon, children, delay,
+}: {
+    title: string; icon: React.ReactNode; children: React.ReactNode; delay?: string;
+}) {
+    return (
+        <div className={['glass-card overflow-hidden animate-fade-up', delay].filter(Boolean).join(' ')}>
+            <div className="flex items-center gap-2.5 px-5 py-4 border-b border-border/40">
+                <div className="w-7 h-7 rounded-xl bg-primary/10 dark:bg-primary/20 flex items-center justify-center flex-shrink-0">
+                    {icon}
+                </div>
+                <h3 className="font-semibold text-sm text-foreground">{title}</h3>
+            </div>
+            <div className="px-5 py-4">{children}</div>
+        </div>
+    );
+}
+
+// ─── Field ────────────────────────────────────────────────────────────────────
+
+function Field({ label, required, children }: {
+    label: string; required?: boolean; children: React.ReactNode;
+}) {
+    return (
+        <div className="space-y-1.5">
+            <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                {label} {required && <span className="text-red-500 normal-case">*</span>}
+            </label>
+            {children}
+        </div>
+    );
+}
+
+
+// ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function BorrowingForm() {
     const navigate = useNavigate();
-    const [purpose, setPurpose] = useState('');
-    const [borrowDate, setBorrowDate] = useState('');
-    const [expectedReturnDate, setExpectedReturnDate] = useState('');
-    const [notes, setNotes] = useState('');
-    const [selectedItems, setSelectedItems] = useState<(BorrowingItemPayload & { name: string, max: number })[]>([]);
 
-    const [searchItem, setSearchItem] = useState('');
+    const [purpose,             setPurpose]            = useState('');
+    const [borrowDate,          setBorrowDate]          = useState('');
+    const [expectedReturnDate,  setExpectedReturnDate]  = useState('');
+    const [notes,               setNotes]               = useState('');
+    const [selectedItems,       setSelectedItems]       = useState<SelectedItem[]>([]);
+    const [searchItem,          setSearchItem]          = useState('');
+    const [showSelector,        setShowSelector]        = useState(false);
 
     const { data: itemsData, isLoading: isLoadingItems } = useQuery({
         queryKey: ['items-search', searchItem],
-        queryFn: () => getItems({ search: searchItem || undefined, per_page: 20 }),
-        enabled: true,
+        queryFn:  () => getItems({ search: searchItem || undefined, per_page: 20 }),
     });
 
     const createMutation = useMutation({
@@ -29,197 +84,286 @@ export default function BorrowingForm() {
             toast.success('Peminjaman berhasil dibuat');
             navigate('/dashboard/borrowings');
         },
-        onError: (error: { response?: { data?: { message?: string } } }) => {
-            toast.error(error.response?.data?.message || 'Gagal membuat peminjaman');
-        }
+        onError: (e: any) => {
+            toast.error(e.response?.data?.message || 'Gagal membuat peminjaman');
+        },
     });
 
-    const handleAddItem = (item: Item) => {
+    function handleAddItem(item: Item) {
         if (selectedItems.find(i => i.item_id === item.id)) {
-            toast.error('Barang sudah ditambahkan');
-            return;
+            toast.error('Barang sudah ditambahkan'); return;
         }
         if (item.stock <= 0) {
-            toast.error('Stok barang habis');
-            return;
+            toast.error('Stok barang habis'); return;
         }
-        setSelectedItems([...selectedItems, { item_id: item.id, quantity: 1, name: item.name, max: item.stock }]);
-    };
+        setSelectedItems(prev => [...prev, { item_id: item.id, quantity: 1, name: item.name, max: item.stock }]);
+    }
 
-    const handleRemoveItem = (id: number) => {
-        setSelectedItems(selectedItems.filter(i => i.item_id !== id));
-    };
+    function handleRemove(id: number) {
+        setSelectedItems(prev => prev.filter(i => i.item_id !== id));
+    }
 
-    const handleQuantityChange = (id: number, qty: number, max: number) => {
-        if (qty < 1) qty = 1;
-        if (qty > max) qty = max;
-        setSelectedItems(selectedItems.map(i => i.item_id === id ? { ...i, quantity: qty } : i));
-    };
+    function handleQty(id: number, qty: number, max: number) {
+        const clamped = Math.min(Math.max(qty, 1), max);
+        setSelectedItems(prev => prev.map(i => i.item_id === id ? { ...i, quantity: clamped } : i));
+    }
 
-    const handleSubmit = (e: React.FormEvent) => {
+    function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
-        if (selectedItems.length === 0) {
-            toast.error('Pilih minimal satu barang');
-            return;
-        }
+        if (selectedItems.length === 0) { toast.error('Pilih minimal satu barang'); return; }
 
         const payload: CreateBorrowingPayload = {
             purpose,
-            borrow_date: borrowDate,
-            expected_return_date: expectedReturnDate,
+            borrow_date:           borrowDate,
+            expected_return_date:  expectedReturnDate,
             notes,
-            items: selectedItems.map(({ item_id, quantity }) => ({ item_id, quantity }))
+            items: selectedItems.map(({ item_id, quantity }) => ({ item_id, quantity })),
         };
-
         createMutation.mutate(payload);
-    };
+    }
+
+    const inputCls = 'input-ios';
+    const today    = new Date().toISOString().split('T')[0];
 
     return (
-        <div className="max-w-4xl mx-auto space-y-6">
-            <div className="flex items-center gap-4">
-                <button onClick={() => navigate(-1)} className="text-neutral-500 hover:text-neutral-900">
-                    &larr; Kembali
+        <div className="max-w-4xl mx-auto space-y-5">
+
+            {/* Header */}
+            <div className="flex items-center gap-3 animate-fade-up">
+                <button
+                    type="button"
+                    onClick={() => navigate(-1)}
+                    className="p-2 rounded-2xl text-muted-foreground hover:bg-accent hover:text-foreground transition-all duration-150 active:scale-[0.93]"
+                >
+                    <ArrowLeft className="w-5 h-5" />
                 </button>
-                <h2 className="text-2xl font-semibold">Buat Peminjaman Baru</h2>
+                <div>
+                    <h1 className="text-xl font-bold tracking-tight text-foreground">Buat Peminjaman Baru</h1>
+                    <p className="text-xs text-muted-foreground mt-0.5">Isi detail peminjaman dan pilih barang</p>
+                </div>
             </div>
 
-            <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-6">
-                    <div className="bg-white dark:bg-neutral-900 shadow-sm rounded-xl border border-neutral-200 dark:border-neutral-800 p-6 space-y-4">
-                        <h3 className="font-medium text-lg border-b border-neutral-100 dark:border-neutral-800 pb-2">Informasi Peminjaman</h3>
-                        
-                        <div>
-                            <label className="block text-sm font-medium mb-1">Keperluan *</label>
-                            <input
-                                type="text"
-                                required
-                                value={purpose}
-                                onChange={e => setPurpose(e.target.value)}
-                                className="w-full border border-neutral-300 dark:border-neutral-700 rounded-md px-3 py-2 dark:bg-neutral-800"
-                                placeholder="Contoh: Praktikum Jaringan"
-                            />
-                        </div>
+            <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
 
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium mb-1">Tanggal Pinjam *</label>
-                                <input
-                                    type="date"
-                                    required
-                                    value={borrowDate}
-                                    onChange={e => setBorrowDate(e.target.value)}
-                                    className="w-full border border-neutral-300 dark:border-neutral-700 rounded-md px-3 py-2 dark:bg-neutral-800"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium mb-1">Tenggat Kembali *</label>
-                                <input
-                                    type="date"
-                                    required
-                                    value={expectedReturnDate}
-                                    onChange={e => setExpectedReturnDate(e.target.value)}
-                                    className="w-full border border-neutral-300 dark:border-neutral-700 rounded-md px-3 py-2 dark:bg-neutral-800"
-                                />
-                            </div>
-                        </div>
+                    {/* ── Kiri: Info peminjaman ── */}
+                    <div className="space-y-5">
+                        <FormSection title="Informasi Peminjaman" icon={<FileText className="w-4 h-4 text-primary" />} delay="delay-75">
+                            <div className="space-y-4">
+                                <Field label="Keperluan" required>
+                                    <input
+                                        required
+                                        type="text"
+                                        value={purpose}
+                                        onChange={e => setPurpose(e.target.value)}
+                                        placeholder="Contoh: Praktikum Jaringan Komputer"
+                                        className={inputCls}
+                                    />
+                                </Field>
 
-                        <div>
-                            <label className="block text-sm font-medium mb-1">Catatan Tambahan</label>
-                            <textarea
-                                value={notes}
-                                onChange={e => setNotes(e.target.value)}
-                                className="w-full border border-neutral-300 dark:border-neutral-700 rounded-md px-3 py-2 dark:bg-neutral-800"
-                                rows={3}
-                            ></textarea>
-                        </div>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <Field label="Tgl Pinjam" required>
+                                        <input
+                                            required
+                                            type="date"
+                                            value={borrowDate}
+                                            min={today}
+                                            onChange={e => setBorrowDate(e.target.value)}
+                                            className={inputCls}
+                                        />
+                                    </Field>
+                                    <Field label="Tenggat Kembali" required>
+                                        <input
+                                            required
+                                            type="date"
+                                            value={expectedReturnDate}
+                                            min={borrowDate || today}
+                                            onChange={e => setExpectedReturnDate(e.target.value)}
+                                            className={inputCls}
+                                        />
+                                    </Field>
+                                </div>
+
+                                <Field label="Catatan Tambahan">
+                                    <textarea
+                                        value={notes}
+                                        onChange={e => setNotes(e.target.value)}
+                                        rows={3}
+                                        placeholder="Keterangan tambahan (opsional)"
+                                        className={inputCls + ' resize-none'}
+                                    />
+                                </Field>
+                            </div>
+                        </FormSection>
                     </div>
 
-                    <button
-                        type="submit"
-                        disabled={createMutation.isPending}
-                        className="w-full bg-indigo-600 text-white py-3 rounded-xl font-medium hover:bg-indigo-700 disabled:opacity-50"
-                    >
-                        {createMutation.isPending ? 'Menyimpan...' : 'Ajukan Peminjaman'}
-                    </button>
+                    {/* ── Kanan: Pilih barang ── */}
+                    <div className="space-y-5">
+                        <FormSection title="Pilih Barang" icon={<ShoppingCart className="w-4 h-4 text-primary" />} delay="delay-100">
+                            <div className="space-y-3">
+
+                                {/* Search */}
+                                <div className="relative">
+                                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/60 pointer-events-none" />
+                                    <input
+                                        type="text"
+                                        placeholder="Cari barang..."
+                                        value={searchItem}
+                                        onChange={e => setSearchItem(e.target.value)}
+                                        className={inputCls + ' pl-10'}
+                                        onFocus={() => setShowSelector(true)}
+                                    />
+                                </div>
+
+                                {/* Item list */}
+                                {showSelector && (
+                                    <div className="border border-border/50 rounded-2xl overflow-hidden max-h-52 overflow-y-auto animate-fade-up">
+                                        {isLoadingItems ? (
+                                            <div className="p-4 text-center text-sm text-muted-foreground">Memuat...</div>
+                                        ) : itemsData?.data?.length === 0 ? (
+                                            <div className="p-4 text-center text-sm text-muted-foreground">
+                                                {searchItem ? `"${searchItem}" tidak ditemukan.` : 'Tidak ada barang.'}
+                                            </div>
+                                        ) : (
+                                            itemsData?.data?.map((item: Item) => {
+                                                const added = selectedItems.some(i => i.item_id === item.id);
+                                                const outOfStock = item.stock <= 0;
+                                                return (
+                                                    <div
+                                                        key={item.id}
+                                                        className="flex items-center justify-between px-4 py-3 border-b border-border/30 last:border-0 hover:bg-accent/40 transition-colors duration-150"
+                                                    >
+                                                        <div className="min-w-0 flex-1">
+                                                            <p className="font-medium text-sm text-foreground truncate">{item.name}</p>
+                                                            <p className="text-xs text-muted-foreground">
+                                                                Stok: {item.stock} · {CONDITION_LABEL[item.condition as string] ?? item.condition}
+                                                            </p>
+                                                        </div>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => { handleAddItem(item); setShowSelector(false); setSearchItem(''); }}
+                                                            disabled={outOfStock || added}
+                                                            className={[
+                                                                'ml-3 flex-shrink-0 text-xs font-semibold px-2.5 py-1 rounded-xl transition-all duration-150',
+                                                                added
+                                                                    ? 'text-green-600 bg-green-100/80 dark:bg-green-900/30 cursor-default'
+                                                                    : outOfStock
+                                                                    ? 'text-muted-foreground bg-accent cursor-not-allowed opacity-50'
+                                                                    : 'text-primary bg-primary/10 dark:bg-primary/20 hover:bg-primary/20 active:scale-[0.95]',
+                                                            ].join(' ')}
+                                                        >
+                                                            {added ? '✓ Ditambahkan' : outOfStock ? 'Habis' : '+ Tambah'}
+                                                        </button>
+                                                    </div>
+                                                );
+                                            })
+                                        )}
+                                    </div>
+                                )}
+
+                                {/* Selected items */}
+                                <div>
+                                    <div className="flex items-center justify-between mb-2">
+                                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                                            Barang Dipilih ({selectedItems.length})
+                                        </p>
+                                        {showSelector && (
+                                            <button
+                                                type="button"
+                                                onClick={() => { setShowSelector(false); setSearchItem(''); }}
+                                                className="text-xs text-muted-foreground hover:text-foreground transition-colors duration-150"
+                                            >
+                                                Tutup
+                                            </button>
+                                        )}
+                                    </div>
+
+                                    {selectedItems.length === 0 ? (
+                                        <div className="flex flex-col items-center gap-2 py-8 border-2 border-dashed border-border/50 rounded-2xl text-muted-foreground">
+                                            <Package className="w-8 h-8 opacity-30" />
+                                            <p className="text-xs">Belum ada barang dipilih</p>
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowSelector(true)}
+                                                className="text-xs text-primary font-semibold hover:underline"
+                                            >
+                                                + Cari & tambah barang
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-2">
+                                            {selectedItems.map(item => (
+                                                <div
+                                                    key={item.item_id}
+                                                    className="flex items-center gap-3 p-3 bg-accent/30 rounded-2xl border border-border/30 animate-fade-up"
+                                                >
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="font-semibold text-sm text-foreground truncate">{item.name}</p>
+                                                        <p className="text-xs text-muted-foreground">Maks: {item.max} unit</p>
+                                                    </div>
+                                                    <div className="flex items-center gap-2 flex-shrink-0">
+                                                        {/* Qty stepper */}
+                                                        <div className="flex items-center gap-1 bg-background rounded-xl border border-border/50 px-1">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleQty(item.item_id, item.quantity - 1, item.max)}
+                                                                className="w-6 h-6 flex items-center justify-center text-muted-foreground hover:text-foreground rounded-lg transition-colors duration-150 text-sm font-bold"
+                                                            >
+                                                                −
+                                                            </button>
+                                                            <input
+                                                                type="number"
+                                                                min={1}
+                                                                max={item.max}
+                                                                value={item.quantity}
+                                                                onChange={e => handleQty(item.item_id, parseInt(e.target.value) || 1, item.max)}
+                                                                className="w-8 text-center text-sm font-semibold bg-transparent outline-none text-foreground"
+                                                            />
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleQty(item.item_id, item.quantity + 1, item.max)}
+                                                                className="w-6 h-6 flex items-center justify-center text-muted-foreground hover:text-foreground rounded-lg transition-colors duration-150 text-sm font-bold"
+                                                            >
+                                                                +
+                                                            </button>
+                                                        </div>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleRemove(item.item_id)}
+                                                            className="p-1.5 rounded-xl text-destructive hover:bg-destructive/8 dark:hover:bg-destructive/15 transition-all duration-150 active:scale-[0.93]"
+                                                        >
+                                                            <X className="w-3.5 h-3.5" />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </FormSection>
+                    </div>
                 </div>
 
-                <div className="space-y-6">
-                    <div className="bg-white dark:bg-neutral-900 shadow-sm rounded-xl border border-neutral-200 dark:border-neutral-800 p-6 space-y-4 flex flex-col h-full">
-                        <h3 className="font-medium text-lg border-b border-neutral-100 dark:border-neutral-800 pb-2">Pilih Barang</h3>
-                        
-                        <input
-                            type="text"
-                            placeholder="Cari barang untuk ditambahkan..."
-                            value={searchItem}
-                            onChange={e => setSearchItem(e.target.value)}
-                            className="w-full border border-neutral-300 dark:border-neutral-700 rounded-md px-3 py-2 dark:bg-neutral-800"
-                        />
-
-                        <div className="border border-neutral-200 dark:border-neutral-800 rounded-md max-h-[200px] overflow-y-auto">
-                            {isLoadingItems ? (
-                                <div className="p-3 text-center text-sm text-neutral-400">Memuat barang...</div>
-                            ) : itemsData?.data?.length === 0 ? (
-                                <div className="p-3 text-center text-sm text-neutral-400">
-                                    {searchItem ? `Barang "${searchItem}" tidak ditemukan.` : 'Tidak ada barang tersedia.'}
-                                </div>
-                            ) : (
-                                itemsData?.data?.map((item: Item) => (
-                                    <div key={item.id} className="flex justify-between items-center p-3 border-b border-neutral-100 dark:border-neutral-800 last:border-0 hover:bg-neutral-50 dark:hover:bg-neutral-800/50">
-                                        <div>
-                                            <div className="font-medium text-sm">{item.name}</div>
-                                            <div className="text-xs text-neutral-500">
-                                                Stok: {item.stock} · {item.condition}
-                                            </div>
-                                        </div>
-                                        <button
-                                            type="button"
-                                            onClick={() => handleAddItem(item)}
-                                            disabled={item.stock <= 0 || selectedItems.some(i => i.item_id === item.id)}
-                                            className="text-indigo-600 hover:text-indigo-800 text-sm font-medium disabled:opacity-30 disabled:cursor-not-allowed"
-                                        >
-                                            {item.stock <= 0 ? 'Habis' : selectedItems.some(i => i.item_id === item.id) ? 'Ditambahkan' : 'Tambah'}
-                                        </button>
-                                    </div>
-                                ))
-                            )}
-                        </div>
-
-                        <div className="mt-4 flex-1">
-                            <h4 className="font-medium text-sm mb-2 text-neutral-600 dark:text-neutral-400">Barang Terpilih ({selectedItems.length})</h4>
-                            {selectedItems.length === 0 ? (
-                                <div className="text-center text-neutral-500 text-sm py-4 border border-dashed border-neutral-300 dark:border-neutral-700 rounded-md">
-                                    Belum ada barang yang dipilih
-                                </div>
-                            ) : (
-                                <div className="space-y-2">
-                                    {selectedItems.map(item => (
-                                        <div key={item.item_id} className="flex justify-between items-center bg-neutral-50 dark:bg-neutral-950 p-3 rounded-md border border-neutral-200 dark:border-neutral-800">
-                                            <div className="flex-1">
-                                                <div className="font-medium text-sm">{item.name}</div>
-                                                <div className="text-xs text-neutral-500">Maks: {item.max}</div>
-                                            </div>
-                                            <div className="flex items-center gap-3">
-                                                <input
-                                                    type="number"
-                                                    min="1"
-                                                    max={item.max}
-                                                    value={item.quantity}
-                                                    onChange={e => handleQuantityChange(item.item_id, parseInt(e.target.value) || 1, item.max)}
-                                                    className="w-16 border border-neutral-300 dark:border-neutral-700 rounded-md px-2 py-1 text-sm dark:bg-neutral-800"
-                                                />
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleRemoveItem(item.item_id)}
-                                                    className="text-red-500 hover:text-red-700"
-                                                >
-                                                    &times;
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
+                {/* Submit footer */}
+                <div className="glass-card px-5 py-4 flex items-center justify-between gap-3 animate-fade-up delay-200">
+                    <p className="text-xs text-muted-foreground hidden sm:block">
+                        {selectedItems.length > 0
+                            ? `${selectedItems.length} barang dipilih · Total ${selectedItems.reduce((s, i) => s + i.quantity, 0)} unit`
+                            : 'Pilih minimal satu barang untuk melanjutkan.'}
+                    </p>
+                    <div className="flex gap-3 ml-auto">
+                        <Button type="button" variant="outline" onClick={() => navigate(-1)} disabled={createMutation.isPending}>
+                            Batal
+                        </Button>
+                        <Button
+                            type="submit"
+                            loading={createMutation.isPending}
+                            disabled={createMutation.isPending || selectedItems.length === 0}
+                            className="px-8"
+                        >
+                            {createMutation.isPending ? 'Mengajukan...' : 'Ajukan Peminjaman'}
+                        </Button>
                     </div>
                 </div>
             </form>

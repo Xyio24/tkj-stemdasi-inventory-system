@@ -3,11 +3,69 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getAcademicYears, createAcademicYear, updateAcademicYear, deleteAcademicYear } from '@/api/masterData';
 import type { AcademicYear } from '@/api/masterData';
 import { toast } from 'sonner';
+import { CalendarDays, Plus, Trash2, FolderOpen, CheckCircle2 } from 'lucide-react';
+import { Button, ButtonSpinner } from '@/components/ui/button';
 
 const MAX_ACTIVE = 3;
 
+// ─── Skeleton ─────────────────────────────────────────────────────────────────
+
+function Skeleton() {
+    return (
+        <>
+            {Array.from({ length: 4 }).map((_, i) => (
+                <tr key={i} className="border-b border-border/30">
+                    <td className="px-5 py-4">
+                        <div className="flex items-center gap-2.5">
+                            <div className="skeleton w-7 h-7 rounded-xl flex-shrink-0" />
+                            <div className="skeleton h-4 w-28 rounded-full" />
+                        </div>
+                    </td>
+                    <td className="px-5 py-4">
+                        <div className="skeleton h-5 w-16 rounded-full" />
+                    </td>
+                    <td className="px-5 py-4 text-right">
+                        <div className="skeleton h-7 w-24 rounded-xl ml-auto" />
+                    </td>
+                </tr>
+            ))}
+        </>
+    );
+}
+
+// ─── Active Slot Indicator ─────────────────────────────────────────────────────
+
+function ActiveSlotIndicator({ activeCount }: { activeCount: number }) {
+    return (
+        <div className="flex items-center gap-1.5">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">
+                Slot Aktif
+            </span>
+            <div className="flex items-center gap-1 ml-1">
+                {Array.from({ length: MAX_ACTIVE }).map((_, i) => (
+                    <div
+                        key={i}
+                        className={[
+                            'w-2 h-2 rounded-full transition-all duration-300',
+                            i < activeCount
+                                ? 'bg-green-500 shadow-[0_0_4px_oklch(0.60_0.20_145/0.5)]'
+                                : 'bg-border',
+                        ].join(' ')}
+                        title={i < activeCount ? 'Slot terisi' : 'Slot kosong'}
+                    />
+                ))}
+            </div>
+            <span className="text-xs font-semibold text-foreground">
+                {activeCount}/{MAX_ACTIVE}
+            </span>
+        </div>
+    );
+}
+
+// ─── Main Page ────────────────────────────────────────────────────────────────
+
 export default function AcademicYearList() {
-    const [name, setName] = useState('');
+    const [name, setName]         = useState('');
     const [isActive, setIsActive] = useState(false);
     const queryClient = useQueryClient();
 
@@ -20,6 +78,8 @@ export default function AcademicYearList() {
     const activeCount = years.filter(y => y.is_active).length;
     const atMaxActive = activeCount >= MAX_ACTIVE;
 
+    // ── Mutations ─────────────────────────────────────────────────────────────
+
     const createMutation = useMutation({
         mutationFn: createAcademicYear,
         onSuccess: () => {
@@ -28,7 +88,7 @@ export default function AcademicYearList() {
             setName('');
             setIsActive(false);
         },
-        onError: (err: any) => toast.error(err.response?.data?.message || 'Gagal menambahkan Angkatan'),
+        onError: (err: any) => toast.error(err.response?.data?.message || 'Gagal menambahkan angkatan'),
     });
 
     const updateMutation = useMutation({
@@ -47,8 +107,7 @@ export default function AcademicYearList() {
             queryClient.invalidateQueries({ queryKey: ['academic-years'] });
             toast.success('Angkatan berhasil dihapus');
         },
-        onError: (err: any) =>
-            toast.error(err.response?.data?.message || 'Gagal menghapus Angkatan'),
+        onError: (err: any) => toast.error(err.response?.data?.message || 'Gagal menghapus angkatan'),
     });
 
     function handleToggleActive(year: AcademicYear) {
@@ -59,145 +118,236 @@ export default function AcademicYearList() {
         updateMutation.mutate({ id: year.id, data: { is_active: !year.is_active } });
     }
 
+    function handleCreate() {
+        if (!name.trim()) return;
+        createMutation.mutate({ name: name.trim(), is_active: isActive });
+    }
+
+    // ── Render ────────────────────────────────────────────────────────────────
+
     return (
-        <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-semibold">Angkatan</h2>
-                {/* Indikator slot aktif */}
-                <div className="flex items-center gap-1.5">
-                    <span className="text-xs text-neutral-500">Aktif:</span>
-                    {Array.from({ length: MAX_ACTIVE }).map((_, i) => (
-                        <div
-                            key={i}
-                            className={`w-3 h-3 rounded-full border ${
-                                i < activeCount
-                                    ? 'bg-green-500 border-green-600'
-                                    : 'bg-neutral-200 dark:bg-neutral-700 border-neutral-300 dark:border-neutral-600'
-                            }`}
-                            title={i < activeCount ? 'Slot aktif terisi' : 'Slot kosong'}
-                        />
-                    ))}
-                    <span className="text-xs text-neutral-500 ml-1">{activeCount}/{MAX_ACTIVE}</span>
+        <div className="space-y-5">
+
+            {/* ── Header ── */}
+            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 animate-fade-up">
+                <div>
+                    <h1 className="text-2xl font-bold tracking-tight text-foreground">Master Angkatan</h1>
+                    <p className="text-sm text-muted-foreground mt-0.5">Kelola tahun ajaran & angkatan aktif</p>
+                </div>
+                <div className="glass-card px-4 py-2.5 animate-fade-up delay-75">
+                    <ActiveSlotIndicator activeCount={activeCount} />
                 </div>
             </div>
 
-            {/* Form tambah */}
-            <div className="bg-white dark:bg-neutral-900 shadow-sm rounded-lg border border-neutral-200 dark:border-neutral-800 p-4">
-                <h3 className="text-lg font-medium mb-4">Tambah Angkatan Baru</h3>
-                <div className="flex gap-4 items-end flex-wrap">
-                    <div className="flex-1 min-w-[200px]">
-                        <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">
-                            Nama Angkatan <span className="text-neutral-400 font-normal">(contoh: 17 (2024))</span>
+            {/* ── Form tambah ── */}
+            <div className="glass-card px-5 py-5 animate-fade-up delay-75">
+                <div className="flex items-center gap-2.5 mb-4">
+                    <div className="w-7 h-7 rounded-xl bg-primary/10 dark:bg-primary/20 flex items-center justify-center flex-shrink-0">
+                        <Plus className="w-4 h-4 text-primary" />
+                    </div>
+                    <h3 className="font-semibold text-sm text-foreground">Tambah Angkatan Baru</h3>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
+                    {/* Nama */}
+                    <div className="sm:col-span-2 space-y-1">
+                        <label className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground/70">
+                            Nama Angkatan{' '}
+                            <span className="normal-case font-normal text-muted-foreground/50">(contoh: 17 (2024))</span>
                         </label>
                         <input
                             type="text"
                             value={name}
-                            onChange={(e) => setName(e.target.value)}
+                            onChange={e => setName(e.target.value)}
+                            onKeyDown={e => e.key === 'Enter' && handleCreate()}
                             placeholder="17 (2024)"
-                            className="w-full border border-neutral-300 dark:border-neutral-700 rounded-md px-3 py-2 dark:bg-neutral-800"
+                            className="input-ios"
                         />
                     </div>
-                    <div className="flex items-center h-10 gap-2">
-                        <input
-                            type="checkbox"
-                            checked={isActive}
-                            disabled={!isActive && atMaxActive}
-                            onChange={(e) => setIsActive(e.target.checked)}
-                            className="h-4 w-4 text-indigo-600 border-neutral-300 rounded focus:ring-indigo-500 disabled:opacity-40"
-                            id="is_active_new"
-                        />
+
+                    {/* Actions */}
+                    <div className="flex items-center gap-3">
+                        {/* Checkbox aktif */}
                         <label
-                            htmlFor="is_active_new"
-                            className={`text-sm select-none ${!isActive && atMaxActive ? 'text-neutral-400 cursor-not-allowed' : 'text-neutral-900 dark:text-neutral-100'}`}
+                            className={[
+                                'flex items-center gap-2 cursor-pointer select-none',
+                                !isActive && atMaxActive ? 'opacity-40 cursor-not-allowed' : '',
+                            ].join(' ')}
                         >
-                            Jadikan Aktif
-                            {!isActive && atMaxActive && (
-                                <span className="ml-1 text-xs text-orange-500">(limit {MAX_ACTIVE})</span>
-                            )}
+                            <div
+                                className={[
+                                    'w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all duration-200 flex-shrink-0',
+                                    isActive
+                                        ? 'bg-primary border-primary'
+                                        : 'border-border bg-background',
+                                    !isActive && atMaxActive ? 'cursor-not-allowed' : 'cursor-pointer',
+                                ].join(' ')}
+                                onClick={() => {
+                                    if (!isActive && atMaxActive) return;
+                                    setIsActive(a => !a);
+                                }}
+                            >
+                                {isActive && <CheckCircle2 className="w-3 h-3 text-primary-foreground" />}
+                            </div>
+                            <span className="text-sm text-foreground/80 whitespace-nowrap">
+                                Jadikan Aktif
+                                {!isActive && atMaxActive && (
+                                    <span className="ml-1 text-[10px] text-amber-500">(limit)</span>
+                                )}
+                            </span>
                         </label>
+
+                        <Button
+                            onClick={handleCreate}
+                            disabled={!name.trim() || createMutation.isPending}
+                            loading={createMutation.isPending}
+                            className="gap-1.5 flex-shrink-0"
+                        >
+                            <Plus className="w-3.5 h-3.5" /> Tambah
+                        </Button>
                     </div>
-                    <button
-                        onClick={() => createMutation.mutate({ name, is_active: isActive })}
-                        disabled={!name.trim() || createMutation.isPending}
-                        className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 disabled:opacity-50"
-                    >
-                        {createMutation.isPending ? 'Menyimpan...' : 'Tambah'}
-                    </button>
                 </div>
             </div>
 
-            {/* Tabel */}
-            <div className="bg-white dark:bg-neutral-900 shadow-sm rounded-lg overflow-hidden border border-neutral-200 dark:border-neutral-800">
-                <table className="min-w-full divide-y divide-neutral-200 dark:divide-neutral-800">
-                    <thead className="bg-neutral-50 dark:bg-neutral-950">
-                        <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Nama Angkatan</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Status</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase">Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800">
-                        {isLoading ? (
-                            <tr>
-                                <td colSpan={3} className="px-6 py-4 text-center text-neutral-500">Loading...</td>
+            {/* ── Max active warning ── */}
+            {atMaxActive && (
+                <div className="animate-fade-up glass-card px-4 py-3 border border-amber-200/60 dark:border-amber-700/30 bg-amber-50/60 dark:bg-amber-900/10">
+                    <p className="text-xs text-amber-700 dark:text-amber-400 text-center">
+                        ⚠ Batas maksimal <strong>{MAX_ACTIVE}</strong> angkatan aktif tercapai.
+                        Nonaktifkan salah satu untuk mengaktifkan angkatan lain.
+                    </p>
+                </div>
+            )}
+
+            {/* ── Table ── */}
+            <div className="glass rounded-3xl overflow-hidden animate-fade-up delay-100">
+                {/* Table header info */}
+                {!isLoading && years.length > 0 && (
+                    <div className="px-5 py-3.5 border-b border-border/40">
+                        <p className="text-xs text-muted-foreground">
+                            Total{' '}
+                            <span className="font-semibold text-foreground">{years.length}</span>{' '}
+                            angkatan,{' '}
+                            <span className="font-semibold text-green-600 dark:text-green-400">{activeCount}</span>{' '}
+                            aktif
+                        </p>
+                    </div>
+                )}
+
+                <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                        <thead>
+                            <tr className="border-b border-border/50">
+                                <th className="px-5 py-3.5 text-[10px] font-bold text-muted-foreground uppercase tracking-widest text-left">
+                                    Nama Angkatan
+                                </th>
+                                <th className="px-5 py-3.5 text-[10px] font-bold text-muted-foreground uppercase tracking-widest text-left">
+                                    Status
+                                </th>
+                                <th className="px-5 py-3.5 text-[10px] font-bold text-muted-foreground uppercase tracking-widest text-right">
+                                    Aksi
+                                </th>
                             </tr>
-                        ) : years.length === 0 ? (
-                            <tr>
-                                <td colSpan={3} className="px-6 py-8 text-center text-neutral-400 text-sm">
-                                    Belum ada angkatan. Tambahkan angkatan pertama.
-                                </td>
-                            </tr>
-                        ) : (
-                            years.map((year) => (
-                                <tr key={year.id} className="hover:bg-neutral-50 dark:hover:bg-neutral-800/30 transition-colors">
-                                    <td className="px-6 py-4 font-medium">{year.name}</td>
-                                    <td className="px-6 py-4">
-                                        <span className={`px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                                            year.is_active
-                                                ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                                                : 'bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400'
-                                        }`}>
-                                            {year.is_active ? 'Aktif' : 'Nonaktif'}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4 space-x-3">
-                                        <button
-                                            onClick={() => handleToggleActive(year)}
-                                            disabled={updateMutation.isPending}
-                                            className={`text-sm font-medium disabled:opacity-40 ${
-                                                year.is_active
-                                                    ? 'text-orange-600 hover:text-orange-800 dark:text-orange-400'
-                                                    : atMaxActive
-                                                        ? 'text-neutral-400 cursor-not-allowed'
-                                                        : 'text-indigo-600 hover:text-indigo-800 dark:text-indigo-400'
-                                            }`}
-                                        >
-                                            {year.is_active ? 'Nonaktifkan' : 'Aktifkan'}
-                                        </button>
-                                        <button
-                                            onClick={() => {
-                                                if (confirm(`Hapus angkatan "${year.name}"?`)) {
-                                                    deleteMutation.mutate(year.id);
-                                                }
-                                            }}
-                                            disabled={deleteMutation.isPending}
-                                            className="text-red-600 hover:text-red-800 dark:text-red-400 text-sm font-medium disabled:opacity-40"
-                                        >
-                                            Hapus
-                                        </button>
+                        </thead>
+                        <tbody>
+                            {isLoading ? (
+                                <Skeleton />
+                            ) : years.length === 0 ? (
+                                <tr>
+                                    <td colSpan={3} className="px-5 py-16 text-center">
+                                        <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                                            <FolderOpen className="w-8 h-8 opacity-30" />
+                                            <p className="text-sm">Belum ada angkatan.</p>
+                                            <p className="text-xs opacity-60">Tambahkan angkatan pertama di form di atas.</p>
+                                        </div>
                                     </td>
                                 </tr>
-                            ))
-                        )}
-                    </tbody>
-                </table>
+                            ) : (
+                                years.map((year, i) => (
+                                    <tr
+                                        key={year.id}
+                                        className="border-b border-border/30 hover:bg-accent/30 transition-colors duration-150 group animate-fade-up"
+                                        style={{ animationDelay: `${i * 30}ms` }}
+                                    >
+                                        {/* Nama */}
+                                        <td className="px-5 py-3.5">
+                                            <div className="flex items-center gap-2.5">
+                                                <div className={[
+                                                    'w-7 h-7 rounded-xl flex items-center justify-center flex-shrink-0 transition-all duration-200 group-hover:scale-110',
+                                                    year.is_active
+                                                        ? 'bg-green-100 dark:bg-green-900/30'
+                                                        : 'bg-accent/60',
+                                                ].join(' ')}>
+                                                    <CalendarDays className={[
+                                                        'w-3.5 h-3.5',
+                                                        year.is_active
+                                                            ? 'text-green-600 dark:text-green-400'
+                                                            : 'text-muted-foreground/50',
+                                                    ].join(' ')} />
+                                                </div>
+                                                <span className="font-semibold text-foreground">{year.name}</span>
+                                            </div>
+                                        </td>
+
+                                        {/* Status badge */}
+                                        <td className="px-5 py-3.5">
+                                            <span className={[
+                                                'badge-pill',
+                                                year.is_active
+                                                    ? 'bg-green-100/80 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                                                    : 'bg-neutral-100 text-neutral-500 dark:bg-neutral-800/60 dark:text-neutral-400',
+                                            ].join(' ')}>
+                                                {year.is_active ? 'Aktif' : 'Nonaktif'}
+                                            </span>
+                                        </td>
+
+                                        {/* Aksi */}
+                                        <td className="px-5 py-3.5">
+                                            <div className="flex items-center justify-end gap-2">
+                                                {/* Toggle aktif */}
+                                                <Button
+                                                    variant="glass-primary"
+                                                    size="sm"
+                                                    onClick={() => handleToggleActive(year)}
+                                                    disabled={updateMutation.isPending || (!year.is_active && atMaxActive)}
+                                                    className={[
+                                                        'opacity-0 group-hover:opacity-100 transition-all duration-150',
+                                                        !year.is_active && atMaxActive ? '!opacity-30 cursor-not-allowed' : '',
+                                                    ].join(' ')}
+                                                >
+                                                    {updateMutation.isPending
+                                                        ? <ButtonSpinner className="w-3 h-3" />
+                                                        : year.is_active ? 'Nonaktifkan' : 'Aktifkan'
+                                                    }
+                                                </Button>
+
+                                                {/* Hapus */}
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon-sm"
+                                                    onClick={() => {
+                                                        if (confirm(`Hapus angkatan "${year.name}"?`)) {
+                                                            deleteMutation.mutate(year.id);
+                                                        }
+                                                    }}
+                                                    disabled={deleteMutation.isPending}
+                                                    className="text-destructive hover:bg-destructive/8 dark:hover:bg-destructive/15 opacity-0 group-hover:opacity-100 transition-all duration-150"
+                                                >
+                                                    {deleteMutation.isPending
+                                                        ? <ButtonSpinner className="w-3.5 h-3.5 text-destructive" />
+                                                        : <Trash2 className="w-3.5 h-3.5" />
+                                                    }
+                                                </Button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
-            {atMaxActive && (
-                <p className="text-xs text-orange-600 dark:text-orange-400 text-center">
-                    ⚠ Batas maksimal {MAX_ACTIVE} angkatan aktif tercapai. Nonaktifkan salah satu untuk mengaktifkan angkatan lain.
-                </p>
-            )}
         </div>
     );
 }
