@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { Eye, EyeOff, ArrowRight } from 'lucide-react';
 import { loginWithGoogle } from '@/api/auth';
 import { useAuthStore } from '@/store/authStore';
+import { useThemeStore } from '@/store/themeStore';
 import { Button } from '@/components/ui/button';
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
@@ -65,6 +66,7 @@ export default function Login() {
     const setAuth                  = useAuthStore((state) => state.setAuth);
     const loginWithPasswordAction  = useAuthStore((state) => state.loginWithPassword);
     const navigate                 = useNavigate();
+    const { theme }                = useThemeStore();
 
     const [showPassword, setShowPassword] = useState(false);
     const [googleError,  setGoogleError]  = useState<string | null>(null);
@@ -118,9 +120,15 @@ export default function Login() {
 
                 {/* ── Logo & title ── */}
                 <div className="text-center mb-8 animate-fade-up">
-                    {/* Logo badge with glow */}
-                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-3xl bg-primary shadow-glow-blue mb-5 animate-spring-in">
-                        <img src="/tkj.svg" alt="TKJ Logo" className="w-9 h-9 object-contain brightness-0 invert" />
+                    {/* Logo — sama persis dengan sidebar dashboard */}
+                    <div className={[
+                        'inline-flex items-center justify-center w-16 h-16 rounded-3xl mb-5 animate-spring-in',
+                        'bg-white/35 dark:bg-white/[0.06]',
+                        'ring-1 ring-black/[0.08] dark:ring-white/[0.10]',
+                        'shadow-[0_4px_16px_oklch(0.13_0.01_260/0.12),inset_0_1px_0_oklch(1_0_0/0.80)]',
+                        'dark:shadow-[0_4px_16px_oklch(0_0_0/0.35),inset_0_1px_0_oklch(1_0_0/0.10)]',
+                    ].join(' ')}>
+                        <img src="/tkj.svg" alt="TKJ Logo" className="w-10 h-10 object-contain p-1" />
                     </div>
 
                     <h1 className="text-2xl font-bold text-foreground tracking-tight">
@@ -139,14 +147,14 @@ export default function Login() {
                     </h2>
 
                     {/* Google Login */}
-                    <div className="flex flex-col items-center gap-3">
+                    <div className="flex flex-col items-center gap-3 w-full">
                         {isPending ? (
                             <div className="flex items-center gap-2.5 text-sm text-muted-foreground py-2">
                                 <span className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
                                 Memproses login...
                             </div>
                         ) : (
-                            <div className="w-full flex justify-center">
+                            <div className="w-full flex justify-center google-btn-wrap">
                                 <GoogleLogin
                                     onSuccess={(credentialResponse) => {
                                         setGoogleError(null);
@@ -158,7 +166,11 @@ export default function Login() {
                                         setGoogleError('Login Google gagal. Silakan coba lagi.');
                                     }}
                                     useOneTap
-                                    width="280"
+                                    width="320"
+                                    theme={theme === 'dark' ? 'filled_black' : 'filled_white'}
+                                    shape="rectangular"
+                                    text="continue_with"
+                                    locale="id"
                                 />
                             </div>
                         )}
@@ -223,7 +235,7 @@ export default function Login() {
                                     placeholder="••••••••"
                                     disabled={isPending}
                                     hasError={!!errors.password}
-                                    className="pr-11"
+                                    className="pr-11 [&::-ms-reveal]:hidden [&::-ms-clear]:hidden"
                                     {...register('password')}
                                 />
                                 <button

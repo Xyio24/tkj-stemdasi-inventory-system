@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getUsers, updateUser, approveUser, rejectUser, blockUser, unblockUser } from '@/api/users';
+import { getUsers, updateUser, approveUser, rejectUser, blockUser, unblockUser, resetUserPassword, deletePendingUser } from '@/api/users';
 import type { User } from '@/api/users';
 import { getClasses, getAcademicYears } from '@/api/masterData';
 import type { AcademicYear } from '@/api/masterData';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/store/authStore';
-import { Search, Users, ShieldAlert, Clock, CheckCircle, XCircle, ShieldOff, ShieldCheck } from 'lucide-react';
+import { Search, Users, ShieldAlert, Clock, CheckCircle, XCircle, ShieldOff, ShieldCheck, KeyRound, Copy, Check, Trash2 } from 'lucide-react';
 import GeneratedAvatar from '@/components/common/GeneratedAvatar';
 import { Button, ButtonSpinner } from '@/components/ui/button';
 
@@ -68,12 +68,13 @@ function UserAvatar({ user }: { user: User }) {
 // ─── PendingTable ─────────────────────────────────────────────────────────────
 
 function PendingTable({
-    users, isLoading, approveMutation, rejectMutation,
+    users, isLoading, approveMutation, rejectMutation, deleteMutation,
 }: {
     users: User[];
     isLoading: boolean;
     approveMutation: ReturnType<typeof useMutation>;
     rejectMutation: ReturnType<typeof useMutation<unknown, unknown, { id: number; reason: string }>>;
+    deleteMutation: ReturnType<typeof useMutation<unknown, unknown, number>>;
 }) {
     const [rejectId, setRejectId]         = useState<number | null>(null);
     const [rejectReason, setRejectReason] = useState('');
@@ -85,13 +86,18 @@ function PendingTable({
         });
     }
 
+    function handleDelete(user: User) {
+        if (!confirm(`Hapus pendaftaran ${user.name}?\n\nAkun ini akan dihapus permanen dari database dan tidak dapat dipulihkan.`)) return;
+        deleteMutation.mutate(user.id);
+    }
+
     return (
         <div className="overflow-x-auto">
             <table className="w-full text-sm">
                 <thead>
                     <tr className="border-b border-border/50">
                         {['Pendaftar', 'Kelas', 'No. Absen', 'Tgl. Daftar', 'Aksi'].map((h, i) => (
-                            <th key={h} className={['px-5 py-3.5 text-[10px] font-bold text-muted-foreground uppercase tracking-widest text-left', i === 2 ? 'hidden sm:table-cell' : '', i === 3 ? 'hidden md:table-cell' : ''].join(' ')}>{h}</th>
+                            <th key={h} className={['px-5 py-3.5 text-[10px] font-bold text-muted-foreground uppercase tracking-widest', i === 4 ? 'text-center' : 'text-left', i === 2 ? 'hidden sm:table-cell' : '', i === 3 ? 'hidden md:table-cell' : ''].join(' ')}>{h}</th>
                         ))}
                     </tr>
                 </thead>
@@ -126,13 +132,16 @@ function PendingTable({
                                 <td className="px-5 py-3.5 hidden md:table-cell text-xs text-muted-foreground whitespace-nowrap">
                                     {new Date(user.created_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
                                 </td>
-                                <td className="px-5 py-3.5">
-                                    <div className="flex items-center justify-end gap-2">
-                                        <Button size="sm" onClick={() => approveMutation.mutate(user.id)} disabled={(approveMutation.isPending as boolean) || (rejectMutation.isPending as boolean)} className="gap-1 text-green-700 bg-green-100/80 hover:bg-green-200/80 border border-green-200/60 dark:text-green-400 dark:bg-green-900/20 dark:border-green-700/30">
+                                <td className="px-5 py-3.5 text-center">
+                                    <div className="flex items-center justify-center gap-2">
+                                        <Button size="sm" onClick={() => approveMutation.mutate(user.id)} disabled={(approveMutation.isPending as boolean) || (rejectMutation.isPending as boolean) || (deleteMutation.isPending as boolean)} className="gap-1 text-green-700 bg-green-100/80 hover:bg-green-200/80 border border-green-200/60 dark:text-green-400 dark:bg-green-900/20 dark:border-green-700/30">
                                             <CheckCircle className="w-3.5 h-3.5" /> Setujui
                                         </Button>
-                                        <Button size="sm" variant="ghost" onClick={() => { setRejectId(rejectId === user.id ? null : user.id); setRejectReason(''); }} disabled={(approveMutation.isPending as boolean) || (rejectMutation.isPending as boolean)} className="gap-1 text-destructive hover:bg-destructive/8 dark:hover:bg-destructive/15">
+                                        <Button size="sm" variant="ghost" onClick={() => { setRejectId(rejectId === user.id ? null : user.id); setRejectReason(''); }} disabled={(approveMutation.isPending as boolean) || (rejectMutation.isPending as boolean) || (deleteMutation.isPending as boolean)} className="gap-1 text-destructive hover:bg-destructive/8 dark:hover:bg-destructive/15">
                                             <XCircle className="w-3.5 h-3.5" /> Tolak
+                                        </Button>
+                                        <Button size="sm" variant="ghost" onClick={() => handleDelete(user)} disabled={(approveMutation.isPending as boolean) || (rejectMutation.isPending as boolean) || (deleteMutation.isPending as boolean)} className="gap-1 text-destructive/70 hover:text-destructive hover:bg-destructive/8 dark:hover:bg-destructive/15" title="Hapus permanen">
+                                            {(deleteMutation.isPending as boolean) ? <ButtonSpinner className="w-3.5 h-3.5" /> : <Trash2 className="w-3.5 h-3.5" />}
                                         </Button>
                                     </div>
                                 </td>
@@ -156,6 +165,62 @@ function PendingTable({
     );
 }
 
+// ─── ResetPasswordModal ───────────────────────────────────────────────────────
+
+function ResetPasswordModal({ userName, newPassword, onClose }: {
+    userName: string;
+    newPassword: string;
+    onClose: () => void;
+}) {
+    const [copied, setCopied] = useState(false);
+
+    function handleCopy() {
+        navigator.clipboard.writeText(newPassword);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    }
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+            <div className="bg-white dark:bg-neutral-900 rounded-2xl shadow-xl w-full max-w-sm overflow-hidden animate-spring-in">
+                <div className="px-6 pt-6 pb-4 text-center">
+                    <div className="w-12 h-12 rounded-2xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center mx-auto mb-3">
+                        <KeyRound className="w-6 h-6 text-amber-600 dark:text-amber-400" />
+                    </div>
+                    <h3 className="font-semibold text-foreground">Password Berhasil Direset</h3>
+                    <p className="text-xs text-muted-foreground mt-1">
+                        Sampaikan password baru ini kepada <span className="font-semibold text-foreground">{userName}</span>. Password hanya ditampilkan sekali.
+                    </p>
+                </div>
+
+                <div className="px-6 pb-2">
+                    <div className="flex items-center gap-2 bg-neutral-100 dark:bg-neutral-800 rounded-xl px-4 py-3 border border-border/40">
+                        <span className="font-mono text-sm font-bold text-foreground flex-1 tracking-wider select-all">
+                            {newPassword}
+                        </span>
+                        <button
+                            onClick={handleCopy}
+                            className="p-1.5 rounded-lg hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors flex-shrink-0"
+                            title="Salin password"
+                        >
+                            {copied
+                                ? <Check className="w-4 h-4 text-green-500" />
+                                : <Copy className="w-4 h-4 text-muted-foreground" />}
+                        </button>
+                    </div>
+                    <p className="text-[10px] text-amber-600 dark:text-amber-400 mt-2 text-center">
+                        ⚠ Tutup jendela ini setelah mencatat password
+                    </p>
+                </div>
+
+                <div className="px-6 pb-5 pt-3">
+                    <Button className="w-full" onClick={onClose}>Sudah Dicatat, Tutup</Button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 // ─── ActiveTable ──────────────────────────────────────────────────────────────
 
 function ActiveTable({
@@ -170,18 +235,38 @@ function ActiveTable({
     currentUserId: number;
     showClassCol?: boolean;
 }) {
+    const [resetResult, setResetResult] = useState<{ userName: string; newPassword: string } | null>(null);
+
+    const resetPasswordMutation = useMutation({
+        mutationFn: (id: number) => resetUserPassword(id),
+        onSuccess: (data, id) => {
+            const user = users.find(u => u.id === id);
+            setResetResult({ userName: user?.name ?? 'User', newPassword: data.new_password });
+        },
+        onError: (err: any) => {
+            toast.error(err.response?.data?.message ?? 'Gagal mereset password.');
+        },
+    });
     const colSpan = showClassCol ? 5 : 4;
     const headers = showClassCol
         ? ['Pengguna', 'Role', 'Kelas', 'Status', 'Aksi']
         : ['Pengguna', 'Role', 'Status', 'Aksi'];
 
     return (
+        <>
+        {resetResult && (
+            <ResetPasswordModal
+                userName={resetResult.userName}
+                newPassword={resetResult.newPassword}
+                onClose={() => setResetResult(null)}
+            />
+        )}
         <div className="overflow-x-auto">
             <table className="w-full text-sm">
                 <thead>
                     <tr className="border-b border-border/50">
                         {headers.map((h, i) => (
-                            <th key={h} className="px-5 py-3.5 text-[10px] font-bold text-muted-foreground uppercase tracking-widest text-left">{h}</th>
+                            <th key={h} className={['px-5 py-3.5 text-[10px] font-bold text-muted-foreground uppercase tracking-widest', h === 'Aksi' ? 'text-center' : 'text-left'].join(' ')}>{h}</th>
                         ))}
                     </tr>
                 </thead>
@@ -246,7 +331,8 @@ function ActiveTable({
                                     </span>
                                 </td>
                                 {/* Aksi — always visible on mobile, hover-reveal on sm+ */}
-                                <td className="px-5 py-3.5">
+                                <td className="px-5 py-3.5 text-center">
+                                    <div className="flex justify-center items-center gap-1">
                                     {user.status === 'blocked' ? (
                                         <Button variant="ghost" size="sm" onClick={() => unblockMutation.mutate(user.id)} disabled={isSelf || (unblockMutation.isPending as boolean)} className="gap-1.5 text-green-600 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/20  transition-all duration-150">
                                             {unblockMutation.isPending ? <ButtonSpinner className="w-3.5 h-3.5" /> : <ShieldCheck className="w-3.5 h-3.5" />} Aktifkan
@@ -256,6 +342,26 @@ function ActiveTable({
                                             {blockMutation.isPending ? <ButtonSpinner className="w-3.5 h-3.5 text-destructive" /> : <ShieldOff className="w-3.5 h-3.5" />} Blokir
                                         </Button>
                                     )}
+                                    {/* Reset Password — hanya tampil jika bukan diri sendiri */}
+                                    {!isSelf && (
+                                        <Button
+                                            variant="ghost"
+                                            size="icon-sm"
+                                            title="Reset Password"
+                                            disabled={resetPasswordMutation.isPending}
+                                            onClick={() => {
+                                                if (confirm(`Reset password ${user.name}?\nPassword baru akan dibuat otomatis.`)) {
+                                                    resetPasswordMutation.mutate(user.id);
+                                                }
+                                            }}
+                                            className="text-amber-600 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-900/20 transition-all duration-150"
+                                        >
+                                            {resetPasswordMutation.isPending
+                                                ? <ButtonSpinner className="w-3.5 h-3.5" />
+                                                : <KeyRound className="w-3.5 h-3.5" />}
+                                        </Button>
+                                    )}
+                                    </div>
                                 </td>
                             </tr>
                         );
@@ -263,6 +369,7 @@ function ActiveTable({
                 </tbody>
             </table>
         </div>
+        </>
     );
 }
 
@@ -301,6 +408,11 @@ export default function UserList() {
         mutationFn: ({ id, reason }: { id: number; reason: string }) => rejectUser(id, reason),
         onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['users'] }); toast.success('Pendaftaran berhasil ditolak.'); },
         onError: () => toast.error('Gagal menolak pendaftaran.'),
+    });
+    const deletePendingMutation = useMutation({
+        mutationFn: (id: number) => deletePendingUser(id),
+        onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['users'] }); toast.success('Pendaftaran berhasil dihapus.'); },
+        onError: () => toast.error('Gagal menghapus pendaftaran.'),
     });
     const blockMutation = useMutation({
         mutationFn: (id: number) => blockUser(id),
@@ -390,7 +502,7 @@ export default function UserList() {
                     </p>
                 </div>
                 {activeTab === 'pending' ? (
-                    <PendingTable users={pendingUsers} isLoading={isLoading} approveMutation={approveMutation} rejectMutation={rejectMutation} />
+                    <PendingTable users={pendingUsers} isLoading={isLoading} approveMutation={approveMutation} rejectMutation={rejectMutation} deleteMutation={deletePendingMutation} />
                 ) : (
                     <ActiveTable users={displayUsers} isLoading={isLoading} classesData={classesData} updateMutation={updateMutation} blockMutation={blockMutation} unblockMutation={unblockMutation} currentUserId={currentUser?.id ?? 0} showClassCol={activeTab === 'general'} />
                 )}

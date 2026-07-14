@@ -202,7 +202,52 @@ class UserController extends Controller
         ]);
     }
 
-    // ─── Block ────────────────────────────────────────────────────────────────
+    // ─── Reset Password ───────────────────────────────────────────────────────
+
+    /**
+     * POST /api/users/{user}/reset-password
+     *
+     * Admin mereset password user menjadi password acak.
+     * Password baru dikembalikan sebagai plaintext sekali saja — admin
+     * bertanggung jawab menyampaikannya ke user bersangkutan.
+     */
+    public function resetPassword(Request $request, User $user)
+    {
+        // Admin tidak bisa reset password diri sendiri lewat endpoint ini
+        if ($user->id === $request->user()->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gunakan halaman profil untuk mengubah password Anda sendiri.',
+            ], 409);
+        }
+
+        // Generate password acak 12 karakter: huruf + angka
+        $newPassword = substr(str_shuffle('ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789'), 0, 4)
+                     . substr(str_shuffle('0123456789'), 0, 4)
+                     . substr(str_shuffle('!@#$%'), 0, 2)
+                     . substr(str_shuffle('ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz'), 0, 2);
+        $newPassword = str_shuffle($newPassword);
+
+        $user->update([
+            'password' => bcrypt($newPassword),
+        ]);
+
+        // Cabut semua token aktif user agar dipaksa login ulang
+        $user->tokens()->delete();
+
+        ActivityLogService::log(
+            'user.password_reset',
+            "Admin {$request->user()->name} mereset password akun {$user->name} ({$user->email}).",
+            $user,
+            ['reset_by' => $request->user()->id]
+        );
+
+        return response()->json([
+            'success'      => true,
+            'message'      => "Password {$user->name} berhasil direset.",
+            'new_password' => $newPassword,
+        ]);
+    }
 
     /**
      * PATCH /api/users/{user}/block
@@ -306,6 +351,42 @@ class UserController extends Controller
             'success' => true,
             'message' => 'Status pengguna berhasil diubah.',
             'data'    => $user->fresh(),
+        ]);
+    }
+
+    // ─── Delete Pending ───────────────────────────────────────────────────────
+
+    /**
+     * DELETE /api/users/{user}/delete-pending
+     *
+     * Hard delete akun yang masih berstatus 'pending'.
+     * Hanya bisa untuk user berstatus 'pending' — akun aktif/blocked tidak bisa dihapus (BR-USER-02).
+     */
+    public function deletePending(Request $request, User $user)
+    {
+        if ($user->status !== 'pending') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Hanya akun dengan status pending yang dapat dihapus.',
+            ], 409);
+        }
+
+        $userName  = $user->name;
+        $userEmail = $user->email;
+
+        $user->tokens()->delete();
+        $user->delete();
+
+        ActivityLogService::log(
+            'user.deleted',
+            "Admin {$request->user()->name} menghapus pendaftaran {$userName} ({$userEmail}).",
+            null,
+            ['deleted_user' => ['name' => $userName, 'email' => $userEmail]]
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => "Pendaftaran {$userName} berhasil dihapus.",
         ]);
     }
 

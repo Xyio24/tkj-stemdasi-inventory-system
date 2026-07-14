@@ -177,6 +177,9 @@ function AvatarSection({ avatarUrl, name, email }: { avatarUrl: string | null; n
             {cropSrc && (
                 <ImageCropModal
                     imageSrc={cropSrc}
+                    aspect={1}
+                    title="Sesuaikan Foto Profil"
+                    outputFilename="avatar.jpg"
                     onConfirm={handleCropConfirm}
                     onCancel={handleCropCancel}
                 />
@@ -241,6 +244,49 @@ function EditProfileSection({ defaultName, defaultEmail }: { defaultName: string
 }
 
 
+// ─── PasswordInput ────────────────────────────────────────────────────────────
+// Didefinisikan di LUAR ChangePasswordSection agar referensi komponen stabil.
+// Kalau didefinisikan di dalam, React akan unmount/remount setiap render
+// karena referensi fungsi berubah → input kehilangan fokus saat validasi berjalan.
+
+function PasswordInput({ id, label, show, toggle, err, disabled, ...inputProps }: {
+    id: string;
+    label: string;
+    show: boolean;
+    toggle: () => void;
+    err?: string;
+    disabled?: boolean;
+} & React.InputHTMLAttributes<HTMLInputElement>) {
+    return (
+        <div className="space-y-1.5">
+            <label htmlFor={id} className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
+                {label}
+            </label>
+            <div className="relative">
+                <input
+                    id={id}
+                    type={show ? 'text' : 'password'}
+                    disabled={disabled}
+                    aria-invalid={!!err}
+                    className={inputCls + ' pr-10 [&::-ms-reveal]:hidden [&::-ms-clear]:hidden'}
+                    {...inputProps}
+                />
+                <button
+                    type="button"
+                    tabIndex={-1}
+                    onClick={toggle}
+                    className="absolute inset-y-0 right-0 flex items-center px-3 text-neutral-400 hover:text-neutral-600 transition-colors"
+                    aria-label={show ? 'Sembunyikan' : 'Tampilkan'}
+                >
+                    {show ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+            </div>
+            {/* Selalu render dengan min-h agar tidak ada layout shift */}
+            <p className="text-xs text-red-500 min-h-[1rem]">{err ?? ''}</p>
+        </div>
+    );
+}
+
 // ─── Change Password Section ──────────────────────────────────────────────────
 
 function ChangePasswordSection() {
@@ -268,40 +314,24 @@ function ChangePasswordSection() {
         },
     });
 
-    function PasswordInput({ id, label, show, toggle, reg, err }: {
-        id: string; label: string; show: boolean; toggle: () => void;
-        reg: ReturnType<typeof register>; err?: string;
-    }) {
-        return (
-            <div className="space-y-1.5">
-                <label htmlFor={id} className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">{label}</label>
-                <div className="relative">
-                    <input id={id} type={show ? 'text' : 'password'} disabled={mutation.isPending}
-                        {...reg} aria-invalid={!!err}
-                        className={inputCls + ' pr-10'} />
-                    <button type="button" tabIndex={-1} onClick={toggle}
-                        className="absolute inset-y-0 right-0 flex items-center px-3 text-neutral-400 hover:text-neutral-600 transition-colors"
-                        aria-label={show ? 'Sembunyikan' : 'Tampilkan'}>
-                        {show ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
-                </div>
-                {err && <p className="text-xs text-red-500">{err}</p>}
-            </div>
-        );
-    }
-
     return (
         <Section title="Ganti Password">
             <form onSubmit={handleSubmit((d) => mutation.mutate(d))} className="space-y-4">
                 <PasswordInput id="pw-current" label="Password Saat Ini"
                     show={showCurrent} toggle={() => setShowCurrent((v) => !v)}
-                    reg={register('current_password')} err={errors.current_password?.message} />
+                    disabled={mutation.isPending}
+                    err={errors.current_password?.message}
+                    {...register('current_password')} />
                 <PasswordInput id="pw-new" label="Password Baru"
                     show={showNew} toggle={() => setShowNew((v) => !v)}
-                    reg={register('password')} err={errors.password?.message} />
+                    disabled={mutation.isPending}
+                    err={errors.password?.message}
+                    {...register('password')} />
                 <PasswordInput id="pw-confirm" label="Konfirmasi Password Baru"
                     show={showConfirm} toggle={() => setShowConfirm((v) => !v)}
-                    reg={register('password_confirmation')} err={errors.password_confirmation?.message} />
+                    disabled={mutation.isPending}
+                    err={errors.password_confirmation?.message}
+                    {...register('password_confirmation')} />
                 <Button type="submit" disabled={mutation.isPending}
                     className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl transition-all duration-200 ease-out active:scale-[0.97]" size="sm">
                     {mutation.isPending

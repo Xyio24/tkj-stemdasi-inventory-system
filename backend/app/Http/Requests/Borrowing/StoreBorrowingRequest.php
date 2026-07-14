@@ -15,7 +15,7 @@ class StoreBorrowingRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'purpose' => 'required|string|min:10',
+            'purpose' => 'required|string|min:5',
             'borrow_date' => 'required|date|after_or_equal:today',
             'expected_return_date' => 'required|date|after:borrow_date',
             'notes' => 'nullable|string',
@@ -29,7 +29,7 @@ class StoreBorrowingRequest extends FormRequest
     {
         return [
             'purpose.required' => 'Tujuan peminjaman wajib diisi.',
-            'purpose.min' => 'Tujuan peminjaman minimal harus berisi 10 karakter.',
+            'purpose.min' => 'Tujuan peminjaman minimal harus berisi 5 karakter.',
             'borrow_date.required' => 'Tanggal rencana pinjam wajib diisi.',
             'borrow_date.after_or_equal' => 'Tanggal rencana pinjam tidak boleh berada di masa lalu.',
             'expected_return_date.required' => 'Tanggal rencana kembali wajib diisi.',

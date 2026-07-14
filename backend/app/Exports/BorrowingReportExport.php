@@ -77,7 +77,7 @@ class BorrowingReportExport implements FromQuery, WithHeadings, WithMapping, Wit
             $borrowing->purpose,
             $borrowing->borrow_date?->format('d/m/Y') ?? '-',
             $borrowing->expected_return_date?->format('d/m/Y') ?? '-',
-            $statusMap[$borrowing->status->value ?? $borrowing->status] ?? $borrowing->status,
+            $statusMap[$borrowing->status instanceof \App\Enums\BorrowingStatus ? $borrowing->status->value : (string) $borrowing->status] ?? (string) $borrowing->status,
             $borrowing->approvedBy?->name ?? '-',
             $borrowing->approved_at?->format('d/m/Y H:i') ?? '-',
             $borrowing->created_at->format('d/m/Y H:i'),

@@ -11,6 +11,12 @@ interface Props {
     imageSrc: string;
     onConfirm: (croppedFile: File) => void;
     onCancel: () => void;
+    /** Aspect ratio crop area. Default 1 (square). Gunakan undefined untuk bebas. */
+    aspect?: number;
+    /** Judul modal. Default 'Sesuaikan Foto' */
+    title?: string;
+    /** Nama file output. Default 'photo.jpg' */
+    outputFilename?: string;
 }
 
 // ─── Canvas Helper ────────────────────────────────────────────────────────────
@@ -73,7 +79,7 @@ async function getCroppedBlob(imageSrc: string, pixelCrop: Area, rotation = 0): 
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export default function ImageCropModal({ imageSrc, onConfirm, onCancel }: Props) {
+export default function ImageCropModal({ imageSrc, onConfirm, onCancel, aspect, title = 'Sesuaikan Foto', outputFilename = 'photo.jpg' }: Props) {
     const [crop, setCrop]             = useState<Point>({ x: 0, y: 0 });
     const [zoom, setZoom]             = useState(1);
     const [rotation, setRotation]     = useState(0);
@@ -89,7 +95,7 @@ export default function ImageCropModal({ imageSrc, onConfirm, onCancel }: Props)
         setIsProcessing(true);
         try {
             const blob = await getCroppedBlob(imageSrc, croppedArea, rotation);
-            const file = new File([blob], 'avatar.jpg', { type: 'image/jpeg' });
+            const file = new File([blob], outputFilename, { type: 'image/jpeg' });
             onConfirm(file);
         } catch {
             // error sudah di-handle oleh parent via onError mutation
@@ -111,7 +117,7 @@ export default function ImageCropModal({ imageSrc, onConfirm, onCancel }: Props)
                 {/* Header */}
                 <div className="flex items-center justify-between px-5 py-4 border-b border-neutral-200 dark:border-neutral-800">
                     <h2 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
-                        Sesuaikan Foto Profil
+                        {title}
                     </h2>
                     <button
                         type="button"
@@ -130,9 +136,9 @@ export default function ImageCropModal({ imageSrc, onConfirm, onCancel }: Props)
                         crop={crop}
                         zoom={zoom}
                         rotation={rotation}
-                        aspect={1}
-                        cropShape="round"
-                        showGrid={false}
+                        aspect={aspect}
+                        cropShape={aspect === 1 ? 'round' : 'rect'}
+                        showGrid={aspect !== 1}
                         onCropChange={setCrop}
                         onZoomChange={setZoom}
                         onCropComplete={onCropComplete}

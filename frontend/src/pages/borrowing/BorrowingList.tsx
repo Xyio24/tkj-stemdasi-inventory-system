@@ -142,7 +142,7 @@ export default function BorrowingList() {
                                 <th className="px-5 py-3.5 text-[10px] font-bold text-muted-foreground uppercase tracking-widest text-left hidden md:table-cell">Tgl Pinjam</th>
                                 <th className="px-5 py-3.5 text-[10px] font-bold text-muted-foreground uppercase tracking-widest text-left hidden md:table-cell">Tenggat</th>
                                 <th className="px-5 py-3.5 text-[10px] font-bold text-muted-foreground uppercase tracking-widest text-left">Status</th>
-                                <th className="px-5 py-3.5 text-[10px] font-bold text-muted-foreground uppercase tracking-widest text-left">Aksi</th>
+                                <th className="px-5 py-3.5 text-[10px] font-bold text-muted-foreground uppercase tracking-widest text-center">Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -213,8 +213,8 @@ export default function BorrowingList() {
                                             </td>
 
                                             {/* Actions */}
-                                            <td className="px-5 py-3.5" onClick={e => e.stopPropagation()}>
-                                                <div className="flex items-center gap-1.5">
+                                            <td className="px-5 py-3.5 text-center" onClick={e => e.stopPropagation()}>
+                                                <div className="flex items-center justify-center gap-1.5">
                                                     <Link
                                                         to={`/dashboard/borrowings/${b.id}`}
                                                         className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-primary/8 dark:bg-primary/15 text-primary text-xs font-semibold hover:bg-primary/15 transition-all duration-150 active:scale-[0.95] "

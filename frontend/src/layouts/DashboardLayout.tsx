@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Outlet, Navigate, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
 import { useThemeStore } from '@/store/themeStore';
+import { useThemeOverlay } from '@/providers/ThemeProvider';
 import GeneratedAvatar from '@/components/common/GeneratedAvatar';
 import {
     LayoutDashboard,
@@ -89,25 +90,20 @@ const NAV_GROUPS: NavGroup[] = [
 // ─── ThemeToggle ──────────────────────────────────────────────────────────────
 
 function ThemeToggle({ compact = false }: { compact?: boolean }) {
-    const { theme, setTheme, resolvedTheme } = useThemeStore();
-    const isDark = resolvedTheme() === 'dark';
+    const { theme, setTheme } = useThemeStore();
+    const { showOverlay }     = useThemeOverlay();
+    const isDark              = theme === 'dark';
 
     function toggle() {
-        // light → dark → system → light
-        if (theme === 'light') setTheme('dark');
-        else if (theme === 'dark') setTheme('system');
-        else setTheme('light');
+        const next = isDark ? 'light' : 'dark';
+        showOverlay(next, () => setTheme(next));
     }
-
-    const label =
-        theme === 'system' ? 'Sistem' :
-        theme === 'dark'   ? 'Gelap'  : 'Terang';
 
     if (compact) {
         return (
             <button
                 onClick={toggle}
-                title={`Mode: ${label}`}
+                title={isDark ? 'Mode Terang' : 'Mode Gelap'}
                 aria-label="Toggle dark mode"
                 className={[
                     'p-2 rounded-xl transition-all duration-150 active:scale-[0.93]',
@@ -117,7 +113,9 @@ function ThemeToggle({ compact = false }: { compact?: boolean }) {
                     'border border-transparent hover:border-white/30 dark:hover:border-white/8',
                 ].join(' ')}
             >
-                {isDark ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
+                {isDark
+                    ? <Sun className="w-4 h-4 text-amber-400" />
+                    : <Moon className="w-4 h-4 text-indigo-500" />}
             </button>
         );
     }
@@ -127,9 +125,9 @@ function ThemeToggle({ compact = false }: { compact?: boolean }) {
             onClick={toggle}
             aria-label="Toggle dark mode"
             className={[
-                'w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl text-sm font-medium',
+                'w-full flex items-center justify-start gap-3 px-3 py-2.5 rounded-2xl text-sm font-medium text-left',
                 'transition-all duration-150 ease-out active:scale-[0.98]',
-                'text-foreground/50 border border-transparent',
+                'text-foreground/60 border border-transparent',
                 'hover:text-foreground/90',
                 'hover:bg-white/60 dark:hover:bg-white/[0.05]',
                 'hover:border-white/50 dark:hover:border-white/[0.07]',
@@ -142,15 +140,14 @@ function ThemeToggle({ compact = false }: { compact?: boolean }) {
                 'flex items-center justify-center w-[26px] h-[26px] rounded-lg flex-shrink-0',
                 'transition-all duration-150',
                 'bg-black/[0.04] dark:bg-white/[0.06]',
-                'text-foreground/40 group-hover:text-foreground/70',
                 'group-hover:bg-black/[0.06] dark:group-hover:bg-white/[0.09]',
             ].join(' ')}>
-                {isDark ? <Moon className="w-3.5 h-3.5" /> : <Sun className="w-3.5 h-3.5" />}
+                {isDark
+                    ? <Sun className="w-3.5 h-3.5 text-amber-400" />
+                    : <Moon className="w-3.5 h-3.5 text-indigo-500" />}
             </span>
-            <span className="flex-1 leading-none tracking-tight">{label}</span>
-            {/* Pill indicator */}
-            <span className="text-[10px] font-semibold text-foreground/25 uppercase tracking-wide">
-                {theme === 'system' ? 'Auto' : ''}
+            <span className="flex-1 leading-none tracking-tight">
+                Ubah Tema
             </span>
         </button>
     );
@@ -368,7 +365,7 @@ function SidebarContent({ role, onClose }: { role: string; onClose?: () => void 
                 <button
                     onClick={handleLogout}
                     className={[
-                        'w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl text-sm font-medium',
+                        'w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl text-sm font-medium text-left',
                         'transition-all duration-150 ease-out active:scale-[0.98]',
                         'text-foreground/50 border border-transparent',
                         'hover:text-red-500 dark:hover:text-red-400',

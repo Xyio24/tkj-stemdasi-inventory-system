@@ -14,6 +14,7 @@ import {
     Info,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import ImageCropModal from '@/components/common/ImageCropModal';
 
 const STORAGE_URL = (import.meta.env.VITE_STORAGE_URL ?? 'http://localhost:8000/storage').replace(/\/+$/, '');
 
@@ -198,6 +199,7 @@ export default function ItemForm() {
     const [coverPreviewUrl, setCoverPreviewUrl] = useState<string | null>(null);
     const [existingGallery, setExistingGallery] = useState<any[]>([]);
     const [newGalleryPrev,  setNewGalleryPrev]  = useState<string[]>([]);
+    const [cropSrc,         setCropSrc]         = useState<string | null>(null);
 
     const { data: categories } = useQuery({ queryKey: ['categories'], queryFn: getCategories });
 
@@ -210,6 +212,7 @@ export default function ItemForm() {
     useEffect(() => {
         if (isEdit && itemData?.data) {
             const item = itemData.data;
+            const isConsumable = item.type === 'consumable';
             setFormData({
                 category_id:   String(item.category_id),
                 name:          item.name,
@@ -217,7 +220,8 @@ export default function ItemForm() {
                 brand:         item.brand || '',
                 model:         item.model || '',
                 type:          item.type || 'non_consumable',
-                stock_total:   String(item.stock_total),
+                // Untuk consumable: tampilkan stock aktif (bukan stock_total historis)
+                stock_total:   isConsumable ? String(item.stock) : String(item.stock_total),
                 stock_minimum: String(item.stock_minimum),
                 condition:     item.condition,
                 location:      item.location || '',
@@ -272,8 +276,18 @@ export default function ItemForm() {
     function handleCoverFiles(files: File[]) {
         const file = files[0];
         if (!file) return;
-        setCoverImage(file);
-        setCoverPreviewUrl(URL.createObjectURL(file));
+        // Buka crop modal, terapkan setelah crop dikonfirmasi
+        setCropSrc(URL.createObjectURL(file));
+    }
+
+    function handleCropConfirm(croppedFile: File) {
+        setCoverImage(croppedFile);
+        setCoverPreviewUrl(URL.createObjectURL(croppedFile));
+        setCropSrc(null);
+    }
+
+    function handleCropCancel() {
+        setCropSrc(null);
     }
 
     function handleGalleryFiles(files: File[]) {
@@ -461,9 +475,11 @@ export default function ItemForm() {
                 >
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-5">
                         <Field
-                            label="Total Stok Fisik"
+                            label={formData.type === 'consumable' ? 'Stok Aktif Saat Ini' : 'Total Stok Fisik'}
                             required
-                            hint={!isEdit ? 'Stok aktif mengikuti total awal.' : undefined}
+                            hint={formData.type === 'consumable'
+                                ? (isEdit ? 'Jumlah sisa stok yang tersedia sekarang.' : 'Stok awal yang tersedia.')
+                                : (!isEdit ? 'Stok aktif mengikuti total awal.' : undefined)}
                         >
                             <input
                                 required
@@ -629,6 +645,18 @@ export default function ItemForm() {
                     </div>
                 </div>
             </form>
+
+            {/* Crop Modal — untuk foto cover barang */}
+            {cropSrc && (
+                <ImageCropModal
+                    imageSrc={cropSrc}
+                    aspect={16 / 9}
+                    title="Sesuaikan Foto Barang"
+                    outputFilename="cover.jpg"
+                    onConfirm={handleCropConfirm}
+                    onCancel={handleCropCancel}
+                />
+            )}
         </div>
     );
 }

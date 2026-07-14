@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\BorrowingStatus;
 use App\Exports\BorrowingReportExport;
 use App\Exports\InventoryReportExport;
 use App\Exports\ReturnReportExport;
@@ -48,8 +49,8 @@ class ReportController extends Controller
             'id'                   => $b->id,
             'code'                 => $b->code,
             'user'                 => $b->user ? ['id' => $b->user->id, 'name' => $b->user->name, 'nis_nip' => $b->user->nis_nip] : null,
-            'status'               => $b->status instanceof \BackedEnum ? $b->status->value : $b->status,
-            'status_label'         => $statusMap[$b->status instanceof \BackedEnum ? $b->status->value : $b->status] ?? '-',
+            'status'               => $b->status instanceof BorrowingStatus ? $b->status->value : (string) $b->status,
+            'status_label'         => $statusMap[$b->status instanceof BorrowingStatus ? $b->status->value : (string) $b->status] ?? '-',
             'purpose'              => $b->purpose,
             'borrow_date'          => $b->borrow_date?->format('Y-m-d'),
             'expected_return_date' => $b->expected_return_date?->format('Y-m-d'),

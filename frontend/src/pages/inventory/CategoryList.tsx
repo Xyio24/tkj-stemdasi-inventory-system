@@ -192,7 +192,7 @@ export default function CategoryList() {
                                 <th className="px-5 py-3.5 text-[10px] font-bold text-muted-foreground uppercase tracking-widest text-left hidden sm:table-cell">Slug</th>
                                 <th className="px-5 py-3.5 text-[10px] font-bold text-muted-foreground uppercase tracking-widest text-left hidden md:table-cell">Deskripsi</th>
                                 {canManage && (
-                                    <th className="px-5 py-3.5 text-[10px] font-bold text-muted-foreground uppercase tracking-widest text-left">Aksi</th>
+                                    <th className="px-5 py-3.5 text-[10px] font-bold text-muted-foreground uppercase tracking-widest text-center">Aksi</th>
                                 )}
                             </tr>
                         </thead>
@@ -259,8 +259,8 @@ export default function CategoryList() {
 
                                         {/* Actions — always visible on mobile, hover-reveal on desktop */}
                                         {canManage && (
-                                            <td className="px-5 py-3.5">
-                                                <div className="flex gap-1.5">
+                                            <td className="px-5 py-3.5 text-center">
+                                                <div className="flex justify-center gap-1.5">
                                                     <Button
                                                         variant="ghost"
                                                         size="icon-sm"

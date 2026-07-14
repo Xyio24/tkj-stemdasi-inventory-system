@@ -81,44 +81,44 @@
   }
 
   .dark {
-    --background:           0.10  0.01  260;
-    --foreground:           0.96  0.005 247;
-    --card:                 0.14  0.01  260;
-    --card-foreground:      0.96  0.005 247;
-    --popover:              0.14  0.01  260;
-    --popover-foreground:   0.96  0.005 247;
+    --background:           0.16  0.01  260;
+    --foreground:           0.93  0.005 247;
+    --card:                 0.19  0.01  260;
+    --card-foreground:      0.93  0.005 247;
+    --popover:              0.19  0.01  260;
+    --popover-foreground:   0.93  0.005 247;
     --primary:              0.60  0.22  264;
     --primary-foreground:   1     0     0;
-    --secondary:            0.20  0.01  260;
+    --secondary:            0.23  0.01  260;
     --secondary-foreground: 0.90  0.005 247;
-    --muted:                0.18  0.01  260;
+    --muted:                0.22  0.01  260;
     --muted-foreground:     0.62  0.01  260;
-    --accent:               0.22  0.015 264;
-    --accent-foreground:    0.96  0.005 247;
+    --accent:               0.25  0.015 264;
+    --accent-foreground:    0.93  0.005 247;
     --destructive:          0.65  0.22  25;
     --destructive-foreground: 1   0     0;
-    --border:               0.60  0     0; /* oklch(0.60 0 0 / alpha) ≈ gray */
-    --input:                0.60  0     0;
+    --border:               0.28  0     0;
+    --input:                0.28  0     0;
     --ring:                 0.60  0.22  264;
 
-    --sidebar:                    0.13  0.01  260;
-    --sidebar-foreground:         0.96  0.005 247;
+    --sidebar:                    0.14  0.01  260;
+    --sidebar-foreground:         0.93  0.005 247;
     --sidebar-primary:            0.60  0.22  264;
     --sidebar-primary-foreground: 1     0     0;
-    --sidebar-accent:             0.22  0.015 264;
+    --sidebar-accent:             0.25  0.015 264;
     --sidebar-accent-foreground:  0.80  0.01  264;
-    --sidebar-border:             0.60  0     0;
+    --sidebar-border:             0.28  0     0;
     --sidebar-ring:               0.60  0.22  264;
 
     /* ── Glass tokens (dark) ── */
-    --glass-bg:           oklch(0.16 0.01 260 / 0.75);
-    --glass-bg-strong:    oklch(0.16 0.01 260 / 0.90);
+    --glass-bg:           oklch(0.19 0.01 260 / 0.75);
+    --glass-bg-strong:    oklch(0.19 0.01 260 / 0.90);
     --glass-border:       oklch(1 0 0 / 0.12);
     --glass-border-dark:  oklch(1 0 0 / 0.08);
-    --glass-shadow:       0 8px 32px oklch(0 0 0 / 0.35),
-                          0 2px  8px oklch(0 0 0 / 0.20);
-    --glass-shadow-float: 0 20px 60px oklch(0 0 0 / 0.50),
-                          0  4px 16px oklch(0 0 0 / 0.28);
+    --glass-shadow:       0 8px 32px oklch(0 0 0 / 0.28),
+                          0 2px  8px oklch(0 0 0 / 0.16);
+    --glass-shadow-float: 0 20px 60px oklch(0 0 0 / 0.40),
+                          0  4px 16px oklch(0 0 0 / 0.22);
 
     --glow-blue:    0 0 20px oklch(0.60 0.22 264 / 0.30),
                     0 0  8px oklch(0.60 0.22 264 / 0.18);
@@ -280,6 +280,28 @@
     z-index: 1;
   }
 
+  /*
+   * Glass legibility — text-shadow tipis agar teks terbaca di atas
+   * surface transparan tanpa harus menaikkan opacity (yang merusak glass effect).
+   * Light mode: shadow putih di bawah teks (seperti Apple vibrancy).
+   * Dark mode: shadow gelap tipis untuk kontras di atas background terang yg tembus.
+   */
+  .glass-sidebar nav a,
+  .glass-sidebar nav p,
+  .glass-sidebar button {
+    text-shadow:
+      0 1px 2px oklch(1 0 0 / 0.50),
+      0 0 8px oklch(1 0 0 / 0.20);
+  }
+
+  .dark .glass-sidebar nav a,
+  .dark .glass-sidebar nav p,
+  .dark .glass-sidebar button {
+    text-shadow:
+      0 1px 3px oklch(0 0 0 / 0.55),
+      0 0 10px oklch(0 0 0 / 0.30);
+  }
+
   .dark .glass-sidebar {
     background: oklch(0.18 0.030 260 / 0.34);
     backdrop-filter: saturate(135%) blur(16px);
@@ -369,6 +391,14 @@
       radial-gradient(ellipse 70% 60% at 50% 100%, oklch(0.92 0.05 230 / 0.20) 0%, transparent 60%);
   }
 
+  .dark .bg-mesh {
+    background-color: oklch(0.13 0.012 260);
+    background-image:
+      radial-gradient(ellipse 80% 60% at 20%  20%, oklch(0.38 0.10 264 / 0.30) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 50% at 80%  10%, oklch(0.35 0.10 290 / 0.22) 0%, transparent 55%),
+      radial-gradient(ellipse 70% 60% at 50% 100%, oklch(0.32 0.07 230 / 0.18) 0%, transparent 60%);
+  }
+
   /* ── Calm mesh background (dashboard main content) ── */
   .bg-mesh-calm {
     background-color: oklch(var(--background));
@@ -381,9 +411,9 @@
 
   .dark .bg-mesh-calm {
     background-image:
-      radial-gradient(ellipse 75% 60% at 5%   5%,   oklch(0.32 0.08 264 / 0.35) 0%, transparent 55%),
-      radial-gradient(ellipse 55% 50% at 95%  5%,   oklch(0.30 0.09 290 / 0.25) 0%, transparent 50%),
-      radial-gradient(ellipse 65% 55% at 50%  105%, oklch(0.28 0.06 230 / 0.20) 0%, transparent 55%);
+      radial-gradient(ellipse 75% 60% at 5%   5%,   oklch(0.38 0.08 264 / 0.30) 0%, transparent 55%),
+      radial-gradient(ellipse 55% 50% at 95%  5%,   oklch(0.36 0.09 290 / 0.22) 0%, transparent 50%),
+      radial-gradient(ellipse 65% 55% at 50%  105%, oklch(0.34 0.06 230 / 0.18) 0%, transparent 55%);
     background-attachment: fixed;
   }
 
@@ -412,6 +442,16 @@
     background-size: 200% 100%;
     animation: shimmer 1.6s ease-in-out infinite;
     border-radius: var(--radius-md);
+  }
+
+  .dark .skeleton {
+    background: linear-gradient(
+      90deg,
+      oklch(0.26 0.01 260) 25%,
+      oklch(0.30 0.01 260) 50%,
+      oklch(0.26 0.01 260) 75%
+    );
+    background-size: 200% 100%;
   }
 
   /* ── iOS Segmented Control ── */
@@ -449,6 +489,56 @@
   .input-ios:focus {
     border-color: oklch(var(--primary) / 0.6);
     box-shadow: 0 0 0 4px oklch(var(--primary) / 0.12), var(--glow-blue-sm);
+  }
+
+  /* ── iOS Safari date input fix ── */
+  /* Safari tidak mewarisi warna teks & mengabaikan beberapa style pada type=date */
+  input[type="date"].input-ios,
+  input[type="date"] {
+    /* Pastikan teks/placeholder terlihat di iOS dark & light mode */
+    color-scheme: light dark;
+    /* Paksa min-height agar picker tidak collapse */
+    min-height: 2.5rem;
+    /* Alignment teks agar konsisten dengan input lain */
+    line-height: normal;
+  }
+
+  /* Webkit date/time value — atur warna teks eksplisit agar terlihat */
+  input[type="date"]::-webkit-date-and-time-value {
+    color: oklch(var(--foreground));
+    text-align: left;
+    min-height: 1.25rem;
+  }
+
+  /* Placeholder warna pada Safari sebelum dipilih */
+  input[type="date"]:not(:focus):not([value])::-webkit-datetime-edit {
+    color: oklch(var(--muted-foreground));
+  }
+
+  /* ── Google Sign-In button styling ── */
+  /* Hilangkan shadow bawaan Google agar menyatu dengan glass card */
+  .google-btn-wrap > div,
+  .google-btn-wrap iframe {
+    box-shadow: none !important;
+  }
+
+  /* ── Hide browser built-in password reveal button ── */
+  /* Edge / IE */
+  input[type="password"]::-ms-reveal,
+  input[type="password"]::-ms-clear {
+    display: none !important;
+  }
+  /* Chrome — built-in eye icon */
+  input[type="password"]::-webkit-textfield-decoration-container {
+    display: none !important;
+  }
+  input::-webkit-strong-password-auto-fill-button,
+  input::-webkit-credentials-auto-fill-button,
+  input::-webkit-contacts-auto-fill-button {
+    display: none !important;
+    pointer-events: none;
+    position: absolute;
+    right: -9999px;
   }
 
   /* ── Animated blob ── */

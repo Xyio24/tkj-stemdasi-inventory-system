@@ -24,6 +24,7 @@ import {
     ChevronDown, Image as ImageIcon,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import ImageCropModal from '@/components/common/ImageCropModal';
 
 // ─── Status config ────────────────────────────────────────────────────────────
 
@@ -152,6 +153,8 @@ export default function BorrowingDetail() {
     const [returnNotes,      setReturnNotes]     = useState('');
     const [returnItems,      setReturnItems]     = useState<ApproveReturnItemPayload[]>([]);
     const [photoFile,        setPhotoFile]       = useState<File | null>(null);
+    const [cropSrc,          setCropSrc]         = useState<string | null>(null);
+    const [pendingPhotoType, setPendingPhotoType] = useState<'borrow' | 'return' | null>(null);
 
     const { data: response, isLoading } = useQuery({
         queryKey: ['borrowings', id],
@@ -164,13 +167,19 @@ export default function BorrowingDetail() {
     useEffect(() => {
         if (borrowing?.items) {
             setReturnItems(
-                borrowing.items.map((item: BorrowingItemDetail) => ({
-                    borrowing_item_id: item.borrowing_item_id,
-                    return_conditions: [{
-                        condition: (item.item_condition_out || 'baik') as ReturnConditionEntry['condition'],
-                        quantity:  item.quantity,
-                    }],
-                }))
+                borrowing.items.map((item: BorrowingItemDetail) => {
+                    const isConsumable = item.type === 'consumable';
+                    const defaultCondition = isConsumable
+                        ? 'terpakai'
+                        : (item.item_condition_out || 'baik');
+                    return {
+                        borrowing_item_id: item.borrowing_item_id,
+                        return_conditions: [{
+                            condition: defaultCondition as ReturnConditionEntry['condition'],
+                            quantity:  item.quantity,
+                        }],
+                    };
+                })
             );
         }
     }, [borrowing]);
@@ -230,6 +239,23 @@ export default function BorrowingDetail() {
         fd.append('photo', photoFile);
         fd.append('type', type);
         uploadPhotoMutation.mutate(fd);
+    };
+
+    // Buka crop modal saat file dipilih, simpan type untuk dipakai setelah crop
+    const handlePhotoSelect = (file: File | null, type: 'borrow' | 'return') => {
+        if (!file) { setPhotoFile(null); return; }
+        setPendingPhotoType(type);
+        setCropSrc(URL.createObjectURL(file));
+    };
+
+    const handleCropConfirm = (croppedFile: File) => {
+        setPhotoFile(croppedFile);
+        setCropSrc(null);
+    };
+
+    const handleCropCancel = () => {
+        setCropSrc(null);
+        setPendingPhotoType(null);
     };
 
     const hasBorrowPhoto = borrowing?.photos?.some((p: BorrowingPhoto) => p.type === 'borrow');
@@ -372,10 +398,10 @@ export default function BorrowingDetail() {
                             <form onSubmit={e => handleUpload(e, 'borrow')} className="space-y-3">
                                 <PhotoUploadArea
                                     label="Pilih Foto Selfie"
-                                    hint="JPG, PNG, WebP"
+                                    hint="JPG, PNG, WebP — akan di-crop"
                                     accept="image/jpeg,image/png,image/webp"
                                     file={photoFile}
-                                    onChange={setPhotoFile}
+                                    onChange={f => handlePhotoSelect(f, 'borrow')}
                                 />
                                 <Button type="submit" className="w-full" disabled={!photoFile} loading={uploadPhotoMutation.isPending}>
                                     Unggah Foto Bukti
@@ -391,10 +417,10 @@ export default function BorrowingDetail() {
                             <form onSubmit={e => handleUpload(e, 'return')} className="space-y-3">
                                 <PhotoUploadArea
                                     label="Pilih Foto Selfie"
-                                    hint="JPG, PNG, WebP"
+                                    hint="JPG, PNG, WebP — akan di-crop"
                                     accept="image/jpeg,image/png,image/webp"
                                     file={photoFile}
-                                    onChange={setPhotoFile}
+                                    onChange={f => handlePhotoSelect(f, 'return')}
                                 />
                                 <Button
                                     type="submit"
@@ -556,9 +582,26 @@ export default function BorrowingDetail() {
 
                                             <button
                                                 type="button"
-                                                onClick={() => setReturnItems(prev => prev.map((ri, ii) => ii !== itemIdx ? ri : {
-                                                    ...ri,
-                                                    return_conditions: [...ri.return_conditions, { condition: 'baik' as ReturnConditionEntry['condition'], quantity: 1 }],
+                                                onClick={() => setReturnItems(prev => prev.map((ri, ii) => {
+                                                    if (ii !== itemIdx) return ri;
+                                                    const origQty = orig?.quantity ?? 0;
+                                                    const currentTotal = ri.return_conditions.reduce((s, c) => s + c.quantity, 0);
+                                                    // Sisa qty setelah ditambah 1 untuk kondisi baru
+                                                    const newCondQty = 1;
+                                                    const remaining  = currentTotal - newCondQty;
+                                                    // Kurangi qty dari baris pertama (pastikan minimal 1)
+                                                    const updatedConditions = ri.return_conditions.map((c, ci) => {
+                                                        if (ci !== 0) return c;
+                                                        return { ...c, quantity: Math.max(0, c.quantity - newCondQty) };
+                                                    }).filter(c => c.quantity > 0);
+                                                    const defaultCond = isConsumable ? 'terpakai' : 'baik';
+                                                    return {
+                                                        ...ri,
+                                                        return_conditions: [
+                                                            ...updatedConditions,
+                                                            { condition: defaultCond as ReturnConditionEntry['condition'], quantity: newCondQty },
+                                                        ],
+                                                    };
                                                 }))}
                                                 className="flex items-center gap-1 text-xs text-primary font-medium hover:gap-1.5 transition-all duration-150"
                                             >
@@ -621,6 +664,18 @@ export default function BorrowingDetail() {
                     )}
                 </div>
             </div>
+
+            {/* Crop Modal — muncul saat user pilih foto selfie */}
+            {cropSrc && (
+                <ImageCropModal
+                    imageSrc={cropSrc}
+                    aspect={undefined}
+                    title={pendingPhotoType === 'borrow' ? 'Sesuaikan Foto Pengambilan' : 'Sesuaikan Foto Pengembalian'}
+                    outputFilename={`selfie-${pendingPhotoType ?? 'photo'}.jpg`}
+                    onConfirm={handleCropConfirm}
+                    onCancel={handleCropCancel}
+                />
+            )}
         </div>
     );
 }

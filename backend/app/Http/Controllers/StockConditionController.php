@@ -147,10 +147,12 @@ class StockConditionController extends Controller
             'condition'          => $item->condition,
         ];
 
+        $notesText = $validated['notes'] ?? null;
+
         ActivityLogService::log(
             'item.condition_adjusted',
             "Admin {$request->user()->name} memindahkan {$qty} unit '{$item->name}' dari kondisi '{$validated['from_condition']}' ke '{$validated['to_condition']}'" .
-                ($validated['notes'] ? ". Catatan: {$validated['notes']}" : '.'),
+                ($notesText ? ". Catatan: {$notesText}" : '.'),
             $item,
             [
                 'before' => $before,
@@ -159,7 +161,7 @@ class StockConditionController extends Controller
                     'from'     => $validated['from_condition'],
                     'to'       => $validated['to_condition'],
                     'quantity' => $qty,
-                    'notes'    => $validated['notes'] ?? null,
+                    'notes'    => $notesText,
                 ],
             ]
         );

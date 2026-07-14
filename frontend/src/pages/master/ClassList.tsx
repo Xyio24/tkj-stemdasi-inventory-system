@@ -99,7 +99,7 @@ export default function ClassList() {
                         <thead><tr className="border-b border-border/50">
                             <th className="px-5 py-3.5 text-[10px] font-bold text-muted-foreground uppercase tracking-widest text-left">Angkatan</th>
                             <th className="px-5 py-3.5 text-[10px] font-bold text-muted-foreground uppercase tracking-widest text-left">Nama Kelas</th>
-                            <th className="px-5 py-3.5 text-[10px] font-bold text-muted-foreground uppercase tracking-widest text-left">Aksi</th>
+                            <th className="px-5 py-3.5 text-[10px] font-bold text-muted-foreground uppercase tracking-widest text-center">Aksi</th>
                         </tr></thead>
                         <tbody>
                             {isLoading ? (
@@ -135,10 +135,12 @@ export default function ClassList() {
                                             <span className="font-semibold text-foreground">{c.name}</span>
                                         </div>
                                     </td>
-                                    <td className="px-5 py-3.5">
+                                    <td className="px-5 py-3.5 text-center">
+                                        <div className="flex justify-center">
                                         <Button variant="ghost" size="icon-sm" onClick={() => confirm(`Hapus kelas "${c.name}"?`) && deleteMutation.mutate(c.id)} disabled={deleteMutation.isPending} className="text-destructive hover:bg-destructive/8  transition-all duration-150">
                                             {deleteMutation.isPending ? <ButtonSpinner className="w-3.5 h-3.5 text-destructive" /> : <Trash2 className="w-3.5 h-3.5" />}
                                         </Button>
+                                        </div>
                                     </td>
                                 </tr>
                             ))}

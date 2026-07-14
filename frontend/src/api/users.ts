@@ -108,3 +108,24 @@ export const deleteUser = async (id: number) => {
     const response = await api.delete(`/users/${id}`);
     return response.data;
 };
+
+// ─── Reset Password ───────────────────────────────────────────────────────────
+
+export const resetUserPassword = async (id: number) => {
+    const response = await api.post<{
+        success: boolean;
+        message: string;
+        new_password: string;
+    }>(`/users/${id}/reset-password`);
+    return response.data;
+};
+
+// ─── Delete Pending ───────────────────────────────────────────────────────────
+
+export const deletePendingUser = async (id: number) => {
+    const response = await api.delete<{
+        success: boolean;
+        message: string;
+    }>(`/users/${id}/delete-pending`);
+    return response.data;
+};

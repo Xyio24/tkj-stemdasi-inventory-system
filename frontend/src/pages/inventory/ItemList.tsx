@@ -118,7 +118,9 @@ function ItemCard({ item, canManage, isAdmin, onDelete }: {
                         {conditionLabel}
                     </span>
                     <span className="text-[10px] font-medium text-muted-foreground tabular-nums">
-                        {item.stock}/{item.stock_total} unit
+                        {item.type === 'consumable'
+                            ? `${item.stock} unit`
+                            : `${item.stock}/${item.stock_total} unit`}
                     </span>
                 </div>
             </div>
@@ -406,7 +408,7 @@ export default function ItemList() {
                                         <th className="px-4 py-3.5 text-[10px] font-bold text-red-600   dark:text-red-400    uppercase tracking-widest text-center">Rusak ∙ B</th>
                                         <th className="px-4 py-3.5 text-[10px] font-bold text-muted-foreground uppercase tracking-widest text-center">Hilang</th>
                                         <th className="px-4 py-3.5 text-[10px] font-bold text-muted-foreground uppercase tracking-widest text-center">Kondisi</th>
-                                        {isAdmin && <th className="px-4 py-3.5 text-[10px] font-bold text-muted-foreground uppercase tracking-widest text-left">Aksi</th>}
+                                        {isAdmin && <th className="px-4 py-3.5 text-[10px] font-bold text-muted-foreground uppercase tracking-widest text-center">Aksi</th>}
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -460,7 +462,8 @@ export default function ItemList() {
                                                     </span>
                                                 </td>
                                                 {isAdmin && (
-                                                    <td className="px-4 py-3.5 text-right">
+                                                    <td className="px-4 py-3.5 text-center">
+                                                        <div className="flex justify-center">
                                                         <Button
                                                             variant="ghost"
                                                             size="icon-sm"
@@ -470,6 +473,7 @@ export default function ItemList() {
                                                         >
                                                             <SlidersHorizontal className="w-4 h-4" />
                                                         </Button>
+                                                        </div>
                                                     </td>
                                                 )}
                                             </tr>

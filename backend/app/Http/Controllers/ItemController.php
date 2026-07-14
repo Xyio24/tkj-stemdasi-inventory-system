@@ -124,11 +124,17 @@ class ItemController extends Controller
             'type.in' => 'Jenis barang tidak valid. Pilih non_consumable atau consumable.',
         ]);
 
-        // Sesuaikan stock berdasarkan perubahan stock_total
-        // stock_baik ikut naik/turun proporsional dengan selisih stock_total
-        $stockDiff           = $validated['stock_total'] - $item->stock_total;
-        $validated['stock']  = max(0, $item->stock + $stockDiff);
-        $validated['stock_baik'] = max(0, $item->stock_baik + $stockDiff);
+        // Untuk non_consumable: sesuaikan stock berdasarkan perubahan stock_total
+        // Untuk consumable: stock_total tidak berubah dengan perubahan stock aktif, abaikan diff
+        $itemType = $validated['type'] ?? $item->type;
+        if ($itemType !== 'consumable') {
+            $stockDiff           = $validated['stock_total'] - $item->stock_total;
+            $validated['stock']  = max(0, $item->stock + $stockDiff);
+            $validated['stock_baik'] = max(0, $item->stock_baik + $stockDiff);
+        } else {
+            // Untuk consumable, jangan ubah stock dan stock_baik melalui stock_total
+            unset($validated['stock'], $validated['stock_baik']);
+        }
         
         if ($request->has('name') && $request->name !== $item->name) {
             $validated['slug'] = Str::slug($validated['name']) . '-' . uniqid();

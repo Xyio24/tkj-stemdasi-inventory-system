@@ -38,6 +38,8 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('users')->group(functi
     Route::patch('/{user}/unblock', [UserController::class, 'unblock']);
     Route::patch('/{user}/toggle-status', [UserController::class, 'toggleStatus']); // deprecated
     Route::delete('/{user}', [UserController::class, 'destroy']);
+    Route::post('/{user}/reset-password', [UserController::class, 'resetPassword']);
+    Route::delete('/{user}/delete-pending', [UserController::class, 'deletePending']);
 });
 
 // Profile routes — semua role yang sudah login
