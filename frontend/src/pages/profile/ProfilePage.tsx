@@ -36,18 +36,17 @@ type PasswordForm  = z.infer<typeof passwordSchema>;
 
 // ─── Input className helper ───────────────────────────────────────────────────
 
-const inputCls =
-    'w-full rounded-xl border border-neutral-200 bg-white dark:bg-neutral-800 dark:border-neutral-600 px-4 py-2.5 text-sm text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 disabled:opacity-50 aria-invalid:border-red-400 transition-all duration-150';
+const inputCls = 'input-ios';
 
 // ─── Section wrapper ──────────────────────────────────────────────────────────
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
     return (
-        <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 shadow-sm">
-            <div className="px-6 py-5 border-b border-neutral-100 dark:border-neutral-800">
-                <h2 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">{title}</h2>
+        <div className="glass-card overflow-hidden">
+            <div className="px-5 py-4 border-b border-border/40">
+                <h2 className="text-sm font-semibold text-foreground">{title}</h2>
             </div>
-            <div className="px-6 py-5">{children}</div>
+            <div className="px-5 py-5">{children}</div>
         </div>
     );
 }
@@ -168,7 +167,7 @@ function AvatarSection({ avatarUrl, name, email }: { avatarUrl: string | null; n
                                 Hapus Foto
                             </Button>
                         )}
-                        <p className="text-xs text-neutral-400">JPEG, PNG, WebP — maks. 5 MB</p>
+                        <p className="text-xs text-muted-foreground">JPEG, PNG, WebP — maks. 5 MB</p>
                     </div>
                 </div>
             </Section>
@@ -221,19 +220,18 @@ function EditProfileSection({ defaultName, defaultEmail }: { defaultName: string
         <Section title="Informasi Profil">
             <form onSubmit={handleSubmit((d) => mutation.mutate(d))} className="space-y-4">
                 <div className="space-y-1.5">
-                    <label htmlFor="p-name" className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Nama Lengkap</label>
+                    <label htmlFor="p-name" className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Nama Lengkap</label>
                     <input id="p-name" type="text" disabled={mutation.isPending} {...register('name')} aria-invalid={!!errors.name} className={inputCls} />
                     {errors.name && <p className="text-xs text-red-500">{errors.name.message}</p>}
                 </div>
                 <div className="space-y-1.5">
-                    <label htmlFor="p-email" className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Email</label>
+                    <label htmlFor="p-email" className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Email</label>
                     <input id="p-email" type="email" disabled={mutation.isPending} {...register('email')} aria-invalid={!!errors.email} className={inputCls} />
                     {errors.email && <p className="text-xs text-red-500">{errors.email.message}</p>}
                 </div>
                 <Button
                     type="submit"
                     disabled={mutation.isPending || !isDirty}
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl transition-all duration-200 ease-out active:scale-[0.97]"
                     size="sm"
                 >
                     {mutation.isPending ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Menyimpan...</> : 'Simpan Perubahan'}
@@ -259,7 +257,7 @@ function PasswordInput({ id, label, show, toggle, err, disabled, ...inputProps }
 } & React.InputHTMLAttributes<HTMLInputElement>) {
     return (
         <div className="space-y-1.5">
-            <label htmlFor={id} className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
+            <label htmlFor={id} className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                 {label}
             </label>
             <div className="relative">
@@ -275,13 +273,12 @@ function PasswordInput({ id, label, show, toggle, err, disabled, ...inputProps }
                     type="button"
                     tabIndex={-1}
                     onClick={toggle}
-                    className="absolute inset-y-0 right-0 flex items-center px-3 text-neutral-400 hover:text-neutral-600 transition-colors"
+                    className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground transition-colors z-10"
                     aria-label={show ? 'Sembunyikan' : 'Tampilkan'}
                 >
                     {show ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
             </div>
-            {/* Selalu render dengan min-h agar tidak ada layout shift */}
             <p className="text-xs text-red-500 min-h-[1rem]">{err ?? ''}</p>
         </div>
     );
@@ -333,7 +330,7 @@ function ChangePasswordSection() {
                     err={errors.password_confirmation?.message}
                     {...register('password_confirmation')} />
                 <Button type="submit" disabled={mutation.isPending}
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl transition-all duration-200 ease-out active:scale-[0.97]" size="sm">
+                    size="sm">
                     {mutation.isPending
                         ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Menyimpan...</>
                         : 'Ganti Password'}
@@ -386,21 +383,21 @@ function GoogleBindingSection({ googleId }: { googleId: string | null }) {
                 <div>
                     {googleId ? (
                         <>
-                            <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100 flex items-center gap-2">
+                            <p className="text-sm font-medium text-foreground flex items-center gap-2">
                                 <Link2 className="w-4 h-4 text-green-500" />
                                 Terhubung
                             </p>
-                            <p className="text-xs text-neutral-400 mt-0.5">
+                            <p className="text-xs text-muted-foreground mt-0.5">
                                 Akun Google kamu sudah terhubung. Kamu bisa login menggunakan Google.
                             </p>
                         </>
                     ) : (
                         <>
-                            <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100 flex items-center gap-2">
-                                <Link2Off className="w-4 h-4 text-neutral-400" />
+                            <p className="text-sm font-medium text-foreground flex items-center gap-2">
+                                <Link2Off className="w-4 h-4 text-muted-foreground" />
                                 Belum Terhubung
                             </p>
-                            <p className="text-xs text-neutral-400 mt-0.5">
+                            <p className="text-xs text-muted-foreground mt-0.5">
                                 Hubungkan akun Google agar bisa login menggunakan Google.
                             </p>
                         </>
@@ -456,9 +453,9 @@ export default function ProfilePage() {
     if (isLoading || !user) {
         return (
             <div className="space-y-6 max-w-2xl mx-auto w-full">
-                <div className="h-8 w-48 bg-neutral-200 dark:bg-neutral-800 rounded-xl animate-pulse" />
+                <div className="h-8 w-48 skeleton rounded-xl" />
                 {[1, 2, 3, 4].map((i) => (
-                    <div key={i} className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 h-36 animate-pulse" />
+                    <div key={i} className="glass-card h-36 animate-pulse" />
                 ))}
             </div>
         );
@@ -468,31 +465,31 @@ export default function ProfilePage() {
         <div className="space-y-6">
             {/* Page title */}
             <div>
-                <h1 className="text-2xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100">Profil Saya</h1>
-                <p className="text-sm text-neutral-500 mt-0.5">Kelola informasi akun dan keamanan</p>
+                <h1 className="text-2xl font-bold tracking-tight text-foreground">Profil Saya</h1>
+                <p className="text-sm text-muted-foreground mt-0.5">Kelola informasi akun dan keamanan</p>
             </div>
 
             {/* Info bar — full width, hanya tampil jika ada data kelas */}
             {user.student_class && (
-                <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-700 shadow-sm px-6 py-5 flex flex-wrap gap-6 text-sm">
+                <div className="glass-card px-5 py-4 flex flex-wrap gap-6 text-sm">
                     <div>
-                        <span className="text-neutral-400 text-xs">Kelas</span>
-                        <p className="font-medium text-neutral-900 dark:text-neutral-100 mt-0.5">
+                        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Kelas</span>
+                        <p className="font-medium text-foreground mt-0.5">
                             {user.student_class.name}
                         </p>
                     </div>
                     {user.student_class.academic_year && (
                         <div>
-                            <span className="text-neutral-400 text-xs">Angkatan</span>
-                            <p className="font-medium text-neutral-900 dark:text-neutral-100 mt-0.5">
+                            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Angkatan</span>
+                            <p className="font-medium text-foreground mt-0.5">
                                 {user.student_class.academic_year.name}
                             </p>
                         </div>
                     )}
                     {user.absen_number && (
                         <div>
-                            <span className="text-neutral-400 text-xs">No. Absen</span>
-                            <p className="font-medium text-neutral-900 dark:text-neutral-100 mt-0.5">
+                            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">No. Absen</span>
+                            <p className="font-medium text-foreground mt-0.5">
                                 {user.absen_number}
                             </p>
                         </div>
@@ -501,15 +498,15 @@ export default function ProfilePage() {
             )}
 
             {/* 2-column grid di desktop, stack di mobile */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
                 {/* Kolom kiri — Foto Profil + Informasi Profil */}
-                <div className="space-y-6">
+                <div className="space-y-6 flex flex-col">
                     <AvatarSection avatarUrl={user.avatar_url} name={user.name} email={user.email} />
                     <EditProfileSection defaultName={user.name} defaultEmail={user.email} />
                 </div>
 
                 {/* Kolom kanan — Ganti Password + Akun Google */}
-                <div className="space-y-6">
+                <div className="space-y-6 flex flex-col">
                     <ChangePasswordSection />
                     <GoogleBindingSection googleId={user.google_id} />
                 </div>

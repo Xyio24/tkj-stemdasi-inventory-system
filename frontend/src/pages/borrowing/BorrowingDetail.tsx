@@ -85,19 +85,25 @@ function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
 // ─── Section Card ─────────────────────────────────────────────────────────────
 
 function Section({
-    title, icon, children, className,
+    title, icon, children, className, stretch,
 }: {
-    title: string; icon: React.ReactNode; children: React.ReactNode; className?: string;
+    title: string; icon: React.ReactNode; children: React.ReactNode; className?: string; stretch?: boolean;
 }) {
     return (
-        <div className={['glass-card animate-fade-up', className].filter(Boolean).join(' ')}>
+        <div className={[
+            'glass-card animate-fade-up',
+            stretch ? 'flex flex-col flex-1' : '',
+            className,
+        ].filter(Boolean).join(' ')}>
             <div className="flex items-center gap-2.5 px-5 py-4 border-b border-border/40">
                 <div className="w-7 h-7 rounded-xl bg-primary/10 dark:bg-primary/20 flex items-center justify-center flex-shrink-0">
                     {icon}
                 </div>
                 <h3 className="font-semibold text-sm text-foreground">{title}</h3>
             </div>
-            <div className="px-5 py-4">{children}</div>
+            <div className={['px-5 py-4', stretch ? 'flex flex-col flex-1' : ''].filter(Boolean).join(' ')}>
+                {children}
+            </div>
         </div>
     );
 }
@@ -285,10 +291,10 @@ export default function BorrowingDetail() {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 items-stretch">
 
                 {/* ── Left: main info ── */}
-                <div className="lg:col-span-2 space-y-4">
+                <div className="lg:col-span-2 space-y-4 flex flex-col">
 
                     {/* Info utama */}
                     <Section title="Informasi Peminjaman" icon={<FileText className="w-4 h-4 text-primary" />} className="delay-75">
@@ -374,7 +380,7 @@ export default function BorrowingDetail() {
                 </div>
 
                 {/* ── Right: action panels ── */}
-                <div className="space-y-4">
+                <div className="space-y-4 flex flex-col">
 
                     {/* Siswa: batalkan */}
                     {isSiswa && borrowing.status === 'pending' && (

@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { FileDown, Search, RefreshCw, Filter, FileText, ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react';
 import { getBorrowingReport, exportBorrowingReport, type BorrowingReportItem, type BorrowingReportParams } from '@/api/report';
-import { Button } from '@/components/ui/button';
+import { Button, ButtonSpinner } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 const STATUS_OPTIONS = [
     { value: '', label: 'Semua Status' }, { value: 'pending', label: 'Menunggu' },
@@ -83,10 +84,22 @@ function ReportRow({ row, index }: { row: BorrowingReportItem; index: number }) 
 export default function BorrowingReportPage() {
     const [filters, setFilters] = useState<BorrowingReportParams>({ per_page: 15, page: 1 });
     const [draft, setDraft] = useState({ date_from: '', date_to: '', status: '' });
+    const [isExporting, setIsExporting] = useState(false);
     const { data, isLoading, isError, refetch } = useQuery({ queryKey: ['report-borrowings', filters], queryFn: () => getBorrowingReport(filters) });
 
     function apply() { setFilters(p => ({ ...p, page: 1, date_from: draft.date_from || undefined, date_to: draft.date_to || undefined, status: draft.status || undefined })); }
     function reset() { setDraft({ date_from: '', date_to: '', status: '' }); setFilters({ per_page: 15, page: 1 }); }
+
+    async function handleExport() {
+        setIsExporting(true);
+        try {
+            await exportBorrowingReport({ date_from: filters.date_from, date_to: filters.date_to, status: filters.status });
+        } catch {
+            toast.error('Gagal mengunduh laporan. Silakan coba lagi.');
+        } finally {
+            setIsExporting(false);
+        }
+    }
 
     const rows = data?.data ?? [];
     const meta = data?.meta;
@@ -98,8 +111,9 @@ export default function BorrowingReportPage() {
                     <h1 className="text-2xl font-bold tracking-tight text-foreground">Laporan Peminjaman</h1>
                     <p className="text-sm text-muted-foreground mt-0.5">Riwayat seluruh transaksi peminjaman barang</p>
                 </div>
-                <Button onClick={() => exportBorrowingReport({ date_from: filters.date_from, date_to: filters.date_to, status: filters.status })} className="gap-2 flex-shrink-0">
-                    <FileDown className="w-4 h-4" /> Export Excel
+                <Button onClick={handleExport} disabled={isExporting} className="gap-2 flex-shrink-0">
+                    {isExporting ? <ButtonSpinner className="w-4 h-4" /> : <FileDown className="w-4 h-4" />}
+                    {isExporting ? 'Mengunduh...' : 'Export Excel'}
                 </Button>
             </div>
 

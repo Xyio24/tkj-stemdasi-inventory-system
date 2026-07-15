@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { FileDown, Search, RefreshCw, Filter, Package, ChevronLeft, ChevronRight } from 'lucide-react';
 import { getInventoryReport, exportInventoryReport, type InventoryReportItem, type InventoryReportParams } from '@/api/report';
-import { Button } from '@/components/ui/button';
+import { Button, ButtonSpinner } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 const CONDITION_OPTIONS = [
     { value: '', label: 'Semua Kondisi' }, { value: 'baik', label: 'Baik' },
@@ -77,10 +78,22 @@ function ReportRow({ row, index }: { row: InventoryReportItem; index: number }) 
 export default function InventoryReportPage() {
     const [filters, setFilters] = useState<InventoryReportParams>({ per_page: 15, page: 1 });
     const [draft, setDraft] = useState({ category_id: '', condition: '' });
+    const [isExporting, setIsExporting] = useState(false);
     const { data, isLoading, isError, refetch } = useQuery({ queryKey: ['report-inventory', filters], queryFn: () => getInventoryReport(filters) });
 
     function apply() { setFilters(p => ({ ...p, page: 1, category_id: draft.category_id ? Number(draft.category_id) : undefined, condition: draft.condition || undefined })); }
     function reset() { setDraft({ category_id: '', condition: '' }); setFilters({ per_page: 15, page: 1 }); }
+
+    async function handleExport() {
+        setIsExporting(true);
+        try {
+            await exportInventoryReport({ category_id: draft.category_id ? Number(draft.category_id) : undefined, condition: draft.condition || undefined });
+        } catch {
+            toast.error('Gagal mengunduh laporan. Silakan coba lagi.');
+        } finally {
+            setIsExporting(false);
+        }
+    }
 
     const rows       = data?.data ?? [];
     const meta       = data?.meta;
@@ -93,8 +106,9 @@ export default function InventoryReportPage() {
                     <h1 className="text-2xl font-bold tracking-tight text-foreground">Laporan Inventaris</h1>
                     <p className="text-sm text-muted-foreground mt-0.5">Daftar seluruh barang beserta kondisi stok</p>
                 </div>
-                <Button onClick={() => exportInventoryReport({ category_id: draft.category_id ? Number(draft.category_id) : undefined, condition: draft.condition || undefined })} className="gap-2 flex-shrink-0 bg-sky-600 hover:bg-sky-700">
-                    <FileDown className="w-4 h-4" /> Export Excel
+                <Button onClick={handleExport} disabled={isExporting} className="gap-2 flex-shrink-0 bg-sky-600 hover:bg-sky-700">
+                    {isExporting ? <ButtonSpinner className="w-4 h-4" /> : <FileDown className="w-4 h-4" />}
+                    {isExporting ? 'Mengunduh...' : 'Export Excel'}
                 </Button>
             </div>
 

@@ -115,51 +115,58 @@ export async function getInventoryReport(params?: InventoryReportParams): Promis
 // ─── Export helpers (download file) ──────────────────────────────────────────
 
 /**
- * Build a URL with query params and trigger a browser download.
- * Uses a hidden anchor so the Axios auth headers are NOT needed —
- * the token is appended as a query param instead.
+ * Download file via axios (dengan Authorization header) lalu trigger browser download.
+ * Lebih aman dari URL-based download karena token tidak terekspos di URL.
  */
-function triggerDownload(path: string, params: Record<string, string | number | undefined>, filename: string): void {
-    const token = localStorage.getItem('token');
-    const query = new URLSearchParams();
-
+async function triggerDownload(
+    path: string,
+    params: Record<string, string | number | undefined>,
+    filename: string,
+): Promise<void> {
+    const cleanParams: Record<string, string> = {};
     Object.entries(params).forEach(([key, val]) => {
         if (val !== undefined && val !== null && val !== '') {
-            query.append(key, String(val));
+            cleanParams[key] = String(val);
         }
     });
 
-    if (token) query.append('token', token);
+    const res = await api.get(path, {
+        params: cleanParams,
+        responseType: 'blob',
+    });
 
-    const baseUrl = import.meta.env.VITE_API_URL ?? 'http://localhost:8000/api';
-    const url = `${baseUrl}${path}?${query.toString()}`;
+    const blob = new Blob([res.data], {
+        type: res.headers['content-type'] ?? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
 
+    const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
     a.download = filename;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
+    URL.revokeObjectURL(url);
 }
 
-export function exportBorrowingReport(params?: Omit<BorrowingReportParams, 'per_page' | 'page'>): void {
-    triggerDownload(
+export function exportBorrowingReport(params?: Omit<BorrowingReportParams, 'per_page' | 'page'>): Promise<void> {
+    return triggerDownload(
         '/reports/borrowings/export',
         params as Record<string, string | number | undefined>,
         `laporan-peminjaman-${new Date().toISOString().slice(0, 10)}.xlsx`,
     );
 }
 
-export function exportReturnReport(params?: Omit<ReturnReportParams, 'per_page' | 'page'>): void {
-    triggerDownload(
+export function exportReturnReport(params?: Omit<ReturnReportParams, 'per_page' | 'page'>): Promise<void> {
+    return triggerDownload(
         '/reports/returns/export',
         params as Record<string, string | number | undefined>,
         `laporan-pengembalian-${new Date().toISOString().slice(0, 10)}.xlsx`,
     );
 }
 
-export function exportInventoryReport(params?: Omit<InventoryReportParams, 'per_page' | 'page'>): void {
-    triggerDownload(
+export function exportInventoryReport(params?: Omit<InventoryReportParams, 'per_page' | 'page'>): Promise<void> {
+    return triggerDownload(
         '/reports/inventory/export',
         params as Record<string, string | number | undefined>,
         `laporan-inventaris-${new Date().toISOString().slice(0, 10)}.xlsx`,

@@ -256,7 +256,7 @@ function RecentBorrowingsTable({ data }: { data: RecentBorrowing[] }) {
     const navigate = useNavigate();
 
     return (
-        <div className="glass-card overflow-hidden animate-fade-up delay-300">
+        <div className="glass-card overflow-hidden animate-fade-up delay-300 flex flex-col flex-1">
             {/* Header */}
             <div className="flex items-center justify-between px-5 py-4 border-b border-border/50">
                 <div className="flex items-center gap-2.5">
@@ -344,7 +344,7 @@ function getActivityDot(description: string): string {
 
 function ActivityFeed({ data }: { data: RecentActivity[] }) {
     return (
-        <div className="glass-card overflow-hidden animate-fade-up delay-300">
+        <div className="glass-card overflow-hidden animate-fade-up delay-300 flex flex-col flex-1">
             {/* Header */}
             <div className="flex items-center gap-2.5 px-5 py-4 border-b border-border/50">
                 <div className="w-8 h-8 rounded-xl bg-green-100/80 dark:bg-green-900/30 flex items-center justify-center">
@@ -588,11 +588,13 @@ export default function Dashboard() {
             <BorrowingsChart data={borrowings_chart} />
 
             {/* ── Recent Borrowings + Activity ── */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                <div className="lg:col-span-2">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-stretch">
+                <div className="lg:col-span-2 flex flex-col">
                     <RecentBorrowingsTable data={recent_borrowings} />
                 </div>
-                <ActivityFeed data={recent_activity} />
+                <div className="flex flex-col">
+                    <ActivityFeed data={recent_activity} />
+                </div>
             </div>
         </div>
     );

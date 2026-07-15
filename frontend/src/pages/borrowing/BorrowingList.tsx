@@ -118,7 +118,7 @@ export default function BorrowingList() {
             {/* ── Search bar ── */}
             <div className="glass-card px-5 py-3.5 animate-fade-up delay-100">
                 <div className="relative">
-                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/60 pointer-events-none" />
+                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/60 pointer-events-none z-10" />
                     <input
                         type="text"
                         placeholder="Cari kode atau keperluan..."

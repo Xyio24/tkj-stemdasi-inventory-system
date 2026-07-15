@@ -472,7 +472,7 @@ export default function UserList() {
                     <p className="text-sm text-muted-foreground mt-0.5">Kelola akun dan role pengguna sistem</p>
                 </div>
                 <div className="relative w-full sm:w-72">
-                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/60 pointer-events-none" />
+                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/60 pointer-events-none z-10" />
                     <input type="text" placeholder="Cari nama, email, NIS/NIP..." value={search} onChange={e => setSearch(e.target.value)} className="input-ios pl-10" />
                 </div>
             </div>

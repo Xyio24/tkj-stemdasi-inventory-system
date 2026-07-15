@@ -12,6 +12,10 @@ class BorrowingItem extends Pivot
 
     protected $table = 'borrowing_items';
 
+    protected $primaryKey = 'id';
+
+    protected $keyType = 'int';
+
     protected $fillable = [
         'borrowing_id',
         'item_id',

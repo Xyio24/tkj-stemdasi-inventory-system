@@ -106,11 +106,9 @@ function ItemCard({ item, canManage, isAdmin, onDelete }: {
                 <h3 className="font-semibold text-sm text-foreground leading-snug line-clamp-2">
                     {item.name}
                 </h3>
-                {(item.brand || item.model) && (
-                    <p className="text-xs text-muted-foreground truncate">
-                        {[item.brand, item.model].filter(Boolean).join(' · ')}
-                    </p>
-                )}
+                <p className="text-xs text-muted-foreground truncate">
+                    {[item.brand, item.model].filter(Boolean).join(' · ') || <span className="opacity-0">—</span>}
+                </p>
 
                 {/* Divider + meta row */}
                 <div className="mt-auto pt-3 border-t border-border/40 flex items-center justify-between gap-2">
@@ -306,7 +304,7 @@ export default function ItemList() {
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                             {/* Search */}
                             <div className="relative">
-                                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/60 pointer-events-none" />
+                                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/60 pointer-events-none z-10" />
                                 <input
                                     type="text"
                                     placeholder="Cari nama, merek, seri..."
@@ -374,7 +372,7 @@ export default function ItemList() {
                     <div className="glass-card px-5 py-4 animate-fade-up delay-75">
                         <div className="flex flex-col sm:flex-row gap-3">
                             <div className="relative flex-1">
-                                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/60 pointer-events-none" />
+                                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/60 pointer-events-none z-10" />
                                 <input
                                     type="text"
                                     placeholder="Cari nama, merek..."

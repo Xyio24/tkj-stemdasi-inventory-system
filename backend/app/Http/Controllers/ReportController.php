@@ -29,7 +29,7 @@ class ReportController extends Controller
         ]);
 
         $data = Borrowing::query()
-            ->with(['user:id,name,nis_nip', 'approvedBy:id,name', 'items.item:id,name'])
+            ->with(['user:id,name,nis_nip', 'approvedBy:id,name', 'borrowingItems.item:id,name'])
             ->when($request->date_from, fn ($q) => $q->whereDate('borrow_date', '>=', $request->date_from))
             ->when($request->date_to,   fn ($q) => $q->whereDate('borrow_date', '<=', $request->date_to))
             ->when($request->status,    fn ($q) => $q->where('status', $request->status))
@@ -54,8 +54,8 @@ class ReportController extends Controller
             'purpose'              => $b->purpose,
             'borrow_date'          => $b->borrow_date?->format('Y-m-d'),
             'expected_return_date' => $b->expected_return_date?->format('Y-m-d'),
-            'items_count'          => $b->items->sum('quantity'),
-            'items'                => $b->items->map(fn ($bi) => [
+            'items_count'          => $b->borrowingItems->sum('quantity'),
+            'items'                => $b->borrowingItems->map(fn ($bi) => [
                 'name'     => $bi->item?->name,
                 'quantity' => $bi->quantity,
             ]),
@@ -88,7 +88,7 @@ class ReportController extends Controller
         ]);
 
         $data = Borrowing::query()
-            ->with(['user:id,name,nis_nip', 'returnApprovedBy:id,name', 'items.item:id,name'])
+            ->with(['user:id,name,nis_nip', 'returnApprovedBy:id,name', 'borrowingItems.item:id,name'])
             ->where('status', 'returned')
             ->when($request->date_from, fn ($q) => $q->whereDate('return_approved_at', '>=', $request->date_from))
             ->when($request->date_to,   fn ($q) => $q->whereDate('return_approved_at', '<=', $request->date_to))
@@ -110,7 +110,7 @@ class ReportController extends Controller
             'return_approved_at'   => $b->return_approved_at?->format('Y-m-d H:i'),
             'return_approved_by'   => $b->returnApprovedBy?->name,
             'return_notes'         => $b->return_notes,
-            'items'                => $b->items->map(fn ($bi) => [
+            'items'                => $b->borrowingItems->map(fn ($bi) => [
                 'name'              => $bi->item?->name,
                 'quantity'          => $bi->quantity,
                 'returned_quantity' => $bi->returned_quantity,

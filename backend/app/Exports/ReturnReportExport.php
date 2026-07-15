@@ -23,7 +23,7 @@ class ReturnReportExport implements FromQuery, WithHeadings, WithMapping, WithSt
     public function query()
     {
         return Borrowing::query()
-            ->with(['user', 'returnApprovedBy', 'items.item'])
+            ->with(['user', 'returnApprovedBy', 'borrowingItems.item'])
             ->where('status', 'returned')
             ->when($this->dateFrom, fn ($q) => $q->whereDate('return_approved_at', '>=', $this->dateFrom))
             ->when($this->dateTo,   fn ($q) => $q->whereDate('return_approved_at', '<=', $this->dateTo))
@@ -58,12 +58,12 @@ class ReturnReportExport implements FromQuery, WithHeadings, WithMapping, WithSt
             'rusak_berat'  => 'Rusak Berat',
         ];
 
-        $itemDetails = $borrowing->items->map(function ($bi) use ($conditionMap) {
+        $itemDetails = $borrowing->borrowingItems->map(function ($bi) use ($conditionMap) {
             $condition = $conditionMap[$bi->item_condition_in ?? ''] ?? '-';
             return $bi->item->name . ' (' . ($bi->returned_quantity ?? $bi->quantity) . ' - ' . $condition . ')';
         })->implode(', ');
 
-        $conditions = $borrowing->items
+        $conditions = $borrowing->borrowingItems
             ->map(fn ($bi) => $conditionMap[$bi->item_condition_in ?? ''] ?? '-')
             ->unique()
             ->implode(', ');

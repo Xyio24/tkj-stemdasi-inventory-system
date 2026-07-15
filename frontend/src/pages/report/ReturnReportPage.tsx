@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { FileDown, Search, RefreshCw, Filter, FileText, ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react';
 import { getReturnReport, exportReturnReport, type ReturnReportItem, type ReturnReportParams } from '@/api/report';
-import { Button } from '@/components/ui/button';
+import { Button, ButtonSpinner } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 const CONDITION_BADGE: Record<string, string> = {
     baik:         'bg-green-100/80  text-green-700  dark:bg-green-900/30  dark:text-green-400',
@@ -82,10 +83,22 @@ function ReportRow({ row, index }: { row: ReturnReportItem; index: number }) {
 export default function ReturnReportPage() {
     const [filters, setFilters] = useState<ReturnReportParams>({ per_page: 15, page: 1 });
     const [draft, setDraft] = useState({ date_from: '', date_to: '' });
+    const [isExporting, setIsExporting] = useState(false);
     const { data, isLoading, isError, refetch } = useQuery({ queryKey: ['report-returns', filters], queryFn: () => getReturnReport(filters) });
 
     function apply() { setFilters(p => ({ ...p, page: 1, date_from: draft.date_from || undefined, date_to: draft.date_to || undefined })); }
     function reset() { setDraft({ date_from: '', date_to: '' }); setFilters({ per_page: 15, page: 1 }); }
+
+    async function handleExport() {
+        setIsExporting(true);
+        try {
+            await exportReturnReport({ date_from: filters.date_from, date_to: filters.date_to });
+        } catch {
+            toast.error('Gagal mengunduh laporan. Silakan coba lagi.');
+        } finally {
+            setIsExporting(false);
+        }
+    }
 
     const rows = data?.data ?? [];
     const meta = data?.meta;
@@ -97,8 +110,9 @@ export default function ReturnReportPage() {
                     <h1 className="text-2xl font-bold tracking-tight text-foreground">Laporan Pengembalian</h1>
                     <p className="text-sm text-muted-foreground mt-0.5">Riwayat seluruh barang yang telah dikembalikan</p>
                 </div>
-                <Button onClick={() => exportReturnReport({ date_from: filters.date_from, date_to: filters.date_to })} className="gap-2 flex-shrink-0 bg-emerald-600 hover:bg-emerald-700">
-                    <FileDown className="w-4 h-4" /> Export Excel
+                <Button onClick={handleExport} disabled={isExporting} className="gap-2 flex-shrink-0 bg-emerald-600 hover:bg-emerald-700">
+                    {isExporting ? <ButtonSpinner className="w-4 h-4" /> : <FileDown className="w-4 h-4" />}
+                    {isExporting ? 'Mengunduh...' : 'Export Excel'}
                 </Button>
             </div>
 

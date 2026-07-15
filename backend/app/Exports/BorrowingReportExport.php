@@ -24,7 +24,7 @@ class BorrowingReportExport implements FromQuery, WithHeadings, WithMapping, Wit
     public function query()
     {
         return Borrowing::query()
-            ->with(['user', 'approvedBy', 'items.item'])
+            ->with(['user', 'approvedBy', 'borrowingItems.item'])
             ->when($this->dateFrom, fn ($q) => $q->whereDate('borrow_date', '>=', $this->dateFrom))
             ->when($this->dateTo,   fn ($q) => $q->whereDate('borrow_date', '<=', $this->dateTo))
             ->when($this->status,   fn ($q) => $q->where('status', $this->status))
@@ -55,7 +55,7 @@ class BorrowingReportExport implements FromQuery, WithHeadings, WithMapping, Wit
         static $no = 0;
         $no++;
 
-        $itemNames = $borrowing->items
+        $itemNames = $borrowing->borrowingItems
             ->map(fn ($bi) => $bi->item->name . ' (' . $bi->quantity . ')')
             ->implode(', ');
 
@@ -73,7 +73,7 @@ class BorrowingReportExport implements FromQuery, WithHeadings, WithMapping, Wit
             $borrowing->code,
             $borrowing->user?->name ?? '-',
             $itemNames ?: '-',
-            $borrowing->items->sum('quantity'),
+            $borrowing->borrowingItems->sum('quantity'),
             $borrowing->purpose,
             $borrowing->borrow_date?->format('d/m/Y') ?? '-',
             $borrowing->expected_return_date?->format('d/m/Y') ?? '-',

@@ -1,14 +1,14 @@
 import { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { getItems } from '@/api/inventory';
-import type { Item } from '@/api/inventory';
+import { getItems, getCategories } from '@/api/inventory';
+import type { Item, Category } from '@/api/inventory';
 import { createBorrowing } from '@/api/borrowing';
 import type { CreateBorrowingPayload, BorrowingItemPayload } from '@/api/borrowing';
 import { toast } from 'sonner';
 import {
     ArrowLeft, Search, Plus, X, Package,
-    CalendarDays, FileText, ShoppingCart,
+    CalendarDays, FileText, ShoppingCart, ChevronDown,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -27,19 +27,25 @@ const CONDITION_LABEL: Record<string, string> = {
 // ─── FormSection ──────────────────────────────────────────────────────────────
 
 function FormSection({
-    title, icon, children, delay,
+    title, icon, children, delay, stretch,
 }: {
-    title: string; icon: React.ReactNode; children: React.ReactNode; delay?: string;
+    title: string; icon: React.ReactNode; children: React.ReactNode; delay?: string; stretch?: boolean;
 }) {
     return (
-        <div className={['glass-card overflow-hidden animate-fade-up', delay].filter(Boolean).join(' ')}>
+        <div className={[
+            'glass-card overflow-hidden animate-fade-up',
+            stretch ? 'flex flex-col flex-1' : '',
+            delay,
+        ].filter(Boolean).join(' ')}>
             <div className="flex items-center gap-2.5 px-5 py-4 border-b border-border/40">
                 <div className="w-7 h-7 rounded-xl bg-primary/10 dark:bg-primary/20 flex items-center justify-center flex-shrink-0">
                     {icon}
                 </div>
                 <h3 className="font-semibold text-sm text-foreground">{title}</h3>
             </div>
-            <div className="px-5 py-4">{children}</div>
+            <div className={['px-5 py-4', stretch ? 'flex flex-col flex-1' : ''].filter(Boolean).join(' ')}>
+                {children}
+            </div>
         </div>
     );
 }
@@ -71,11 +77,21 @@ export default function BorrowingForm() {
     const [notes,               setNotes]               = useState('');
     const [selectedItems,       setSelectedItems]       = useState<SelectedItem[]>([]);
     const [searchItem,          setSearchItem]          = useState('');
-    const [showSelector,        setShowSelector]        = useState(false);
+    const [showSelector,        setShowSelector]        = useState(true);
+    const [categoryId,          setCategoryId]          = useState<number | ''>('');
+
+    const { data: categoriesData } = useQuery({
+        queryKey: ['categories'],
+        queryFn:  getCategories,
+    });
 
     const { data: itemsData, isLoading: isLoadingItems } = useQuery({
-        queryKey: ['items-search', searchItem],
-        queryFn:  () => getItems({ search: searchItem || undefined, per_page: 20 }),
+        queryKey: ['items-search', searchItem, categoryId],
+        queryFn:  () => getItems({
+            search:      searchItem   || undefined,
+            category_id: categoryId   || undefined,
+            per_page:    20,
+        }),
     });
 
     const createMutation = useMutation({
@@ -144,12 +160,12 @@ export default function BorrowingForm() {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-5" noValidate>
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-stretch">
 
                     {/* ── Kiri: Info peminjaman ── */}
-                    <div className="space-y-5">
-                        <FormSection title="Informasi Peminjaman" icon={<FileText className="w-4 h-4 text-primary" />} delay="delay-75">
-                            <div className="space-y-4">
+                    <div className="flex flex-col">
+                        <FormSection title="Informasi Peminjaman" icon={<FileText className="w-4 h-4 text-primary" />} delay="delay-75" stretch>
+                            <div className="space-y-4 flex flex-col flex-1">
                                 <Field label="Keperluan" required>
                                     <input
                                         required
@@ -198,21 +214,54 @@ export default function BorrowingForm() {
                     </div>
 
                     {/* ── Kanan: Pilih barang ── */}
-                    <div className="space-y-5">
-                        <FormSection title="Pilih Barang" icon={<ShoppingCart className="w-4 h-4 text-primary" />} delay="delay-100">
+                    <div className="flex flex-col">
+                        <FormSection title="Pilih Barang" icon={<ShoppingCart className="w-4 h-4 text-primary" />} delay="delay-100" stretch>
                             <div className="space-y-3">
 
-                                {/* Search */}
+                                {/* Category filter */}
                                 <div className="relative">
-                                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/60 pointer-events-none" />
-                                    <input
-                                        type="text"
-                                        placeholder="Cari barang..."
-                                        value={searchItem}
-                                        onChange={e => setSearchItem(e.target.value)}
-                                        className={inputCls + ' pl-10'}
-                                        onFocus={() => setShowSelector(true)}
-                                    />
+                                    <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/60 pointer-events-none" />
+                                    <select
+                                        value={categoryId}
+                                        onChange={e => {
+                                            setCategoryId(e.target.value ? Number(e.target.value) : '');
+                                            setShowSelector(true);
+                                        }}
+                                        className={inputCls + ' appearance-none cursor-pointer pr-9'}
+                                    >
+                                        <option value="">Semua Kategori</option>
+                                        {categoriesData?.data?.map((cat: Category) => (
+                                            <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                {/* Search + tombol + */}
+                                <div className="flex gap-2">
+                                    <div className="relative flex-1">
+                                        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/60 pointer-events-none z-10" />
+                                        <input
+                                            type="text"
+                                            placeholder="Cari barang..."
+                                            value={searchItem}
+                                            onChange={e => setSearchItem(e.target.value)}
+                                            className={inputCls + ' pl-10'}
+                                            onFocus={() => setShowSelector(true)}
+                                        />
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowSelector(v => !v)}
+                                        title="Tampilkan daftar barang"
+                                        className={[
+                                            'flex-shrink-0 w-10 h-10 rounded-2xl flex items-center justify-center transition-all duration-150 active:scale-[0.93]',
+                                            showSelector
+                                                ? 'bg-primary text-primary-foreground shadow-sm'
+                                                : 'bg-primary/10 dark:bg-primary/20 text-primary hover:bg-primary/20',
+                                        ].join(' ')}
+                                    >
+                                        <Plus className="w-4 h-4" />
+                                    </button>
                                 </div>
 
                                 {/* Item list */}
@@ -222,7 +271,9 @@ export default function BorrowingForm() {
                                             <div className="p-4 text-center text-sm text-muted-foreground">Memuat...</div>
                                         ) : itemsData?.data?.length === 0 ? (
                                             <div className="p-4 text-center text-sm text-muted-foreground">
-                                                {searchItem ? `"${searchItem}" tidak ditemukan.` : 'Tidak ada barang.'}
+                                                {searchItem || categoryId
+                                                    ? `Tidak ada barang${categoryId ? ' di kategori ini' : ''}${searchItem ? ` untuk "${searchItem}"` : ''}.`
+                                                    : 'Tidak ada barang.'}
                                             </div>
                                         ) : (
                                             itemsData?.data?.map((item: Item) => {
