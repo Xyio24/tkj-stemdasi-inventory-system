@@ -173,19 +173,10 @@ export default function BorrowingDetail() {
     useEffect(() => {
         if (borrowing?.items) {
             setReturnItems(
-                borrowing.items.map((item: BorrowingItemDetail) => {
-                    const isConsumable = item.type === 'consumable';
-                    const defaultCondition = isConsumable
-                        ? 'terpakai'
-                        : (item.item_condition_out || 'baik');
-                    return {
-                        borrowing_item_id: item.borrowing_item_id,
-                        return_conditions: [{
-                            condition: defaultCondition as ReturnConditionEntry['condition'],
-                            quantity:  item.quantity,
-                        }],
-                    };
-                })
+                borrowing.items.map((item: BorrowingItemDetail) => ({
+                    borrowing_item_id: item.borrowing_item_id,
+                    return_conditions: [],
+                }))
             );
         }
     }, [borrowing]);
@@ -216,7 +207,27 @@ export default function BorrowingDetail() {
     });
 
     const approveReturnMutation = useMutation({
-        mutationFn: () => approveReturn(Number(id), { return_notes: returnNotes, items: returnItems }),
+        mutationFn: () => {
+            const payloadItems = returnItems.map(ri => {
+                const orig = borrowing.items?.find((i: BorrowingItemDetail) => i.borrowing_item_id === ri.borrowing_item_id);
+                const isConsumable = orig?.type === 'consumable';
+                const defaultCond = isConsumable ? 'terpakai' : (orig?.item_condition_out || 'baik');
+                
+                const otherSum = ri.return_conditions.reduce((s, c) => s + (Number(c.quantity) || 0), 0);
+                const defaultQty = Math.max(0, (orig?.quantity ?? 0) - otherSum);
+
+                const conditions = [...ri.return_conditions];
+                if (defaultQty > 0) {
+                    conditions.unshift({ condition: defaultCond as ReturnConditionEntry['condition'], quantity: defaultQty });
+                }
+
+                return {
+                    borrowing_item_id: ri.borrowing_item_id,
+                    return_conditions: conditions.filter(c => Number(c.quantity) > 0)
+                };
+            });
+            return approveReturn(Number(id), { return_notes: returnNotes, items: payloadItems });
+        },
         onSuccess: () => { toast.success('Pengembalian dikonfirmasi'); queryClient.invalidateQueries({ queryKey: ['borrowings', id] }); },
         onError: (e: any) => toast.error(e.response?.data?.message || 'Gagal mengonfirmasi'),
     });
@@ -514,9 +525,15 @@ export default function BorrowingDetail() {
                             <div className="space-y-3">
                                 {returnItems.map((rItem, itemIdx) => {
                                     const orig = borrowing.items?.find((i: BorrowingItemDetail) => i.borrowing_item_id === rItem.borrowing_item_id);
-                                    const totalQty = rItem.return_conditions.reduce((s, c) => s + c.quantity, 0);
-                                    const isMatch  = totalQty === (orig?.quantity ?? 0);
+                                    const origQty = orig?.quantity ?? 0;
                                     const isConsumable = orig?.type === 'consumable';
+                                    const defaultCondValue = isConsumable ? 'terpakai' : (orig?.item_condition_out || 'baik');
+                                    const defaultCondLabel = isConsumable ? 'Terpakai' : 'Baik';
+
+                                    const otherSum = rItem.return_conditions.reduce((s, c) => s + (Number(c.quantity) || 0), 0);
+                                    const defaultQty = Math.max(0, origQty - otherSum);
+                                    const totalQty = defaultQty + otherSum;
+                                    const isExceeding = otherSum > origQty;
 
                                     const COND_OPTIONS = [
                                         { value: 'baik',         label: 'Baik' },
@@ -524,10 +541,10 @@ export default function BorrowingDetail() {
                                         { value: 'rusak_berat',  label: 'Rusak Berat' },
                                         { value: 'hilang',       label: 'Hilang' },
                                         ...(isConsumable ? [{ value: 'terpakai', label: 'Terpakai' }] : []),
-                                    ];
+                                    ].filter(opt => opt.value !== defaultCondValue && !rItem.return_conditions.some(c => c.condition === opt.value)); // Cegah ganda
 
                                     return (
-                                        <div key={rItem.borrowing_item_id} className="bg-accent/30 rounded-2xl border border-border/30 p-3.5 space-y-2.5">
+                                        <div key={rItem.borrowing_item_id} className={`rounded-2xl border p-3.5 space-y-3 transition-colors ${isExceeding ? 'bg-red-50/50 border-red-200 dark:bg-red-900/10 dark:border-red-800/30' : 'bg-accent/30 border-border/30'}`}>
                                             <div className="flex items-center justify-between">
                                                 <span className="font-semibold text-sm text-foreground truncate">
                                                     {orig?.name ?? '-'}
@@ -535,13 +552,28 @@ export default function BorrowingDetail() {
                                                         <span className="ml-1.5 text-[9px] bg-amber-100/80 text-amber-700 px-1.5 py-0.5 rounded-full font-bold uppercase tracking-wide">Consumable</span>
                                                     )}
                                                 </span>
-                                                <span className={['text-xs font-semibold', isMatch ? 'text-green-600 dark:text-green-400' : 'text-red-500'].join(' ')}>
-                                                    {totalQty}/{orig?.quantity ?? 0}
-                                                </span>
+                                                <div className="flex flex-col items-end">
+                                                    <span className={['text-xs font-semibold', isExceeding ? 'text-red-500' : 'text-green-600 dark:text-green-400'].join(' ')}>
+                                                        Total Kondisi: {totalQty}/{origQty}
+                                                    </span>
+                                                </div>
                                             </div>
 
+                                            {/* Default Condition (Readonly) */}
+                                            <div className="flex gap-2 items-center bg-background/50 rounded-lg p-2 border border-border/40 shadow-sm">
+                                                <div className="flex-1 text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                                                    <CheckCircle2 className="w-3.5 h-3.5 text-primary" />
+                                                    Kondisi Awal ({defaultCondLabel})
+                                                </div>
+                                                <div className="w-16 py-1 text-sm font-semibold text-center text-foreground">
+                                                    {defaultQty}
+                                                </div>
+                                                <div className="w-[28px]" />
+                                            </div>
+
+                                            {/* Other Conditions */}
                                             {rItem.return_conditions.map((cond, condIdx) => (
-                                                <div key={condIdx} className="flex gap-2 items-center">
+                                                <div key={condIdx} className="flex gap-2 items-center animate-fade-in">
                                                     <select
                                                         value={cond.condition}
                                                         onChange={e => {
@@ -554,65 +586,64 @@ export default function BorrowingDetail() {
                                                         }}
                                                         className="input-ios flex-1 py-1.5 text-xs appearance-none cursor-pointer"
                                                     >
+                                                        <option value={cond.condition}>
+                                                            {{ 'baik': 'Baik', 'rusak_ringan': 'Rusak Ringan', 'rusak_berat': 'Rusak Berat', 'hilang': 'Hilang', 'terpakai': 'Terpakai' }[cond.condition] || cond.condition}
+                                                        </option>
                                                         {COND_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                                                     </select>
                                                     <input
                                                         type="number"
-                                                        min={1}
-                                                        max={orig?.quantity}
-                                                        value={cond.quantity}
+                                                        min={0}
+                                                        value={cond.quantity === 0 ? '' : cond.quantity}
+                                                        placeholder="0"
                                                         onChange={e => {
+                                                            const val = e.target.value === '' ? 0 : Number(e.target.value);
                                                             setReturnItems(prev => prev.map((ri, ii) => ii !== itemIdx ? ri : {
                                                                 ...ri,
                                                                 return_conditions: ri.return_conditions.map((c, ci) =>
-                                                                    ci !== condIdx ? c : { ...c, quantity: Number(e.target.value) }
+                                                                    ci !== condIdx ? c : { ...c, quantity: Math.max(0, val) }
                                                                 ),
                                                             }));
                                                         }}
                                                         className="input-ios w-16 py-1.5 text-xs text-center"
                                                     />
-                                                    {rItem.return_conditions.length > 1 && (
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => setReturnItems(prev => prev.map((ri, ii) => ii !== itemIdx ? ri : {
-                                                                ...ri,
-                                                                return_conditions: ri.return_conditions.filter((_, ci) => ci !== condIdx),
-                                                            }))}
-                                                            className="p-1.5 rounded-xl text-destructive hover:bg-destructive/8 transition-all duration-150"
-                                                        >
-                                                            <Trash2 className="w-3.5 h-3.5" />
-                                                        </button>
-                                                    )}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setReturnItems(prev => prev.map((ri, ii) => ii !== itemIdx ? ri : {
+                                                            ...ri,
+                                                            return_conditions: ri.return_conditions.filter((_, ci) => ci !== condIdx),
+                                                        }))}
+                                                        className="p-1.5 rounded-xl text-destructive hover:bg-destructive/8 transition-all duration-150"
+                                                    >
+                                                        <Trash2 className="w-3.5 h-3.5" />
+                                                    </button>
                                                 </div>
                                             ))}
 
-                                            <button
-                                                type="button"
-                                                onClick={() => setReturnItems(prev => prev.map((ri, ii) => {
-                                                    if (ii !== itemIdx) return ri;
-                                                    const origQty = orig?.quantity ?? 0;
-                                                    const currentTotal = ri.return_conditions.reduce((s, c) => s + c.quantity, 0);
-                                                    // Sisa qty setelah ditambah 1 untuk kondisi baru
-                                                    const newCondQty = 1;
-                                                    const remaining  = currentTotal - newCondQty;
-                                                    // Kurangi qty dari baris pertama (pastikan minimal 1)
-                                                    const updatedConditions = ri.return_conditions.map((c, ci) => {
-                                                        if (ci !== 0) return c;
-                                                        return { ...c, quantity: Math.max(0, c.quantity - newCondQty) };
-                                                    }).filter(c => c.quantity > 0);
-                                                    const defaultCond = isConsumable ? 'terpakai' : 'baik';
-                                                    return {
-                                                        ...ri,
-                                                        return_conditions: [
-                                                            ...updatedConditions,
-                                                            { condition: defaultCond as ReturnConditionEntry['condition'], quantity: newCondQty },
-                                                        ],
-                                                    };
-                                                }))}
-                                                className="flex items-center gap-1 text-xs text-primary font-medium hover:gap-1.5 transition-all duration-150"
-                                            >
-                                                <Plus className="w-3 h-3" /> Tambah Kondisi
-                                            </button>
+                                            {COND_OPTIONS.length > 0 && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setReturnItems(prev => prev.map((ri, ii) => {
+                                                        if (ii !== itemIdx) return ri;
+                                                        return {
+                                                            ...ri,
+                                                            return_conditions: [
+                                                                ...ri.return_conditions,
+                                                                { condition: COND_OPTIONS[0].value as ReturnConditionEntry['condition'], quantity: 0 },
+                                                            ],
+                                                        };
+                                                    }))}
+                                                    className="flex items-center gap-1 text-xs text-primary font-medium hover:gap-1.5 transition-all duration-150 mt-1"
+                                                >
+                                                    <Plus className="w-3 h-3" /> Tambah Kondisi
+                                                </button>
+                                            )}
+
+                                            {isExceeding && (
+                                                <p className="text-[10px] text-red-500 font-medium animate-fade-in mt-1">
+                                                    ⚠️ Jumlah kondisi melebihi barang yang dikembalikan.
+                                                </p>
+                                            )}
                                         </div>
                                     );
                                 })}
@@ -630,18 +661,30 @@ export default function BorrowingDetail() {
                                     />
                                 </div>
 
-                                <Button
-                                    className="w-full bg-violet-600 hover:bg-violet-700"
-                                    loading={approveReturnMutation.isPending}
-                                    disabled={returnItems.some(ri => {
+                                <div className="space-y-2">
+                                    <Button
+                                        className="w-full bg-violet-600 hover:bg-violet-700"
+                                        loading={approveReturnMutation.isPending}
+                                        disabled={returnItems.some(ri => {
+                                            const orig = borrowing.items?.find((i: BorrowingItemDetail) => i.borrowing_item_id === ri.borrowing_item_id);
+                                            const otherSum = ri.return_conditions.reduce((s, c) => s + (Number(c.quantity) || 0), 0);
+                                            return otherSum > (orig?.quantity ?? 0);
+                                        })}
+                                        onClick={() => approveReturnMutation.mutate()}
+                                    >
+                                        <CheckCircle2 className="w-4 h-4" />
+                                        Selesaikan Audit
+                                    </Button>
+                                    {returnItems.some(ri => {
                                         const orig = borrowing.items?.find((i: BorrowingItemDetail) => i.borrowing_item_id === ri.borrowing_item_id);
-                                        return ri.return_conditions.reduce((s, c) => s + c.quantity, 0) !== (orig?.quantity ?? 0);
-                                    })}
-                                    onClick={() => approveReturnMutation.mutate()}
-                                >
-                                    <CheckCircle2 className="w-4 h-4" />
-                                    Konfirmasi Pengembalian
-                                </Button>
+                                        const otherSum = ri.return_conditions.reduce((s, c) => s + (Number(c.quantity) || 0), 0);
+                                        return otherSum > (orig?.quantity ?? 0);
+                                    }) && (
+                                        <p className="text-center text-[10px] text-red-500 font-medium">
+                                            Audit belum dapat diselesaikan karena jumlah kondisi melebihi total barang.
+                                        </p>
+                                    )}
+                                </div>
                             </div>
                         </Section>
                     )}
