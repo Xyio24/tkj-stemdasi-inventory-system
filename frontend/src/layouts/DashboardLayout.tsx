@@ -334,7 +334,7 @@ function SidebarContent({ role, onClose }: { role: string; onClose?: () => void 
                     <div className="flex-shrink-0">
                         {user?.avatar && user.avatar_type === 'upload' ? (
                             <img
-                                src={user.avatar}
+                                src={user.avatar_url || (user.avatar.startsWith('http') ? user.avatar : `${import.meta.env.VITE_STORAGE_URL}/${user.avatar}`)}
                                 alt={user.name}
                                 className="w-8 h-8 rounded-xl object-cover ring-1 ring-black/[0.08] dark:ring-white/10"
                             />
@@ -524,7 +524,7 @@ export default function DashboardLayout() {
                         <ThemeToggle compact />
                         {user?.avatar && user.avatar_type === 'upload' ? (
                             <img
-                                src={user.avatar}
+                                src={user.avatar_url || (user.avatar.startsWith('http') ? user.avatar : `${import.meta.env.VITE_STORAGE_URL}/${user.avatar}`)}
                                 alt={user.name}
                                 className="w-8 h-8 rounded-2xl object-cover ring-2 ring-white/40 dark:ring-white/10"
                             />

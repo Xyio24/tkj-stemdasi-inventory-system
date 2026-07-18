@@ -34,6 +34,8 @@ class User extends Authenticatable
     /** @use HasFactory<UserFactory> */
     use HasApiTokens, HasFactory, Notifiable;
 
+    protected $appends = ['avatar_url'];
+
     protected function casts(): array
     {
         return [
@@ -42,6 +44,14 @@ class User extends Authenticatable
             'is_active'         => 'boolean',
             'approved_at'       => 'datetime',
         ];
+    }
+
+    public function getAvatarUrlAttribute(): ?string
+    {
+        if ($this->avatar_type === 'upload' && $this->avatar) {
+            return \Illuminate\Support\Facades\Storage::disk('public')->url($this->avatar);
+        }
+        return null;
     }
 
     // ─── Helpers ──────────────────────────────────────────────────────────────

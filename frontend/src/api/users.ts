@@ -8,6 +8,7 @@ export interface User {
     email: string;
     role: 'siswa' | 'guru' | 'admin';
     avatar: string | null;
+    avatar_url?: string | null;
     avatar_type: 'generated' | 'upload';
     google_id: string | null;
     status: 'pending' | 'active' | 'blocked';

@@ -551,9 +551,10 @@
   input[type="password"]::-ms-clear {
     display: none !important;
   }
-  /* Chrome — built-in eye icon */
-  input[type="password"]::-webkit-textfield-decoration-container {
-    display: none !important;
+  /* Prevent Safari from changing input line-height due to password font */
+  input[type="password"] {
+    font-family: inherit;
+    letter-spacing: inherit;
   }
   input::-webkit-strong-password-auto-fill-button,
   input::-webkit-credentials-auto-fill-button,

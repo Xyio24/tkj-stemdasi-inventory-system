@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, type UseMutationResult } from '@tanstack/react-query';
 import { getUsers, updateUser, approveUser, rejectUser, blockUser, unblockUser, resetUserPassword, deletePendingUser } from '@/api/users';
 import type { User } from '@/api/users';
 import { getClasses, getAcademicYears } from '@/api/masterData';
@@ -60,7 +60,7 @@ function TableSkeleton({ cols = 5 }: { cols?: number }) {
 
 function UserAvatar({ user }: { user: User }) {
     if (user.avatar_type === 'upload' && user.avatar) {
-        return <img src={user.avatar} alt={user.name} className="w-8 h-8 rounded-2xl flex-shrink-0 object-cover ring-1 ring-border" />;
+        return <img src={user.avatar_url || (user.avatar.startsWith('http') ? user.avatar : `${import.meta.env.VITE_STORAGE_URL}/${user.avatar}`)} alt={user.name} className="w-8 h-8 rounded-2xl flex-shrink-0 object-cover ring-1 ring-border" />;
     }
     return <GeneratedAvatar name={user.name} email={user.email} size={32} />;
 }
@@ -72,9 +72,9 @@ function PendingTable({
 }: {
     users: User[];
     isLoading: boolean;
-    approveMutation: ReturnType<typeof useMutation>;
-    rejectMutation: ReturnType<typeof useMutation<unknown, unknown, { id: number; reason: string }>>;
-    deleteMutation: ReturnType<typeof useMutation<unknown, unknown, number>>;
+    approveMutation: UseMutationResult<any, any, number, any>;
+    rejectMutation: UseMutationResult<any, any, { id: number; reason: string }, any>;
+    deleteMutation: UseMutationResult<any, any, number, any>;
 }) {
     const [rejectId, setRejectId]         = useState<number | null>(null);
     const [rejectReason, setRejectReason] = useState('');
@@ -229,9 +229,9 @@ function ActiveTable({
     users: User[];
     isLoading: boolean;
     classesData: { data: { id: number; name: string }[] } | undefined;
-    updateMutation: ReturnType<typeof useMutation<unknown, unknown, { id: number; data: Record<string, unknown> }>>;
-    blockMutation: ReturnType<typeof useMutation<unknown, unknown, number>>;
-    unblockMutation: ReturnType<typeof useMutation<unknown, unknown, number>>;
+    updateMutation: UseMutationResult<any, any, { id: number; data: Record<string, unknown> }, any>;
+    blockMutation: UseMutationResult<any, any, number, any>;
+    unblockMutation: UseMutationResult<any, any, number, any>;
     currentUserId: number;
     showClassCol?: boolean;
 }) {

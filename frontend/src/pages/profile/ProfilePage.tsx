@@ -65,7 +65,7 @@ function AvatarSection({ avatarUrl, name, email }: { avatarUrl: string | null; n
         mutationFn: (file: File) => uploadAvatar(file),
         onSuccess: (res) => {
             toast.success('Foto profil berhasil diunggah.');
-            updateUser({ avatar: res.data.avatar_url, avatar_type: 'upload' });
+            updateUser({ avatar: res.data.avatar_url, avatar_url: res.data.avatar_url, avatar_type: 'upload' });
             queryClient.invalidateQueries({ queryKey: ['profile'] });
         },
         onError: () => toast.error('Gagal mengunggah foto.'),
@@ -75,7 +75,7 @@ function AvatarSection({ avatarUrl, name, email }: { avatarUrl: string | null; n
         mutationFn: deleteAvatar,
         onSuccess: () => {
             toast.success('Foto profil berhasil dihapus.');
-            updateUser({ avatar: null, avatar_type: 'generated' });
+            updateUser({ avatar: null, avatar_url: null, avatar_type: 'generated' });
             queryClient.invalidateQueries({ queryKey: ['profile'] });
         },
         onError: () => toast.error('Gagal menghapus foto.'),
