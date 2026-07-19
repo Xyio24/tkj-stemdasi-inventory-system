@@ -76,8 +76,8 @@ function DetailSkeleton() {
 function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
     return (
         <div className="flex flex-col gap-0.5">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">{label}</span>
-            <span className="text-sm font-medium text-foreground">{value || '-'}</span>
+            <span className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground/70">{label}</span>
+            <span className="text-sm font-semibold text-foreground">{value || '-'}</span>
         </div>
     );
 }
@@ -85,14 +85,13 @@ function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
 // ─── Section Card ─────────────────────────────────────────────────────────────
 
 function Section({
-    title, icon, children, className, stretch,
+    title, icon, children, className,
 }: {
-    title: string; icon: React.ReactNode; children: React.ReactNode; className?: string; stretch?: boolean;
+    title: string; icon: React.ReactNode; children: React.ReactNode; className?: string;
 }) {
     return (
         <div className={[
             'glass-card animate-fade-up',
-            stretch ? 'flex flex-col flex-1' : '',
             className,
         ].filter(Boolean).join(' ')}>
             <div className="flex items-center gap-2.5 px-5 py-4 border-b border-border/40">
@@ -101,7 +100,7 @@ function Section({
                 </div>
                 <h3 className="font-semibold text-sm text-foreground">{title}</h3>
             </div>
-            <div className={['px-5 py-4', stretch ? 'flex flex-col flex-1' : ''].filter(Boolean).join(' ')}>
+            <div className="px-5 py-4">
                 {children}
             </div>
         </div>
@@ -286,7 +285,7 @@ export default function BorrowingDetail() {
 
     // ── Render ──
     return (
-        <div className="max-w-4xl mx-auto space-y-5">
+        <div className="max-w-[1400px] mx-auto space-y-6 pb-20">
 
             {/* Header */}
             <div className="flex items-center gap-3 animate-fade-up">
@@ -302,96 +301,150 @@ export default function BorrowingDetail() {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 items-stretch">
+            <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] xl:grid-cols-[1fr_420px] gap-6 lg:gap-8 items-stretch">
 
                 {/* ── Left: main info ── */}
-                <div className="lg:col-span-2 space-y-4 flex flex-col">
+                <div className="space-y-6 flex flex-col">
 
                     {/* Info utama */}
-                    <Section title="Informasi Peminjaman" icon={<FileText className="w-4 h-4 text-primary" />} className="delay-75">
-                        {/* Code + status */}
-                        <div className="flex items-start justify-between gap-3 mb-4">
-                            <div>
-                                <p className="font-mono text-lg font-bold text-primary">{borrowing.code}</p>
-                                <p className="text-xs text-muted-foreground mt-0.5">{formatDateTime(borrowing.created_at)}</p>
-                            </div>
-                            <span className={['badge-pill text-xs', st.badge].join(' ')}>{st.label}</span>
-                        </div>
-
-                        {/* Grid info */}
-                        <div className="grid grid-cols-2 gap-4">
-                            <InfoRow label="Peminjam"        value={borrowing.user?.name} />
-                            <InfoRow label="Keperluan"       value={borrowing.purpose} />
-                            <InfoRow label="Tgl Pinjam"      value={formatDate(borrowing.borrow_date)} />
-                            <InfoRow label="Tenggat Kembali" value={formatDate(borrowing.expected_return_date)} />
+                    <Section title="Informasi Peminjaman" icon={<FileText className="w-4 h-4 text-primary" />} className="delay-75 flex-1">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <InfoRow label="Kode Referensi" value={<span className="font-mono text-primary font-bold">{borrowing.code}</span>} />
+                            <InfoRow label="Peminjam" value={borrowing.user?.name} />
+                            <InfoRow label="Keperluan" value={borrowing.purpose} />
+                            <InfoRow label="Waktu Pengajuan" value={formatDateTime(borrowing.created_at)} />
                         </div>
 
                         {/* Notes */}
                         {borrowing.notes && (
-                            <div className="mt-4 p-3.5 bg-accent/40 rounded-2xl border border-border/40">
-                                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70 mb-1">Catatan Siswa</p>
-                                <p className="text-sm text-foreground">{borrowing.notes}</p>
+                            <div className="mt-5 p-3.5 bg-accent/40 rounded-2xl border border-border/40">
+                                <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground/70 mb-1">Catatan Peminjam</p>
+                                <p className="text-sm font-semibold text-foreground">{borrowing.notes}</p>
                             </div>
                         )}
 
                         {/* Rejection reason */}
                         {borrowing.rejection_reason && (
                             <div className="mt-4 p-3.5 bg-red-50/60 dark:bg-red-900/15 rounded-2xl border border-red-200/50 dark:border-red-800/30">
-                                <p className="text-[10px] font-bold uppercase tracking-widest text-red-500 mb-1">Alasan Penolakan</p>
-                                <p className="text-sm text-red-700 dark:text-red-300">{borrowing.rejection_reason}</p>
+                                <p className="text-[11px] font-bold uppercase tracking-widest text-red-500 mb-1">Alasan Penolakan</p>
+                                <p className="text-sm font-semibold text-red-700 dark:text-red-300">{borrowing.rejection_reason}</p>
                             </div>
                         )}
                     </Section>
 
-                    {/* Daftar barang */}
-                    <Section title="Daftar Barang" icon={<Package className="w-4 h-4 text-primary" />} className="delay-100">
-                        <div className="space-y-2">
-                            {borrowing.items?.map((item: BorrowingItemDetail) => (
-                                <div key={item.id} className="flex items-center justify-between p-3.5 bg-accent/30 rounded-2xl border border-border/30 hover:bg-accent/50 transition-colors duration-150">
-                                    <div className="min-w-0">
-                                        <p className="font-semibold text-sm text-foreground truncate">{item.name}</p>
-                                        {(item.brand || item.model) && (
-                                            <p className="text-xs text-muted-foreground">{[item.brand, item.model].filter(Boolean).join(' · ')}</p>
-                                        )}
-                                    </div>
-                                    <span className="badge-pill bg-primary/10 dark:bg-primary/20 text-primary ml-3 flex-shrink-0">
-                                        {item.quantity} unit
-                                    </span>
-                                </div>
-                            ))}
+                    {/* Daftar Barang */}
+                    <Section title="Daftar Barang" icon={<Package className="w-4 h-4 text-primary" />} className="delay-100 flex-1">
+                        <div className="overflow-x-auto -mx-2 sm:mx-0">
+                            <table className="w-full text-left border-collapse min-w-[500px]">
+                                <thead>
+                                    <tr className="border-b border-border/50 text-[11px] uppercase tracking-widest text-muted-foreground/70">
+                                        <th className="pb-3 px-2 font-bold">Nama Barang</th>
+                                        <th className="pb-3 px-2 font-bold text-center">Jml</th>
+                                        <th className="pb-3 px-2 font-bold text-center">Kondisi Awal</th>
+                                        <th className="pb-3 px-2 font-bold text-right">Status Kembali</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-border/30">
+                                    {borrowing.items?.map((item: BorrowingItemDetail) => {
+                                        const isConsumable = item.type === 'consumable';
+                                        return (
+                                            <tr key={item.id} className="hover:bg-accent/20 transition-colors">
+                                                <td className="py-3.5 px-2">
+                                                    <p className="font-semibold text-sm text-foreground leading-tight">{item.name}</p>
+                                                    {(item.brand || item.model) && (
+                                                        <p className="text-[11px] text-muted-foreground mt-0.5">{[item.brand, item.model].filter(Boolean).join(' · ')}</p>
+                                                    )}
+                                                    {isConsumable && (
+                                                        <span className="inline-block mt-1.5 text-[9px] bg-amber-100/80 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 px-2 py-0.5 rounded-full font-bold uppercase tracking-widest">Consumable</span>
+                                                    )}
+                                                </td>
+                                                <td className="py-3.5 px-2 text-center align-top">
+                                                    <span className="badge-pill bg-primary/10 dark:bg-primary/20 text-primary font-semibold text-xs whitespace-nowrap">
+                                                        {item.quantity} unit
+                                                    </span>
+                                                </td>
+                                                <td className="py-3.5 px-2 text-center align-top">
+                                                    <span className="text-xs font-medium capitalize text-muted-foreground">
+                                                        {isConsumable ? 'Terpakai' : (item.item_condition_out || 'Baik').replace('_', ' ')}
+                                                    </span>
+                                                </td>
+                                                <td className="py-3.5 px-2 text-right align-top">
+                                                    {borrowing.status === 'returned' ? (
+                                                        <div className="flex flex-col items-end gap-1">
+                                                            <span className="text-xs text-green-600 dark:text-green-400 font-semibold">Dikembalikan ({item.returned_quantity || item.quantity})</span>
+                                                            {!isConsumable && item.item_condition_in && (
+                                                                <span className="text-[10px] font-medium text-muted-foreground capitalize">({item.item_condition_in.replace('_', ' ')})</span>
+                                                            )}
+                                                        </div>
+                                                    ) : (
+                                                        <span className="text-xs text-muted-foreground">-</span>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
                         </div>
                     </Section>
 
-                    {/* Lampiran foto */}
+                    {/* Lampiran Foto */}
                     {borrowing.photos && borrowing.photos.length > 0 && (
-                        <Section title="Lampiran Foto" icon={<ImageIcon className="w-4 h-4 text-primary" />} className="delay-150">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <Section title="Lampiran Foto" icon={<ImageIcon className="w-4 h-4 text-primary" />} className="delay-150 flex-1">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
                                 {borrowing.photos.map((photo: BorrowingPhoto) => (
-                                    <div key={photo.id} className="space-y-2">
-                                        <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">
-                                            Bukti {photo.type === 'borrow' ? 'Pengambilan' : 'Pengembalian'}
-                                        </p>
-                                        <a href={photo.url ?? photo.path} target="_blank" rel="noopener noreferrer"
-                                            className="block rounded-2xl overflow-hidden border border-border/40 hover:opacity-90 transition-opacity duration-150 shadow-glass">
+                                    <div key={photo.id} className="group relative flex flex-col gap-2.5">
+                                        <a href={photo.url ?? photo.path} target="_blank" rel="noopener noreferrer" className="block w-full aspect-square rounded-2xl overflow-hidden border border-border/40 shadow-sm hover:shadow-md transition-all">
                                             <img
                                                 src={photo.url ?? photo.path}
                                                 alt={`Bukti ${photo.type}`}
-                                                className="w-full h-auto object-cover"
+                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                                                 onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
                                             />
                                         </a>
-                                        <p className="text-[10px] text-muted-foreground/60">
-                                            {photo.uploaded_at ? formatDateTime(photo.uploaded_at) : '-'}
-                                        </p>
+                                        <div className="flex flex-col px-1">
+                                            <span className="text-[11px] font-bold uppercase tracking-widest text-foreground">
+                                                {photo.type === 'borrow' ? 'Pengambilan' : 'Pengembalian'}
+                                            </span>
+                                            <span className="text-[11px] text-muted-foreground font-medium mt-0.5">
+                                                {photo.uploaded_at ? formatDateTime(photo.uploaded_at) : '-'}
+                                            </span>
+                                        </div>
                                     </div>
                                 ))}
                             </div>
                         </Section>
                     )}
+
                 </div>
 
                 {/* ── Right: action panels ── */}
-                <div className="space-y-4 flex flex-col">
+                <div className="space-y-5 flex flex-col">
+                    {/* Ringkasan & Status */}
+                    <div className="glass-card animate-fade-up delay-75 flex flex-col">
+                        <div className="px-5 py-4 border-b border-border/40 flex flex-col items-center justify-center text-center">
+                            <span className={['badge-pill text-sm px-4 py-1.5 font-bold', st.badge].join(' ')}>{st.label}</span>
+                        </div>
+                        <div className="px-5 py-4 space-y-3.5">
+                            <div className="flex justify-between items-center">
+                                <span className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground/70">Total Barang</span>
+                                <span className="font-semibold text-sm text-foreground">{borrowing.items?.length || 0} Macam</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                                <span className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground/70">Total Unit</span>
+                                <span className="font-semibold text-sm text-foreground">{borrowing.items?.reduce((a: any, b: any) => a + b.quantity, 0)} Unit</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                                <span className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground/70">Tgl Pinjam</span>
+                                <span className="font-semibold text-sm text-foreground">{formatDate(borrowing.borrow_date)}</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                                <span className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground/70">Tenggat</span>
+                                <span className="font-semibold text-sm text-foreground">{formatDate(borrowing.expected_return_date)}</span>
+                            </div>
+                        </div>
+                    </div>
+
 
                     {/* Siswa: batalkan */}
                     {isSiswa && borrowing.status === 'pending' && (
