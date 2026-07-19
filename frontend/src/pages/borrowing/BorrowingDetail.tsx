@@ -208,7 +208,7 @@ export default function BorrowingDetail() {
     const approveReturnMutation = useMutation({
         mutationFn: () => {
             const payloadItems = returnItems.map(ri => {
-                const orig = borrowing.items?.find((i: BorrowingItemDetail) => i.borrowing_item_id === ri.borrowing_item_id);
+                const orig = borrowing?.items?.find((i: BorrowingItemDetail) => i.borrowing_item_id === ri.borrowing_item_id);
                 const isConsumable = orig?.type === 'consumable';
                 const defaultCond = isConsumable ? 'terpakai' : (orig?.item_condition_out || 'baik');
                 
